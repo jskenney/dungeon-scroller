@@ -39,8 +39,8 @@
   },
 
   "display": {
-    "defaultViewTiles": 11,
-    "minViewTiles": 5,
+    "defaultViewTiles": 8,
+    "minViewTiles": 4,
     "maxViewTiles": 24,
     "pixelPerfect": true
   },

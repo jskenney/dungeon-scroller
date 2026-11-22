@@ -4,15 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dungeon Scroller</title>
-  <style>
-    html { color-scheme: dark; background: #0d0f14; color: #dfe4ee; font: 16px/1.5 system-ui, sans-serif; }
-    body { max-width: 34em; margin: 18vh auto; padding: 0 20px; }
-    a { color: #e0b354; }
-  </style>
+  <link rel="stylesheet" href="css/game.css">
 </head>
 <body>
-  <h1>Dungeon Scroller</h1>
-  <p>The game is not built yet. The design is in <a href="DESIGN.md">DESIGN.md</a>.</p>
-  <p><a href="viewer.html">Open the asset viewer</a> to see every sprite sheet, tileset and card that is ready.</p>
+  <canvas id="game" tabindex="-1" aria-label="Game view"></canvas>
+  <div id="ui"></div>
+  <div id="boot"><p id="boot-status">Loading…</p></div>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

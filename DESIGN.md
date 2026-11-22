@@ -59,7 +59,7 @@ Where local storage does earn its place later:
 ## 3. Repository layout
 
 ```
-index.html                 the game page (a placeholder linking to the viewer until the game is built)
+index.html                 the game: title, hero and level selection, settings, play screen
 viewer.html                asset viewer: every sheet entity, tileset and card, with checks (§16)
 dungeon.json               site configuration; the first file fetched (§4). Not in the repository.
 example.dungeon.json       documented example; used when dungeon.json is missing
@@ -404,10 +404,10 @@ The boss sheet is 6912 px tall, taller than the 4096 px texture limit of some gr
 
 - **Units.** One world unit is one source-art pixel. A tile is 96 units; a hero stands about 40 units tall.
 - **Canvas.** Fills the whole browser window. Its backing store is sized in physical pixels (`CSS size × devicePixelRatio`), so it is sharp on HiDPI screens and stays sharp when the browser's own zoom changes.
-- **Scale.** `scale = canvas width in physical pixels ÷ visible world width`. The default view is about 11 tiles wide.
+- **Scale.** `scale = canvas width in physical pixels ÷ visible world width`. The default view is about 8 tiles wide, which shows a hero at roughly an eighth of the window height.
 - **Pixel-perfect mode (default).** The scale is rounded to a whole number so every art pixel becomes an identical block of screen pixels. The canvas still fills the width; the number of visible tiles adjusts slightly instead. With this off, any fractional scale is allowed.
 - **Sampling.** Nearest-neighbour everywhere; no smoothing, no mipmaps. The camera position is snapped to whole physical pixels to avoid shimmer.
-- **Zoom.** `+` / `−` and the mouse wheel step the view between `minViewTiles` and `maxViewTiles`. Zoom is remembered in `localStorage`. Zooming changes how much of the level is visible; it never changes game rules.
+- **Zoom.** `+` / `−` and the mouse wheel step the view between `minViewTiles` and `maxViewTiles`. In pixel-perfect mode each step is one whole device pixel per art pixel; otherwise one tile of view width. Zoom is remembered in `localStorage`. Zooming changes how much of the level is visible; it never changes game rules.
 - **Camera.** Follows the hero with a small dead zone and look-ahead in the facing direction, eases vertically only when the hero lands or leaves the dead zone, and clamps to the level bounds. Boss arenas lock the camera to the arena.
 - **Layers, back to front:** parallax backgrounds, background tiles, rear details, terrain, objects, actors, effects and projectiles, foreground tiles, then the HTML layer (speech bubbles, HUD, menus).
 
@@ -665,7 +665,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | Phase | Deliverable |
 |---|---|
 | **0. Asset JSON** | **Done:** JSON for every sprite sheet, tileset and hero card, `example.dungeon.json`, and the gameplay catalogs in `data/` with drafted boxes. Boxes and values are refined through the viewer and play-testing. |
-| **1. Skeleton and viewer** | **Done:** `viewer.html`, configuration loading with the `example.dungeon.json` fallback (`js/config.js`), vendored PixiJS, the asset loader with per-entity sheet slicing and JSON-against-image checks (`js/assets/loader.js`), and animation playback maths shared with the future simulation (`js/assets/animation.js`). Still to come in this phase: the real `index.html` game shell. |
+| **1. Skeleton, viewer and shell** | **Done:** `viewer.html`; configuration loading with the `example.dungeon.json` fallback; vendored PixiJS; the asset loader; and the game shell in `index.html` (§16.2). |
 | **2. Simulation core** | Fixed-step loop, hero movement, all tile shapes, camera and zoom, on a small hand-written test level. In-browser tests for collision. |
 | **3. Procedural levels** | Seeded generator with section templates and reachability check; level schema loader; three or four generated levels saved as static test files. |
 | **4. Combat and enemies** | Abilities, projectiles, damage, enemy archetypes, HP/MP, HUD. |
@@ -691,6 +691,23 @@ Each phase ends with something that can be opened in a browser and checked.
 - **Frame alignment:** in the single view, the nudge buttons (or Shift + arrow keys) move the frame on screen one pixel at a time; the optional "idle ghost" draws a faint copy of the first idle frame as a fixed reference. Adjustments are kept in the browser and listed in the details panel as JSON, ready to copy; they become permanent when written into the sheet JSON as `offsets` (§4.3). The viewer cannot write files itself.
 
 Keys: Space play/pause, ←/→ step a frame, Shift + arrows nudge a frame, F mirror, A single/all, +/− zoom. Each view has its own address (for example `viewer.html#boss/undead_dragon/attack3`), so a specific animation can be linked.
+
+### 16.2 The game shell
+
+`index.html` is the game's single page. The canvas fills the window and every screen is HTML laid over it.
+
+| Screen | What it does |
+|---|---|
+| Title | Play, Settings, and a link to the asset viewer. Notes when `example.dungeon.json` is in use and when the loader found asset problems. |
+| Hero selection | Every hero that has gameplay values, shown as its card with name, role, statistics and abilities written into the card's text area from the catalog. The chosen hero's idle animation plays in the header; the choice is remembered. |
+| Level selection | Lists what can be played. For now that is a **staging room** per tileset; "Random dungeon" is shown but disabled until the generator exists. |
+| Settings | Zoom, pixel-perfect scaling, and key rebinding: choose *Change*, press a key; shared keys are flagged; any action or all of them can be reset to the site defaults. Stored in the browser. |
+| Play | The canvas with the HUD: hero name, HP and MP bars with numbers, lives, score, and each ability with its key and MP cost (dimmed when unaffordable). |
+| Pause | Resume, Settings, Change level, Change hero, Quit to title. Escape goes back on every screen. |
+
+Modules: `js/main.js` (boot and screens), `js/settings.js`, `js/input.js` (keys to actions through the bindings), `js/render/stage.js` (canvas, camera, whole-pixel zoom, rooms, actor sprites), `js/ui/` (cards, HUD, DOM helpers).
+
+**The staging room is temporary.** `js/shell/staging.js` moves the chosen hero on a flat floor so that input, bindings, animation selection, camera, zoom and the HUD can be tried before the simulation exists. It applies the catalog's movement, MP, flight, teleport and air-attack rules, but has no collision beyond the floor, no enemies, and attacks hit nothing. Phase 2 replaces it with the real simulation; the screens around it stay.
 
 ## 17. Open items
 
