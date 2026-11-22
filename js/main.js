@@ -207,6 +207,7 @@ function startPlay(entry) {
   const level = new Level(entry.doc, entry.tileset);
   game.world = new World(level, game.hero, game.config, game.assets.entities);
   game.view = new WorldView(game.stage, game.world);
+  game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
   game.hud = new Hud(game.hero, game.settings);
   const b = game.world.hero.body;
   game.lookAhead = 0;
@@ -258,6 +259,24 @@ function pause() {
       h('button', { type: 'button', onclick: titleScreen }, 'Quit to title')))), resume);
 }
 
+function completeScreen() {
+  game.paused = true;
+  game.input.setEnabled(false);
+  const entry = game.entry, world = game.world;
+  const seconds = Math.round(world.time), clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  show(h('div', { class: 'screen centered scrim' }, panel('Level complete',
+    h('table', { class: 'results' }, h('tbody', {},
+      h('tr', {}, h('th', {}, 'Time'), h('td', {}, clock)),
+      h('tr', {}, h('th', {}, 'Score'), h('td', {}, world.hero.score)),
+      h('tr', {}, h('th', {}, 'Deaths'), h('td', {}, world.deaths)))),
+    h('div', { class: 'menu' },
+      entry.seed ? h('button', { type: 'button', autofocus: true, onclick: () => startRandom({ ...entry.recipe, seed: randomSeed() }) }, 'Next random level') : null,
+      h('button', { type: 'button', autofocus: !entry.seed, onclick: () => startPlay(entry) }, 'Play again'),
+      h('button', { type: 'button', onclick: levelScreen }, 'Change level'),
+      h('button', { type: 'button', onclick: heroScreen }, 'Change hero'),
+      h('button', { type: 'button', onclick: titleScreen }, 'Quit to title')))), levelScreen);
+}
+
 function gameOverScreen() {
   game.paused = true;
   game.input.setEnabled(false);
@@ -294,6 +313,7 @@ function tick(dt) {
   const hero = world.hero, b = hero.body;
   const { x, y } = game.view.update(dt);
   const gameOver = world.events.some(e => e.type === 'gameOver');
+  const complete = world.events.some(e => e.type === 'levelComplete');
   world.events.length = 0;                    // sounds will read these later
   // Look a little ahead of a hero who keeps moving one way. The offset follows
   // the movement speed and eases slowly, so turning around does not jolt the view.
@@ -308,6 +328,7 @@ function tick(dt) {
   game.hud.update(hero);
   if (steps > 0) input.endFrame();
   if (gameOver) gameOverScreen();
+  else if (complete) completeScreen();
 }
 
 // ------------------------------------------------------------------------- boot

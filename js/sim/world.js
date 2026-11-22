@@ -3,13 +3,14 @@
 
 import { Hero } from './hero.js';
 import { Enemy } from './enemy.js';
+import { WorldObject } from './object.js';
 import { overlap } from './actor.js';
 import { makeRng } from '../level/random.js';
 import { TILE } from '../level/level.js';
 
 export const NO_INTENTS = Object.freeze({
   dir: 0, vertical: 0, run: false, jumpHeld: false, jumpPressed: false, down: false,
-  attack1: false, attack2: false, attack3: false, teleport: false, fly: false,
+  attack1: false, attack2: false, attack3: false, teleport: false, fly: false, interact: false,
 });
 
 const WAKE_DISTANCE = 1500;      // enemies farther than this from the hero stand still
@@ -39,11 +40,125 @@ export class World {
     this.projectiles = [];
     this.events = [];
     this.over = false;             // true when the last life is lost
+    this.entities = entities;
+    /** @type {WorldObject[]} */
+    this.objects = [];
+    /** Gates: solid until opened by a lever or a key. {id, rect, open, locked, col, row, height} */
+    this.gates = [];
+    this.prompt = null;            // the object the interact key would use right now
+    this.complete = false;         // true once the goal has been reached
+    this.deaths = 0;
     for (const placed of level.doc.entities ?? []) {
-      if (placed.type !== 'enemy') continue;
-      const entity = entities[`enemy/${placed.id}`];
-      if (!entity?.gameplay) continue;
-      this.enemies.push(new Enemy(entity, config, (placed.col + 0.5) * TILE, (placed.row + 1) * TILE));
+      const x = (placed.col + 0.5) * TILE, y = (placed.row + 1) * TILE;
+      if (placed.type === 'enemy') {
+        const entity = entities[`enemy/${placed.id}`];
+        if (entity?.gameplay) this.enemies.push(new Enemy(entity, config, x, y));
+      } else if (placed.type === 'object') {
+        this.addObject(placed.id, x, y, placed);
+      } else if (placed.type === 'gate') {
+        const height = placed.height ?? 2;
+        const rect = { l: placed.col * TILE + 32, t: placed.row * TILE, r: (placed.col + 1) * TILE - 32, b: (placed.row + height) * TILE, kind: 'solid' };
+        this.gates.push({ id: placed.id, rect, open: false, locked: Boolean(placed.locked), col: placed.col, row: placed.row, height });
+        level.dynamic.push(rect);
+      }
+    }
+  }
+
+  /** Seconds played. */
+  get time() { return this.tick * this.step; }
+
+  addObject(id, x, y, placed = {}) {
+    const entity = this.entities[`object/${id}`];
+    if (!entity?.gameplay) return null;
+    const object = new WorldObject(entity, x, y, placed);
+    if (object.g.solid) {
+      object.solid = { ...object.rect(), kind: 'solid' };
+      this.level.dynamic.push(object.solid);
+    }
+    this.objects.push(object);
+    return object;
+  }
+
+  /** Stop an object or gate from blocking movement. */
+  unblock(rect) {
+    const i = this.level.dynamic.indexOf(rect);
+    if (i >= 0) this.level.dynamic.splice(i, 1);
+  }
+
+  openGate(gate) {
+    if (gate.open) return;
+    gate.open = true;
+    this.unblock(gate.rect);
+    this.events.push({ type: 'gateOpened', x: (gate.rect.l + gate.rect.r) / 2, y: gate.rect.t });
+  }
+
+  /** Drop loot at a spot: [{object, chance, count}] with count a number or [min, max]. */
+  dropLoot(loot, x, y) {
+    const more = this.config.difficulty?.loot ?? 1;
+    let n = 0;
+    for (const item of loot ?? []) {
+      if (this.random() > (item.chance ?? 1) * more) continue;
+      const [min, max] = Array.isArray(item.count) ? item.count : [item.count ?? 1, item.count ?? 1];
+      const count = min + Math.floor(this.random() * (max - min + 1));
+      for (let i = 0; i < count; i++) {
+        this.addObject(item.object, x + (n % 2 ? 1 : -1) * Math.ceil(n / 2) * 18, y, { wait: 0.35 });
+        n++;
+      }
+    }
+  }
+
+  /** Give the hero what a pickup, flag or shrine offers. */
+  give(gives = {}, at) {
+    const hero = this.hero;
+    if (gives.hp) hero.hp = Math.min(hero.maxHp, hero.hp + gives.hp);
+    if (gives.hpFraction) hero.hp = Math.min(hero.maxHp, Math.max(hero.hp, hero.maxHp * gives.hpFraction));
+    if (gives.mp) hero.mp = Math.min(hero.g.stats.mp, hero.mp + gives.mp);
+    if (gives.mpFraction) hero.mp = Math.min(hero.g.stats.mp, Math.max(hero.mp, hero.g.stats.mp * gives.mpFraction));
+    if (gives.score) hero.score += gives.score;
+    if (gives.keys) hero.keys += gives.keys;
+    if (gives.buff) hero.buff = { damage: gives.buff.damage ?? 1, time: gives.buff.duration ?? 10 };
+    this.events.push({ type: 'gave', gives, x: at.x, y: at.rect().t });
+  }
+
+  /** Start using an object: pick it up, open it, pull it, light it. */
+  useObject(object) {
+    const hero = this.hero, kind = object.g.behaviour;
+    if (kind === 'container' && object.locked) {
+      if (hero.keys < 1) { this.events.push({ type: 'locked', x: object.x, y: object.rect().t }); return; }
+      hero.keys--; object.locked = false;
+    }
+    object.begin();
+    if (kind === 'pickup') this.give(object.g.gives, object);
+    else if (kind === 'checkpoint') {
+      this.checkpoint = { x: object.x, y: object.y };
+      this.give(object.g.gives, object);
+      this.events.push({ type: 'checkpoint', x: object.x, y: object.rect().t });
+    } else if (kind === 'shrine') {
+      this.give(object.g.gives, object);
+      object.cooldown = object.g.cooldown ?? 30;
+    } else if (kind === 'goal') {
+      this.give(object.g.gives, object);
+      this.complete = true;
+      this.events.push({ type: 'levelComplete' });
+    } else if (kind === 'breakable' && object.solid) {
+      this.unblock(object.solid);
+      object.solid = null;
+    }
+  }
+
+  /** Called by an object when its use animation ends. */
+  objectFinished(object) {
+    const kind = object.g.behaviour;
+    if (kind === 'container' || kind === 'breakable') this.dropLoot(object.loot, object.x, object.y);
+    else if (kind === 'switch') for (const gate of this.gates) if (gate.id === object.link) this.openGate(gate);
+  }
+
+  /** Break anything breakable inside an attack's area. `struck` remembers what one attack already hit. */
+  hitObjects(area, struck) {
+    for (const object of this.objects) {
+      if (!object.ready('attack') || struck.has(object) || !overlap(area, object.rect())) continue;
+      struck.add(object);
+      this.useObject(object);
     }
   }
 
@@ -79,6 +194,27 @@ export class World {
     }
     for (const p of this.projectiles) p.update(this, dt);
 
+    // Objects: touch to take, the interact key to open or pull, a key to unlock a gate.
+    this.prompt = null;
+    if (!hero.dead) {
+      const body = hero.bodyRect();
+      for (const object of this.objects) {
+        if (object.ready('touch') && overlap(body, object.rect())) this.useObject(object);
+        else if (!this.prompt && object.ready('interact') && overlap(body, object.rect())) this.prompt = object;
+      }
+      if (intents.interact && this.prompt) this.useObject(this.prompt);
+      for (const gate of this.gates) {
+        if (gate.open || !gate.locked) continue;
+        const near = { l: gate.rect.l - 10, t: gate.rect.t, r: gate.rect.r + 10, b: gate.rect.b };
+        if (!overlap(body, near)) continue;
+        if (hero.keys > 0) { hero.keys--; this.openGate(gate); }
+        else if (this.tick % 60 === 0) this.events.push({ type: 'locked', x: (gate.rect.l + gate.rect.r) / 2, y: gate.rect.t + 40 });
+      }
+    }
+    for (const object of this.objects) object.update(this, dt);
+    // The relic appears once no boss is left.
+    if (!this.enemies.some(e => e.boss && !e.dead)) for (const object of this.objects) object.hidden = false;
+
     // Touching an enemy hurts a little and pushes the hero away.
     if (this.config.rules?.touchDamage !== false && !hero.dead && hero.invulnerable <= 0) {
       const body = hero.bodyRect();
@@ -90,10 +226,12 @@ export class World {
     }
 
     this.enemies = this.enemies.filter(e => !e.gone);
+    this.objects = this.objects.filter(o => !o.gone);
     this.projectiles = this.projectiles.filter(p => !p.gone);
 
     // Falling out of the bottom of the level, or dying, costs a life.
-    if (!hero.dead && hero.body.y - hero.body.h > this.level.height + 200) this.respawn();
+    if (this.complete) { /* the level is won; nothing more can go wrong */ }
+    else if (!hero.dead && hero.body.y - hero.body.h > this.level.height + 200) this.respawn();
     else if (hero.dead && hero.deadTime > RESPAWN_DELAY && !this.over) this.respawn();
     this.tick++;
   }
@@ -107,6 +245,7 @@ export class World {
         this.hurtEnemy(enemy, source.damage, source, source.effect ?? {});
         if (!source.pierce) break;
       }
+      if (!struck.size || source.pierce) this.hitObjects(area, struck);
     } else if (!this.hero.dead && !struck.has(this.hero) && overlap(area, this.hero.bodyRect())) {
       struck.add(this.hero);
       this.hurtHero(source.damage, source, source.effect ?? {});
@@ -122,6 +261,7 @@ export class World {
     if (enemy.dead) {
       this.hero.score += enemy.g.stats.score ?? 0;
       this.events.push({ type: 'kill', id: enemy.entity.id, x: enemy.body.x, y: enemy.body.y });
+      this.dropLoot(enemy.g.drops, enemy.body.x, enemy.body.y);
     }
   }
 
@@ -137,6 +277,7 @@ export class World {
 
   respawn() {
     const hero = this.hero;
+    this.deaths++;
     hero.lives = Math.max(0, hero.lives - 1);
     if (hero.lives <= 0) {
       this.over = true;

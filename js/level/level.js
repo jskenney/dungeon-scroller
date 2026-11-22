@@ -36,6 +36,8 @@ export class Level {
     this.palette = doc.palette;
     this.layers = doc.layers;
     this.spawn = { x: (doc.spawn.col + 0.5) * TILE, y: (doc.spawn.row + 1) * TILE };
+    /** Solid rectangles that come and go during play: gates, crates, barrels. {l, t, r, b, kind: 'solid'} */
+    this.dynamic = [];
     const shapes = this.palette.map(id => (id ? cellShape(tileset.tiles[id]) : null));
     const source = doc.layers.collision ?? doc.layers.terrain;
     /** @type {(ReturnType<typeof cellShape>)[]} one entry per cell, row by row */
@@ -84,6 +86,9 @@ export class Level {
           if (rect.l < r && rect.r > l && rect.t < b && rect.b > t) out.push(rect);
         }
       }
+    }
+    for (const rect of this.dynamic) {
+      if (rect.l < r && rect.r > l && rect.t < b && rect.b > t) out.push(rect);
     }
     return out;
   }

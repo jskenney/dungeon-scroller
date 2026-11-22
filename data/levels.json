@@ -2,18 +2,18 @@
   "schema": "dungeon-scroller/levels@1",
   "notes": [
     "Static levels offered on the level selection screen. Paths are relative to this file.",
-    "Both current levels are test courses for movement, collision and combat: each has one of every kind of enemy, and no objects yet."
+    "Both current levels are test courses: each has one of every kind of enemy, most kinds of object, a gate, and the relic at the far end."
   ],
   "entries": [
     {
       "id": "dungeon-test",
       "file": "../levels/dungeon-test.json",
-      "description": "Stairs, stacked platforms, a pit, a low ceiling and a two-flight climb."
+      "description": "Stairs, stacked platforms, a pit, a lever and gate, a locked chest, and every kind of enemy."
     },
     {
       "id": "graveyard-test",
       "file": "../levels/graveyard-test.json",
-      "description": "Slopes and hills, platforms and a pit."
+      "description": "Slopes and hills, platforms, a pit, a key and locked gate, and enemies."
     }
   ]
 }

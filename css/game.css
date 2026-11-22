@@ -131,3 +131,8 @@ select, input[type="text"] {
   font: inherit; color: var(--text); background: #0b0d13; border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px;
 }
 .menu button { padding: 9px 16px; }
+
+.boost { color: var(--gold); }
+table.results { margin: 4px auto 18px; border-collapse: collapse; font-size: 18px; }
+table.results th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 28px 3px 0; }
+table.results td { text-align: right; font-variant-numeric: tabular-nums; }

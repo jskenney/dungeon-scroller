@@ -15,6 +15,6 @@ export function keyboardIntents(input, withPresses) {
     jumpPressed: p('jump'),
     down: input.held('down'),
     attack1: p('attack1'), attack2: p('attack2'), attack3: p('attack3'),
-    teleport: p('teleport'), fly: p('fly'),
+    teleport: p('teleport'), fly: p('fly'), interact: p('interact'),
   };
 }

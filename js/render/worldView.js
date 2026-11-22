@@ -2,7 +2,8 @@
 // particles, damage numbers, and the debug overlay. Reads the simulation;
 // never changes it.
 
-import { Container, Graphics, Text } from '../../vendor/pixi.min.mjs';
+import { Container, Graphics, Sprite, Text } from '../../vendor/pixi.min.mjs';
+import { TILE } from '../level/level.js';
 import { clipLength } from '../assets/animation.js';
 
 const tint = hex => parseInt(String(hex ?? '#ffffff').slice(1), 16);
@@ -16,8 +17,18 @@ export class WorldView {
     stage.showLevel(world.level);
     this.effects = new Container();
     this.bars = new Graphics();
+    // Objects and gates sit behind the hero and enemies.
+    this.props = new Container();
+    stage.world.addChildAt(this.props, stage.world.getChildIndex(stage.actors));
     stage.world.addChildAt(this.effects, stage.world.getChildIndex(stage.actors) + 1);
-    this.effects.addChild(this.bars);
+    this.objectViews = new Map();
+    this.gateViews = new Map();
+    this.interactKey = 'E';
+    this.prompt = new Text({ text: '', resolution: Math.max(1, Math.round(stage.perPixel)) * 2,
+      style: { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 9, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x000000, width: 2 } } });
+    this.prompt.anchor.set(0.5, 1);
+    this.prompt.visible = false;
+    this.effects.addChild(this.bars, this.prompt);
     this.heroView = stage.addActor(world.hero.entity);
     this.enemyViews = new Map();
     this.shots = new Map();
@@ -42,6 +53,33 @@ export class WorldView {
     // Flicker while briefly invulnerable after a hit; flash red on the hit itself.
     sprite.alpha = hero.invulnerable > 0 && !hero.dead && Math.floor(this.time * 18) % 2 ? 0.4 : 1;
     sprite.tint = hero.flash > 0 ? 0xff7070 : hero.slow.time > 0 ? 0x9fc4ff : 0xffffff;
+
+    // ---- objects and gates
+    for (const object of world.objects) {
+      let view = this.objectViews.get(object);
+      if (!view) { view = stage.addActor(object.entity, 0, this.props); this.objectViews.set(object, view); }
+      view.sprite.visible = !object.hidden;
+      view.sprite.alpha = object.wait > 0 ? 0.6 : 1;
+      view.show(object.pose.slot, object.pose.frame, object.x, object.y, 1);
+    }
+    for (const [object, view] of this.objectViews) {
+      if (world.objects.includes(object)) continue;
+      view.sprite.destroy();
+      this.objectViews.delete(object);
+    }
+    for (const gate of world.gates) {
+      let view = this.gateViews.get(gate);
+      if (!view) { view = this.drawGate(gate); this.gateViews.set(gate, view); }
+      // An opened gate slides up out of the way.
+      if (gate.open && view.y > -gate.height * TILE) view.y = Math.max(-gate.height * TILE, view.y - 260 * dt);
+      view.alpha = gate.open ? Math.max(0, 1 + view.y / (gate.height * TILE)) : 1;
+    }
+    const target = world.prompt;
+    this.prompt.visible = Boolean(target);
+    if (target) {
+      this.prompt.text = this.interactKey;
+      this.prompt.position.set(Math.round(target.x), Math.round(target.rect().t - 6 + Math.sin(this.time * 5) * 2));
+    }
 
     // ---- enemies
     const bars = this.bars.clear();
@@ -106,6 +144,14 @@ export class WorldView {
       else if (e.type === 'heal' && e.amount > 0) this.float(e.x, e.y, `+${e.amount}`, 0x7be495);
       else if (e.type === 'hex') this.float(e.x, e.y, 'hexed', 0xd9a8ff);
       else if (e.type === 'kill') this.float(e.x, e.y - 40, 'defeated', 0xffffff);
+      else if (e.type === 'locked') this.float(e.x, e.y, 'locked', 0xc9ced9);
+      else if (e.type === 'checkpoint') this.float(e.x, e.y - 12, 'checkpoint', 0x7be495);
+      else if (e.type === 'gateOpened') this.float(e.x, e.y + 60, 'opened', 0xffffff);
+      else if (e.type === 'gave') {
+        const g = e.gives, label = g.keys ? 'key' : g.buff ? `x${g.buff.damage} damage` : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
+          : g.score ? `+${g.score}` : g.hpFraction && g.mpFraction ? 'restored' : null;
+        if (label) this.float(e.x, e.y, label, g.hp || g.hpFraction ? 0x7be495 : g.mp ? 0x8fb8f2 : 0xffe08a);
+      }
     }
     this.floaters = this.floaters.filter(f => {
       f.age += dt;
@@ -122,6 +168,14 @@ export class WorldView {
       stage.drawBody(hb.x, hb.y, hb.w, hb.h);
       const action = hero.action;
       if (action?.ability?.box) { const r = hero.boxRect(action.ability.box); g.rect(r.l, r.t, r.r - r.l, r.b - r.t).stroke({ width: 1, color: 0xff5d5d }); }
+      for (const object of world.objects) {
+        if (object.g.use === 'none' || object.hidden) continue;
+        const r = object.rect();
+        g.rect(r.l, r.t, r.r - r.l, r.b - r.t).stroke({ width: 1, color: object.solid ? 0xef6b6b : 0x5ac8fa });
+      }
+      for (const gate of world.gates) {
+        if (!gate.open) g.rect(gate.rect.l, gate.rect.t, gate.rect.r - gate.rect.l, gate.rect.b - gate.rect.t).stroke({ width: 1, color: 0xef6b6b });
+      }
       for (const enemy of world.enemies) {
         if (enemy.dead) continue;
         stage.drawBody(enemy.body.x, enemy.body.y, enemy.body.w, enemy.body.h, 0xf59e42);
@@ -133,6 +187,34 @@ export class WorldView {
       }
     }
     return { x: lerp(hero.prev.x, hb.x, a), y: hy };
+  }
+
+  /** A gate: the tileset's grate tile if it has one, otherwise drawn bars. A lock is marked in gold. */
+  drawGate(gate) {
+    const holder = new Container(), inner = new Container();
+    holder.position.set(gate.col * TILE, gate.row * TILE);
+    const tiles = this.world.level.tileset.tiles;
+    const grate = Object.values(tiles).find(t => t.id?.includes('grate') && t.texture);
+    for (let i = 0; i < gate.height; i++) {
+      if (grate) {
+        const sprite = new Sprite(grate.texture);
+        sprite.y = i * TILE;
+        inner.addChild(sprite);
+      } else {
+        const bars = new Graphics();
+        for (let x = 34; x <= 58; x += 8) bars.rect(x, i * TILE, 4, TILE).fill({ color: 0x3b3f4a });
+        bars.rect(32, i * TILE + 10, 32, 5).fill({ color: 0x2b2e37 }).rect(32, i * TILE + 80, 32, 5).fill({ color: 0x2b2e37 });
+        inner.addChild(bars);
+      }
+    }
+    if (gate.locked) {
+      const lock = new Graphics();
+      lock.rect(41, gate.height * TILE / 2 - 8, 14, 16).fill({ color: 0xe3b95c }).rect(46, gate.height * TILE / 2 - 3, 4, 7).fill({ color: 0x3a2c08 });
+      inner.addChild(lock);
+    }
+    holder.addChild(inner);
+    this.props.addChild(holder);
+    return inner;
   }
 
   float(x, y, label, color) {

@@ -71,6 +71,14 @@ function attemptLevel(options, attempt) {
       budget -= ENEMY_COST[id];
     }
   };
+  let gates = 0;
+  /** A wall with a two-tile opening at floor level, closed by a gate. */
+  const doorway = (id, locked) => {
+    const wall = {};
+    for (let r = 0; r <= floor - 3; r++) wall[r] = '#';
+    add(floor, wall);
+    entities.push({ type: 'gate', id, col: col() - 1, row: floor - 2, height: 2, ...(locked ? { locked: true } : {}) });
+  };
   const coins = (from, to, row) => { for (let c = from; c <= to; c++) put('object', 'gold_coin', c, row); };
 
   // ---- sections. Each leaves the floor walkable at its last column.
@@ -126,6 +134,22 @@ function attemptLevel(options, attempt) {
       for (let c = from; c < from + n; c++) columns[c].extra[floor - 2] = '^';
       guard(from, from + n - 1);
     },
+    lock() {                       // a gate in a doorway, opened by a lever on the near side
+      const from = col(), id = `gate-${++gates}`;
+      flat(3);
+      put('object', 'lever', from + 1, floor - 1, { link: id });
+      doorway(id, false);
+      flat(3);
+    },
+    keyLock() {                    // a locked gate; its key waits on a platform before it
+      const from = col(), id = `gate-${++gates}`;
+      flat(5);
+      Object.assign(columns[from + 1].extra, { [floor - 1]: '=' });
+      Object.assign(columns[from + 2].extra, { [floor - 1]: '=' });
+      put('object', 'iron_key', from + 2, floor - 2);
+      doorway(id, true);
+      flat(3);
+    },
     rest() {                       // a quiet stretch with a checkpoint
       const from = col();
       flat(4);
@@ -152,6 +176,7 @@ function attemptLevel(options, attempt) {
       [hazard ? 0 : 0.6 + difficulty * 0.4, 'bridge'],
       [last === 'stack' ? 0 : 1.5, 'stack'],
       [hasCeiling && last !== 'ceiling' ? 1 : 0, 'ceiling'],
+      [gates < 2 && col() > 20 && last !== 'lock' && last !== 'keyLock' ? 0.7 : 0, rng.chance(0.5) ? 'lock' : 'keyLock'],
     ]);
     sections[name]();
     sinceRest += col() - before;
@@ -176,6 +201,12 @@ function attemptLevel(options, attempt) {
   const map = grid.map(r => r.join(''));
 
   if (!checkReachable(map, spawn, goal, options.limits).ok) return null;
+  // Whatever opens a gate must be reachable while that gate is still shut.
+  for (const gate of entities.filter(e => e.type === 'gate')) {
+    const opener = entities.find(e => (e.link === gate.id) || (gate.locked && e.id === 'iron_key' && e.col < gate.col && e.col > gate.col - 8));
+    const shut = map.map((line, r) => (r >= gate.row && r < gate.row + gate.height ? line.slice(0, gate.col) + '#' + line.slice(gate.col + 1) : line));
+    if (!opener || !checkReachable(shut, spawn, opener, options.limits).ok) return null;
+  }
 
   const doc = buildLevel({ id: `random-${seed}`, name: 'Random dungeon', tileset, tilesetId, map });
   doc.entities = entities;

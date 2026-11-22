@@ -15,7 +15,7 @@ export class Hud {
       return { el, fill, value };
     };
     this.hp = bar('hp', 'HP'); this.mp = bar('mp', 'MP');
-    this.lives = h('span'); this.score = h('span');
+    this.lives = h('span'); this.score = h('span'); this.keys = h('span'); this.boost = h('span', { class: 'boost' });
     this.slots = [];
     const slot = (action, name, cost, title) => {
       const key = h('kbd');
@@ -32,7 +32,8 @@ export class Hud {
       h('div', { class: 'hud-status' },
         h('div', { class: 'hud-name' }, hero.name),
         this.hp.el, this.mp.el,
-        h('div', { class: 'hud-line' }, h('span', {}, 'Lives ', this.lives), h('span', {}, 'Score ', this.score))),
+        h('div', { class: 'hud-line' }, h('span', {}, 'Lives ', this.lives), h('span', {}, 'Score ', this.score),
+          h('span', {}, 'Keys ', this.keys), this.boost)),
       h('div', { class: 'hud-abilities' }, abilities));
     this.last = {};
     this.refreshKeys();
@@ -60,6 +61,9 @@ export class Hud {
     }
     if (s.lives !== this.last.lives) this.lives.textContent = s.lives >= 9999 ? '∞' : s.lives;
     if (s.score !== this.last.score) this.score.textContent = s.score;
-    this.last = { hp, mp, lives: s.lives, score: s.score };
+    const keys = s.keys ?? 0, boost = s.buff?.time > 0 ? Math.ceil(s.buff.time) : 0;
+    if (keys !== this.last.keys) this.keys.textContent = keys;
+    if (boost !== this.last.boost) this.boost.textContent = boost ? `x${s.buff.damage} damage ${boost}s` : '';
+    this.last = { hp, mp, lives: s.lives, score: s.score, keys, boost };
   }
 }

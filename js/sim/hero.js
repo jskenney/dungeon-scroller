@@ -18,7 +18,7 @@ const GROUND_ACCEL = 2400;     // px/s²
 const HIT_EVENTS = new Set(['melee', 'area']);
 
 const NOTHING = Object.freeze({ dir: 0, vertical: 0, run: false, jumpHeld: false, jumpPressed: false, down: false,
-  attack1: false, attack2: false, attack3: false, teleport: false, fly: false });
+  attack1: false, attack2: false, attack3: false, teleport: false, fly: false, interact: false });
 
 export class Hero extends Actor {
   /**
@@ -36,6 +36,7 @@ export class Hero extends Actor {
     this.mp = this.g.stats.mp;
     this.lives = config.rules?.lives ?? 9999;
     this.score = 0;
+    this.keys = 0;
     this.crouching = false; this.flying = false; this.running = false;
     this.action = null;          // {slot, t, frame, struck} while an attack, teleport, hit or death plays
     this.teleporting = null;     // 'out' | 'in'
@@ -158,6 +159,7 @@ export class Hero extends Actor {
           a.struck.add(enemy);
           world.hurtEnemy(enemy, a.ability.damage * power, this, a.ability.effect);
         }
+        world.hitObjects(area, a.struck);
       }
       if (this.dead) { /* the death pose holds until the world revives the hero */ }
       else if (this.action.t >= clipLength(clip)) {

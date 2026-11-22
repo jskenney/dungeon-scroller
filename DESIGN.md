@@ -581,6 +581,7 @@ Built in `js/level/generate.js`, with the seeded random source in `js/level/rand
   | Bridge | A longer pit crossed on single platforms level with the floor |
   | Stack | Platforms climbing to a reward (gem, potion, scroll or chest) |
   | Ceiling | A low-roofed stretch, in tilesets that have ceiling tiles |
+  | Gate | A doorway closed by a gate, with its lever before it, or locked with its key on a platform before it; at most two per level |
   | Rest | A checkpoint flag, sometimes with a healing shrine; placed at least every 26 tiles or so |
   | Boss arena | A checkpoint, then 16 tiles of flat floor with the boss and the relic |
 
@@ -590,7 +591,7 @@ Built in `js/level/generate.js`, with the seeded random source in `js/level/rand
 - **Any tileset.** The generator writes a character map and `js/level/build.js` picks the art, so a new tileset with the same `runs` and shapes works without code changes.
 - **Output is an ordinary level document.** *Save level file* in the pause menu downloads it as JSON, ready to add to `levels/`. The document also carries the generator's recipe.
 
-**Partly visible in play:** the enemies the generator places now appear and fight. The objects, boss and relic are recorded in the level's `entities` list but are not created until phases 5–6. Low crawl passages and lever-and-grate locks will be added as sections when the low-passage tile and those mechanics exist.
+**Visible in play:** the enemies, objects, gates and relic the generator places all appear and work. Only the boss is still ignored, until phase 6. Low crawl passages will be added as a section when the low-passage tile exists.
 
 **How it was checked.** Tests generate 300 levels across all difficulties and lengths and confirm each is valid, completable by the check, repeatable from its seed, and has every placed thing standing on something. Separately, a simple bot that only walks right and jumps at gaps and walls completed 120 of 120 generated levels on both tilesets using the real physics.
 
@@ -690,7 +691,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | **2. Simulation core** | **Done:** fixed-step world, tile collision for every shape, the hero controller, the level format with loader and builder, two test courses, the debug overlay and in-browser tests (§16.3). |
 | **3. Procedural levels** | **Done:** seeded generator with section templates and a completion check, the Random dungeon options on the level screen, replay and sharing by seed, and saving a generated level as a file (§10.2). |
 | **4. Combat and enemies** | **Done:** abilities with damage and effects, particle projectiles, four enemy behaviours, touch damage, hit reaction, death, respawn and game over, health bars and damage numbers (§16.4). |
-| **5. Objects and rules** | Pickups, chests, keys, levers, breakables, checkpoint flags, shrines, lives, respawn. |
+| **5. Objects and rules** | **Done:** pickups, chests, keys, breakables, checkpoint flags, shrines, levers and gates, loot drops, the relic as the level goal, and the results screen (§16.5). |
 | **6. Bosses** | Phase machine, arenas, boss health bar, relic and results screen. |
 | **7. Front end** | Title, character cards, level selection, pause and settings including key rebinding, saved preferences. |
 | **8. Audio and dialogue** | Music, effects, speech bubbles, character lines. |
@@ -753,7 +754,7 @@ Everything under `js/sim/` and `js/level/` is plain data and arithmetic: no rend
 - **Level edges:** the left and right sides are walls, the top is open, and falling out of the bottom costs a life and returns the hero to the last checkpoint (the level start for now).
 - **Feel:** jumps can be made up to 0.1 s after leaving a ledge, a jump pressed up to 0.1 s before landing still happens, and releasing jump early gives a shorter hop.
 
-**Levels.** `dungeon.json` → `levels` names an index file (`data/levels.json`) listing the static levels to offer. Two test courses exist, `levels/dungeon-test.json` and `levels/graveyard-test.json`, covering stairs, slopes, stacked platforms, pits and ceilings. Each holds one of every kind of enemy; neither has objects yet.
+**Levels.** `dungeon.json` → `levels` names an index file (`data/levels.json`) listing the static levels to offer. Two test courses exist, `levels/dungeon-test.json` and `levels/graveyard-test.json`, covering stairs, slopes, stacked platforms, pits and ceilings. Each holds one of every kind of enemy, most kinds of object, a gate and the relic.
 
 **Debug overlay.** The debug key (`` ` `` by default) outlines every collision shape and the hero's body box, and shows position, velocity, ground type, animation frame and tick.
 
@@ -794,7 +795,36 @@ An enemy uses an attack when the hero is inside that attack's box (or range, for
 
 **Tests** cover melee reach and once-per-swing hits, projectiles (hit, wall, range), the hex, kills and score, each behaviour, touch damage and invulnerability, crouch dodging, stun, death and respawn, game over, and the multipliers.
 
-Not in the simulation yet: bosses, objects, loot drops and checkpoints (phases 5 and 6). The boss and objects a level lists are still ignored.
+### 16.5 Objects and rules
+
+`js/sim/object.js` holds the objects; `js/sim/world.js` applies the rules. What each object does comes from `data/objects.json`.
+
+| Object | How it is used | What happens |
+|---|---|---|
+| Gold coin, gem | Walk into it | Adds 1 or 10 to the score |
+| Healing potion, space potion | Walk into it | Restores 40 HP or 40 MP, up to the maximum |
+| Spell scroll | Walk into it | Doubles the hero's damage for 15 seconds; the HUD counts it down |
+| Iron key | Walk into it | Adds a key; the HUD shows how many are held |
+| Treasure chest | Interact key | Opens and drops its loot; stays open. A locked chest uses up a key |
+| Crate, barrel, burial urn | Hit it | Breaks and may drop loot. Crates and barrels are solid until broken and can be stood on |
+| Checkpoint flag | Walk into it | Becomes the respawn point and refills health |
+| Healing shrine | Interact key | Refills health and mana, then rests for 30 seconds |
+| Lever | Interact key | Opens the gate it is linked to, permanently |
+| Dungeon relic | Walk into it | Completes the level |
+| Gravestone, wall torch | — | Scenery |
+
+- **Interact prompt.** When the hero stands at something the interact key would use, the key's name floats above it.
+- **Gates** are placed by a level as `{ "type": "gate", "id", "col", "row", "height" }` and block the way until opened: by the lever whose `link` names the gate, or — if the gate is `locked` — by a hero who is carrying a key. They are drawn with the tileset's grate tile when it has one, with a gold lock when locked, and slide up when opened.
+- **Movable solids.** Gates, crates and barrels are solid rectangles that the level adds and removes during play, so the same collision code handles them.
+- **Loot.** Chests, breakables and defeated enemies drop the items in their `loot` or `drops` list, each with a `chance` and a `count`; `difficulty.loot` scales the chances. Dropped items can be collected after a third of a second.
+- **Completing a level.** The relic appears once no boss remains — immediately, until bosses exist — and touching it ends the level with a results screen showing time, score and deaths.
+- **Level entries may override** an object's `loot`, mark it `locked`, or give it a `link`.
+
+The generator now also builds **gate sections**: a lever followed by a gated doorway, or a key on a platform followed by a locked one (at most two per level). Before a layout is accepted, each gate's lever or key must be reachable while that gate is still shut.
+
+**Tests** cover each object above, locked chests and gates, crates as obstacles and as targets for melee and projectiles, loot from enemies, checkpoints as respawn points, the shrine's rest, and level completion. The walking bot, now pulling levers, still completes 120 of 120 generated levels.
+
+Not in the simulation yet: bosses (phase 6). The boss a level lists is still ignored, so the relic is available from the start.
 
 ## 17. Open items
 

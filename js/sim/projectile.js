@@ -27,12 +27,13 @@ export class Projectile {
     this.x += dx; this.y += dy;
     this.left -= Math.hypot(dx, dy);
     const level = world.level, r = this.radius * 0.5;
-    const blocked = level.rectsIn(this.x - r, this.y - r, this.x + r, this.y + r).some(q => q.kind === 'solid')
-      || level.slopesIn(this.x, this.y, this.x, this.y).some(s => this.y > slopeSurface(s, this.x));
-    if (blocked || this.left <= 0 || this.y > level.height + 300) { this.gone = true; return; }
+    // Strike first: a crate is both a target and an obstacle, and should break.
     const hitArea = { l: this.x - this.radius, t: this.y - this.radius, r: this.x + this.radius, b: this.y + this.radius };
     world.strike(this, hitArea, this.struck);
-    if (this.struck.size && !this.pierce) this.gone = true;
+    if (this.struck.size && !this.pierce) { this.gone = true; return; }
+    const blocked = level.rectsIn(this.x - r, this.y - r, this.x + r, this.y + r).some(q => q.kind === 'solid')
+      || level.slopesIn(this.x, this.y, this.x, this.y).some(s => this.y > slopeSurface(s, this.x));
+    if (blocked || this.left <= 0 || this.y > level.height + 300) this.gone = true;
   }
 }
 

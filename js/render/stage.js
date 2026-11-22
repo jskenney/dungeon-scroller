@@ -175,11 +175,11 @@ export class Stage {
   }
 
   /** Add a sprite for a sheet entity; returns a view the caller updates each frame. */
-  addActor(entity, artShift = 0) {
+  addActor(entity, artShift = 0, layer = this.actors) {
     const pivot = entity.pivot ?? entity.sheet.pivot;
     const sprite = new Sprite(entity.animations.idle.frames[0]);
     sprite.pivot.set(pivot.x, pivot.y);
-    this.actors.addChild(sprite);
+    layer.addChild(sprite);
     const drawnRight = entity.sheet.facing === 'right';
     return {
       sprite,

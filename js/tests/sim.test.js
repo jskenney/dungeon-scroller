@@ -307,8 +307,14 @@ tests.push(
     for (let i = 0; i < 60; i++) {
       const { doc, map } = generate(`place-${i}`, { difficulty: 1 + (i % 5) });
       for (const e of doc.entities) {
+        if (e.type === 'gate') {
+          assert(map[e.row][e.col] === '.' && map[e.row + 1][e.col] === '.' && map[e.row - 1][e.col] === '#' && map[e.row + 2][e.col] === '#',
+            `place-${i}: the gate at ${e.col},${e.row} is not in a doorway`);
+          assert(doc.entities.some(o => o.link === e.id || (e.locked && o.id === 'iron_key' && o.col < e.col)), `place-${i}: nothing opens ${e.id}`);
+          continue;
+        }
         const below = map[e.row + 1]?.[e.col], here = map[e.row]?.[e.col];
-        const floating = ['gold_coin', 'gem', 'healing_potion', 'space_potion', 'spell_scroll', 'dungeon_relic'].includes(e.id);
+        const floating = ['gold_coin', 'gem', 'healing_potion', 'space_potion', 'spell_scroll', 'dungeon_relic', 'iron_key'].includes(e.id);
         assert(here === '.' || here === 'S', `place-${i}: ${e.id} is inside a "${here}" cell at ${e.col},${e.row}`);
         if (!floating) assert('#=/\\'.includes(below), `place-${i}: ${e.id} at ${e.col},${e.row} has nothing under it`);
       }
@@ -510,5 +516,156 @@ tests.push(
     faceUp(world, world.enemies[0]);
     runWorld(world, i => ({ attack1: i === 0 }), 50);
     assert(world.enemies[0].hp === 55, `expected 55 HP after a halved hit, got ${world.enemies[0].hp}`);
+  }],
+);
+
+// ------------------------------------------------------------------ objects
+
+/** A stand-in object with the three standard animations. */
+function fakeObject(gameplay, persistent = false) {
+  const animations = { idle: clip('idle', true), interact: clip('interact', false), vanish: clip('vanish', false) };
+  return { id: 'thing', kind: 'object', persistent, animations,
+    gameplay: { box: { x: -14, y: -30, w: 28, h: 30 }, ...gameplay } };
+}
+const OBJECTS = {
+  'object/coin': fakeObject({ use: 'touch', behaviour: 'pickup', gives: { score: 1 } }),
+  'object/potion': fakeObject({ use: 'touch', behaviour: 'pickup', gives: { hp: 40 } }),
+  'object/key': fakeObject({ use: 'touch', behaviour: 'pickup', gives: { keys: 1 } }),
+  'object/scroll': fakeObject({ use: 'touch', behaviour: 'pickup', gives: { buff: { damage: 2, duration: 15 } } }),
+  'object/chest': fakeObject({ use: 'interact', behaviour: 'container', loot: [{ object: 'coin', count: 3 }] }),
+  'object/crate': fakeObject({ use: 'attack', behaviour: 'breakable', hp: 1, solid: true, loot: [{ object: 'coin' }] }),
+  'object/flag': fakeObject({ use: 'touch', behaviour: 'checkpoint', gives: { hpFraction: 1 } }, true),
+  'object/shrine': fakeObject({ use: 'interact', behaviour: 'shrine', gives: { hpFraction: 1, mpFraction: 1 }, cooldown: 5 }, true),
+  'object/lever': fakeObject({ use: 'interact', behaviour: 'switch' }, true),
+  'object/relic': fakeObject({ use: 'touch', behaviour: 'goal', gives: { score: 100 } }),
+};
+
+/** A flat room holding the listed things: [type, id, col, extra]. */
+function room(things, { map, config = QUIET, enemy = dummy() } = {}) {
+  const level = mapLevel(map ?? ['............', '............', 'S...........', '############']);
+  level.doc.entities = things.map(([type, id, col, extra]) => ({ type, id, col, row: 2, ...extra }));
+  const world = new World(level, fighter(), config, { ...OBJECTS, 'enemy/dummy': enemy });
+  runWorld(world, {}, 5);
+  return world;
+}
+const walkTo = (world, col, ticks = 400) => {
+  for (let i = 0; i < ticks && world.hero.body.x < col * TILE + 40; i++) runWorld(world, { dir: 1 }, 1);
+};
+
+tests.push(
+  ['walking into pickups collects them', () => {
+    const world = room([['object', 'coin', 2], ['object', 'coin', 3], ['object', 'key', 4]]);
+    walkTo(world, 5);
+    assert(world.hero.score === 2 && world.hero.keys === 1, `expected 2 points and 1 key, got ${world.hero.score} and ${world.hero.keys}`);
+    runWorld(world, {}, 120);
+    assert(world.objects.length === 0, 'collected pickups were not removed');
+  }],
+  ['a potion heals without going over the maximum', () => {
+    const world = room([['object', 'potion', 2], ['object', 'potion', 4]]);
+    world.hero.hp = 30;
+    walkTo(world, 3);
+    assert(world.hero.hp === 70, `expected 70 HP, got ${world.hero.hp}`);
+    walkTo(world, 5);
+    assert(world.hero.hp === 100, `expected to stop at 100 HP, got ${world.hero.hp}`);
+  }],
+  ['a scroll doubles damage for a while', () => {
+    const world = room([['object', 'scroll', 1], ['enemy', 'dummy', 4]]);
+    walkTo(world, 1.2);
+    faceUp(world, world.enemies[0]);
+    runWorld(world, i => ({ attack1: i === 0 }), 50);
+    assert(world.enemies[0].hp === 10, `expected 10 HP after a doubled hit, got ${world.enemies[0].hp}`);
+    runWorld(world, {}, 60 * 16);
+    world.enemies[0].hp = 30;
+    faceUp(world, world.enemies[0]);
+    runWorld(world, i => ({ attack1: i === 0 }), 50);
+    assert(world.enemies[0].hp === 20, `the boost did not wear off (enemy at ${world.enemies[0].hp} HP)`);
+  }],
+  ['a chest opens with the interact key and gives its loot', () => {
+    const world = room([['object', 'chest', 2]]);
+    walkTo(world, 2);
+    assert(world.objects.length === 1 && world.hero.score === 0, 'the chest opened by touch');
+    assert(world.prompt === world.objects[0], 'no prompt was offered at the chest');
+    runWorld(world, i => ({ interact: i === 0 }), 120);
+    assert(world.hero.score === 3, `expected 3 coins, got ${world.hero.score}`);
+    assert(world.objects.some(o => o.entity === OBJECTS['object/chest'] && o.state === 'used'), 'the chest did not stay open');
+  }],
+  ['a locked chest needs a key', () => {
+    const world = room([['object', 'chest', 2, { locked: true }], ['object', 'key', 5]]);
+    walkTo(world, 2);
+    runWorld(world, i => ({ interact: i === 0 }), 30);
+    assert(world.objects[0].state === 'idle', 'a locked chest opened without a key');
+    walkTo(world, 5.3);
+    for (let i = 0; i < 300 && world.hero.body.x > 2 * TILE + 50; i++) runWorld(world, { dir: -1 }, 1);
+    runWorld(world, i => ({ interact: i === 0 }), 120);
+    assert(world.hero.keys === 0 && world.hero.score === 3, 'the key did not open the chest');
+  }],
+  ['a crate blocks the way until it is broken, then drops loot', () => {
+    const world = room([['object', 'crate', 3]]);
+    walkTo(world, 6, 200);
+    assert(world.hero.body.x < 3.5 * TILE, `the hero walked through a crate (x=${world.hero.body.x})`);
+    runWorld(world, i => ({ attack1: i === 0 }), 60);
+    walkTo(world, 6);
+    assert(world.hero.body.x > 5 * TILE, 'the broken crate still blocked the way');
+    assert(world.hero.score === 1, 'the crate dropped no loot');
+  }],
+  ['a projectile breaks a crate and stops there', () => {
+    const world = room([['object', 'crate', 3], ['enemy', 'dummy', 5]]);
+    runWorld(world, i => ({ attack2: i === 0 }), 80);
+    assert(world.objects.every(o => o.entity !== OBJECTS['object/crate'] || o.state !== 'idle'), 'the crate was not broken');
+    assert(world.enemies[0].hp === 30, 'the shot carried on through the crate');
+  }],
+  ['a checkpoint flag moves the respawn point and refills health', () => {
+    const world = room([['object', 'flag', 6]]);
+    world.hero.hp = 20;
+    walkTo(world, 6.2);
+    assert(world.hero.hp === 100, 'the flag did not refill health');
+    world.hurtHero(500, { x: 0 });
+    runWorld(world, {}, 150);
+    assert(Math.abs(world.hero.body.x - 6.5 * TILE) < 10, `expected to return to the flag, x=${world.hero.body.x}`);
+  }],
+  ['a shrine refills health and mana, then rests', () => {
+    const world = room([['object', 'shrine', 2]]);
+    walkTo(world, 2);
+    world.hero.hp = 10; world.hero.mp = 0;
+    runWorld(world, i => ({ interact: i === 0 }), 10);
+    assert(world.hero.hp === 100 && world.hero.mp > 99, 'the shrine did not refill');
+    world.hero.hp = 10;
+    runWorld(world, i => ({ interact: i === 0 }), 60);
+    assert(world.hero.hp === 10, 'the shrine worked again at once');
+    runWorld(world, {}, 60 * 5);
+    runWorld(world, i => ({ interact: i === 0 }), 10);
+    assert(world.hero.hp === 100, 'the shrine did not work again after resting');
+  }],
+  ['a lever opens its gate', () => {
+    const world = room([['object', 'lever', 1, { link: 'door' }], ['gate', 'door', 4, { row: 1, height: 2 }]],
+      { map: ['....#.......', '............', 'S...........', '############'] });
+    walkTo(world, 8, 240);
+    assert(world.hero.body.x < 4.5 * TILE, 'the hero walked through a closed gate');
+    for (let i = 0; i < 300 && world.hero.body.x > TILE + 50; i++) runWorld(world, { dir: -1 }, 1);
+    runWorld(world, i => ({ interact: i === 0 }), 80);
+    assert(world.gates[0].open, 'the lever did not open the gate');
+    walkTo(world, 8);
+    assert(world.hero.body.x > 7 * TILE, 'the open gate still blocked the way');
+  }],
+  ['a locked gate opens for a hero carrying a key', () => {
+    const world = room([['object', 'key', 2], ['gate', 'door', 4, { row: 1, height: 2, locked: true }]],
+      { map: ['....#.......', '............', 'S...........', '############'] });
+    walkTo(world, 8);
+    assert(world.gates[0].open && world.hero.keys === 0 && world.hero.body.x > 7 * TILE, 'the key did not open the gate');
+  }],
+  ['a defeated enemy can drop loot', () => {
+    const generous = fakeEnemy({ archetype: 'guard', sight: 0, leash: 100 }, { drops: [{ object: 'coin', chance: 1, count: 2 }] });
+    const world = room([['enemy', 'dummy', 2]], { enemy: generous });
+    world.hurtEnemy(world.enemies[0], 99, world.hero);
+    assert(world.objects.length === 2, `expected 2 coins on the ground, got ${world.objects.length}`);
+    runWorld(world, {}, 30);
+    walkTo(world, 4);
+    assert(world.hero.score === 12, `expected 10 for the kill and 2 coins, got ${world.hero.score}`);
+  }],
+  ['reaching the relic completes the level', () => {
+    const world = room([['object', 'relic', 5, { appears: 'boss_defeated' }]]);
+    walkTo(world, 5.3);
+    assert(world.complete && world.hero.score === 100, 'the level was not completed');
+    assert(world.time > 1 && world.deaths === 0, 'the time or death count is wrong');
   }],
 );
