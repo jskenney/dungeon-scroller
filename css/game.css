@@ -122,3 +122,12 @@ table.keys tr + tr { border-top: 1px solid #ffffff10; }
 @media (prefers-reduced-motion: reduce) { .card-button, .bar .fill { transition: none; } }
 
 .debug { position: absolute; left: 14px; top: 118px; padding: 3px 8px; background: #000c; border-radius: 5px; color: #9fe6b5; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; }
+
+.generator { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; margin: 0; }
+.generator .fields { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 8px; }
+.generator label { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.generator .warn:empty { display: none; }
+select, input[type="text"] {
+  font: inherit; color: var(--text); background: #0b0d13; border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px;
+}
+.menu button { padding: 9px 16px; }

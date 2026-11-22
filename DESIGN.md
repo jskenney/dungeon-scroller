@@ -567,12 +567,32 @@ Layer cells are indexes into `palette` (0 is empty), which keeps files small and
 
 ### 10.2 Procedural generator
 
-- **Seeded and repeatable.** A small seeded random-number generator drives every choice, so the same seed and settings always give the same level. The seed is shown on screen and accepted from the URL (`?seed=…`), so levels can be shared.
-- **Built from sections.** A level is a chain of sections drawn from templates: flat run, gap, stair or slope climb, stacked platforms, low crawl passage, lever-and-grate lock, treasure side-room, checkpoint rest, boss arena.
-- **Always completable.** Sections join only where the exit of one is reachable from the entrance of the next using the jump and crawl limits of §7. The whole level is then verified by a reachability walk from spawn to boss before it is accepted. Flight is never required.
-- **Difficulty budget.** Each section spends points on enemies and hazards; the budget rises along the level and with the chosen difficulty. Checkpoint flags are placed at regular intervals and before the boss.
-- **Theme.** A preset chooses the tileset, enemy pool, boss, music, and decoration density. The generator uses each tileset's `groups` to vary the look without changing the shape.
-- **Output** is an ordinary level document, so a generated level can be saved to `levels/` as a static file. The first static test levels will be produced this way.
+Built in `js/level/generate.js`, with the seeded random source in `js/level/random.js` and the completion check in `js/level/reach.js`. All three are pure, so they run in the browser, in tests or on a server.
+
+- **Seeded and repeatable.** The same seed, theme, length and difficulty always give the same level, on every browser. The seed is shown during play and in the pause menu, and the whole recipe is written into the address bar (`?seed=…&theme=…&length=…&difficulty=…`) so a level can be shared or replayed. Leaving the seed blank picks a random one.
+- **Built from sections.** A level is a chain of sections chosen by weighted chance:
+
+  | Section | What it is |
+  |---|---|
+  | Run | 3–7 tiles of flat floor, sometimes with a crate, barrel or urn |
+  | Climb / descend | One to three flights of stairs (or slopes, depending on the tileset) |
+  | Ledge up / down | A one-tile step up to jump, or a one- or two-tile drop |
+  | Pit | A one-tile gap; from difficulty 3, sometimes two in a row |
+  | Bridge | A longer pit crossed on single platforms level with the floor |
+  | Stack | Platforms climbing to a reward (gem, potion, scroll or chest) |
+  | Ceiling | A low-roofed stretch, in tilesets that have ceiling tiles |
+  | Rest | A checkpoint flag, sometimes with a healing shrine; placed at least every 26 tiles or so |
+  | Boss arena | A checkpoint, then 16 tiles of flat floor with the boss and the relic |
+
+  Hazards are never placed back to back, and the floor stays within a band of six rows.
+- **Always completable on foot.** Every layout must pass the completion check before it is accepted. The check trusts only moves every hero can certainly make — walk, drop any distance, jump up one tile, jump a one-tile gap, jump onto a platform overhead, drop through a platform — with the limits worked out from the heroes' own jump height and walking speed. Flight and teleport are never assumed. A layout that failed would be replaced by the next one in the seed's own sequence; in testing none has needed it.
+- **Difficulty budget.** Each flat stretch spends a budget on enemies; the budget grows with the chosen difficulty (1–5) and along the level, and dearer enemies only appear at higher difficulty. No enemy is placed near the start.
+- **Any tileset.** The generator writes a character map and `js/level/build.js` picks the art, so a new tileset with the same `runs` and shapes works without code changes.
+- **Output is an ordinary level document.** *Save level file* in the pause menu downloads it as JSON, ready to add to `levels/`. The document also carries the generator's recipe.
+
+**Not yet visible in play:** the enemies, objects, boss and relic the generator places are recorded in the level's `entities` list, but the simulation does not create them until phases 4–6. Today a generated level plays as terrain only. Low crawl passages and lever-and-grate locks will be added as sections when the low-passage tile and those mechanics exist.
+
+**How it was checked.** Tests generate 300 levels across all difficulties and lengths and confirm each is valid, completable by the check, repeatable from its seed, and has every placed thing standing on something. Separately, a simple bot that only walks right and jumps at gaps and walls completed 120 of 120 generated levels on both tilesets using the real physics.
 
 ---
 
@@ -668,7 +688,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | **0. Asset JSON** | **Done:** JSON for every sprite sheet, tileset and hero card, `example.dungeon.json`, and the gameplay catalogs in `data/` with drafted boxes. Boxes and values are refined through the viewer and play-testing. |
 | **1. Skeleton, viewer and shell** | **Done:** `viewer.html`; configuration loading with the `example.dungeon.json` fallback; vendored PixiJS; the asset loader; and the game shell in `index.html` (§16.2). |
 | **2. Simulation core** | **Done:** fixed-step world, tile collision for every shape, the hero controller, the level format with loader and builder, two test courses, the debug overlay and in-browser tests (§16.3). |
-| **3. Procedural levels** | Seeded generator with section templates and reachability check; level schema loader; three or four generated levels saved as static test files. |
+| **3. Procedural levels** | **Done:** seeded generator with section templates and a completion check, the Random dungeon options on the level screen, replay and sharing by seed, and saving a generated level as a file (§10.2). |
 | **4. Combat and enemies** | Abilities, projectiles, damage, enemy archetypes, HP/MP, HUD. |
 | **5. Objects and rules** | Pickups, chests, keys, levers, breakables, checkpoint flags, shrines, lives, respawn. |
 | **6. Bosses** | Phase machine, arenas, boss health bar, relic and results screen. |
@@ -701,10 +721,10 @@ Keys: Space play/pause, ←/→ step a frame, Shift + arrows nudge a frame, F mi
 |---|---|
 | Title | Play, Settings, and a link to the asset viewer. Notes when `example.dungeon.json` is in use and when the loader found asset problems. |
 | Hero selection | Every hero that has gameplay values, shown as its card with name, role, statistics and abilities written into the card's text area from the catalog. The chosen hero's idle animation plays in the header; the choice is remembered. |
-| Level selection | Lists the static levels from the level index. "Random dungeon" is shown but disabled until the generator exists. |
+| Level selection | **Random dungeon** with theme, length, difficulty and an optional seed, then the static levels from the level index. |
 | Settings | Zoom, pixel-perfect scaling, and key rebinding: choose *Change*, press a key; shared keys are flagged; any action or all of them can be reset to the site defaults. Stored in the browser. |
 | Play | The canvas with the HUD: hero name, HP and MP bars with numbers, lives, score, and each ability with its key and MP cost (dimmed when unaffordable). |
-| Pause | Resume, Settings, Change level, Change hero, Quit to title. Escape goes back on every screen. |
+| Pause | Resume, Restart level, Settings, Change level, Change hero, Quit to title; for a random dungeon also its seed and recipe, New random level, and Save level file. Escape goes back on every screen. |
 
 Modules: `js/main.js` (boot and screens), `js/settings.js`, `js/input.js` (keys to actions through the bindings), `js/render/stage.js` (canvas, camera, whole-pixel zoom, rooms, actor sprites), `js/ui/` (cards, HUD, DOM helpers).
 

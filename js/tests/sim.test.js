@@ -255,3 +255,85 @@ export function runAll() {
     try { fn(); return { name, ok: true }; } catch (error) { return { name, ok: false, error: error.message }; }
   });
 }
+
+// ------------------------------------------------------------ level generator
+
+import { generateLevel, ENEMY_COST } from '../level/generate.js';
+import { checkReachable } from '../level/reach.js';
+import { makeRng } from '../level/random.js';
+
+/** A stand-in tileset with everything the builder looks for. */
+const GEN_TILESET = {
+  tiles: {
+    top_l: { shape: 'solid' }, top_c: { shape: 'solid' }, top_r: { shape: 'solid' }, top_s: { shape: 'solid' }, fill: { shape: 'solid' },
+    deck_l: { shape: 'platform' }, deck_c: { shape: 'platform' }, deck_r: { shape: 'platform' }, deck_s: { shape: 'platform' },
+    stairs_r: { shape: 'stairs_right' }, stairs_l: { shape: 'stairs_left' },
+    ceiling_center: { shape: 'rect', rect: [0, 0, 96, 32] }, back: { shape: 'none' },
+  },
+  groups: { background: ['back'] },
+  runs: {
+    floor: { left: 'top_l', center: 'top_c', right: 'top_r', single: 'top_s', below: 'fill' },
+    platform: { left: 'deck_l', center: 'deck_c', right: 'deck_r', single: 'deck_s' },
+  },
+};
+const generate = (seed, extra = {}) => generateLevel({ seed, tileset: GEN_TILESET, tilesetId: 'test', length: 100, difficulty: 3,
+  enemies: ['normal_skeleton', 'undead_wolf', 'lich'], bosses: ['undead_dragon'], ...extra });
+
+tests.push(
+  ['the random source repeats for the same seed and differs for another', () => {
+    const a = makeRng('abc'), b = makeRng('abc'), c = makeRng('abd');
+    const seqA = [1, 2, 3, 4, 5].map(() => a.next()), seqB = [1, 2, 3, 4, 5].map(() => b.next()), seqC = [1, 2, 3, 4, 5].map(() => c.next());
+    assert(seqA.join() === seqB.join(), 'the same seed gave different numbers');
+    assert(seqA.join() !== seqC.join(), 'different seeds gave the same numbers');
+    assert(seqA.every(v => v >= 0 && v < 1), 'a value fell outside 0–1');
+  }],
+  ['the same seed always builds the same level', () => {
+    assert(JSON.stringify(generate('repeat').doc) === JSON.stringify(generate('repeat').doc), 'two runs with one seed differed');
+    assert(JSON.stringify(generate('repeat').doc.layers) !== JSON.stringify(generate('other').doc.layers), 'two seeds gave the same level');
+  }],
+  ['300 generated levels are valid and completable on foot', () => {
+    let retried = 0;
+    for (let i = 0; i < 300; i++) {
+      const { doc, map, goal, attempts } = generate(`seed-${i}`, { difficulty: 1 + (i % 5), length: 60 + (i % 4) * 50 });
+      retried += attempts > 1 ? 1 : 0;
+      const problems = Level.validate(doc, GEN_TILESET);
+      assert(!problems.length, `seed-${i}: ${problems.join('; ')}`);
+      assert(checkReachable(map, doc.spawn, goal).ok, `seed-${i}: the goal cannot be reached`);
+      assert(doc.size.cols >= 60, `seed-${i}: only ${doc.size.cols} columns`);
+    }
+    assert(retried === 0, `${retried} of 300 seeds needed a second layout`);
+  }],
+  ['everything placed in a generated level stands on something', () => {
+    for (let i = 0; i < 60; i++) {
+      const { doc, map } = generate(`place-${i}`, { difficulty: 1 + (i % 5) });
+      for (const e of doc.entities) {
+        const below = map[e.row + 1]?.[e.col], here = map[e.row]?.[e.col];
+        const floating = ['gold_coin', 'gem', 'healing_potion', 'space_potion', 'spell_scroll', 'dungeon_relic'].includes(e.id);
+        assert(here === '.' || here === 'S', `place-${i}: ${e.id} is inside a "${here}" cell at ${e.col},${e.row}`);
+        if (!floating) assert('#=/\\'.includes(below), `place-${i}: ${e.id} at ${e.col},${e.row} has nothing under it`);
+      }
+      assert(doc.entities.some(e => e.type === 'boss') && doc.entities.some(e => e.id === 'dungeon_relic'), `place-${i}: no boss or relic`);
+      assert(doc.entities.some(e => e.id === 'checkpoint_flag'), `place-${i}: no checkpoint`);
+    }
+  }],
+  ['harder levels hold more dangerous enemies', () => {
+    const threat = d => {
+      let total = 0;
+      for (let i = 0; i < 40; i++) for (const e of generate(`d-${i}`, { difficulty: d }).doc.entities) total += e.type === 'enemy' ? ENEMY_COST[e.id] : 0;
+      return total;
+    };
+    const easy = threat(1), mid = threat(3), hard = threat(5);
+    assert(mid > easy * 1.3 && hard > mid * 1.2, `threat was ${easy}, ${mid}, ${hard} at difficulty 1, 3, 5`);
+  }],
+  ['the completion check rejects walls, wide pits and tall ledges', () => {
+    const from = { col: 0, row: 2 }, to = { col: 7, row: 2 };
+    assert(checkReachable(['........', '........', '........', '########'], from, to).ok, 'a flat floor was rejected');
+    assert(checkReachable(['........', '........', '........', '###.####'], from, to).ok, 'a one-tile pit was rejected');
+    assert(!checkReachable(['........', '........', '........', '###..###'], from, to).ok, 'a two-tile pit was accepted');
+    assert(!checkReachable(['....#...', '....#...', '....#...', '########'], from, to).ok, 'a wall was accepted');
+    assert(checkReachable(['........', '........', '....####', '########'], from, { col: 7, row: 1 }).ok, 'a one-tile ledge was rejected');
+    assert(!checkReachable(['........', '....####', '....####', '########'], from, { col: 7, row: 0 }).ok, 'a two-tile ledge was accepted');
+    assert(checkReachable(['........', '........', '....####', '...=####', '########'], { col: 0, row: 3 }, { col: 7, row: 1 }).ok, 'a platform step was rejected');
+    assert(!checkReachable(['........', '..^^....', '........', '###.####'], from, to).ok, 'a pit under a low roof was accepted');
+  }],
+);

@@ -6,7 +6,10 @@ import { loadAssets } from './assets/loader.js';
 import { Settings, ACTIONS } from './settings.js';
 import { Input } from './input.js';
 import { Stage } from './render/stage.js';
-import { Level } from './level/level.js';
+import { Level, TILE } from './level/level.js';
+import { generateLevel } from './level/generate.js';
+import { levelToJson } from './level/build.js';
+import { randomSeed } from './level/random.js';
 import { World } from './sim/world.js';
 import { keyboardIntents } from './sim/controllers/keyboard.js';
 import { h, keyName } from './ui/dom.js';
@@ -18,6 +21,7 @@ const game = {
   config: null, assets: null, settings: null, input: null, stage: null,
   hero: null, world: null, view: null, hud: null, debugText: null,
   lookAhead: 0,
+  entry: null,                    // the level being played: {name, doc, tileset, seed?}
   paused: false, back: null,       // back: what Escape does on the current screen
 };
 
@@ -92,13 +96,63 @@ function levelScreen() {
     onclick: () => startPlay(level) },
     h('strong', {}, level.name),
     h('span', { class: 'muted' }, level.description)));
+
+  // Random dungeon: the same theme, length, difficulty and seed always give the same level.
+  const query = new URLSearchParams(location.search);
+  const defaults = game.config.generator ?? {};
+  const option = (value, label, chosen) => h('option', { value, selected: String(value) === String(chosen) }, label);
+  const theme = h('select', { id: 'gen-theme' }, game.assets.tilesets.map(t =>
+    option(t.id, t.id.replaceAll('_', ' '), query.get('theme') ?? defaults.defaultTheme)));
+  const length = h('select', { id: 'gen-length' }, [[80, 'Short'], [140, 'Medium'], [220, 'Long']].map(([v, label]) =>
+    option(v, label, query.get('length') ?? defaults.defaultLength ?? 140)));
+  const difficulty = h('select', { id: 'gen-difficulty' }, [1, 2, 3, 4, 5].map(v =>
+    option(v, ['1 · gentle', '2', '3 · standard', '4', '5 · hard'][v - 1], query.get('difficulty') ?? defaults.defaultDifficulty ?? 1)));
+  const seed = h('input', { id: 'gen-seed', type: 'text', maxlength: 40, size: 14, placeholder: 'random', value: query.get('seed') ?? '',
+    autocomplete: 'off', spellcheck: 'false' });
+  const error = h('p', { class: 'warn', role: 'alert' });
+  const play = () => {
+    try {
+      startRandom({ theme: theme.value, length: Number(length.value), difficulty: Number(difficulty.value), seed: seed.value.trim() || randomSeed() });
+    } catch (e) {
+      error.textContent = e.message;
+    }
+  };
+  const random = h('form', { class: 'level generator', onsubmit: e => { e.preventDefault(); play(); } },
+    h('strong', {}, 'Random dungeon'),
+    h('span', { class: 'muted' }, 'A new level built from a seed. Use the same seed and settings to get the same level again.'),
+    h('div', { class: 'fields' },
+      h('label', {}, 'Theme ', theme), h('label', {}, 'Length ', length), h('label', {}, 'Difficulty ', difficulty),
+      h('label', {}, 'Seed ', seed), h('button', { type: 'submit', class: 'primary' }, 'Play')),
+    error);
+
   show(h('div', { class: 'screen centered' }, panel('Choose a level',
     h('p', { class: 'muted' }, `Playing as ${game.hero.name}.`),
-    h('div', { class: 'levels' }, levels,
-      h('button', { type: 'button', class: 'level', disabled: true },
-        h('strong', {}, 'Random dungeon'),
-        h('span', { class: 'muted' }, 'Not built yet: arrives with the level generator.'))),
+    h('div', { class: 'levels' }, random, levels),
     h('div', { class: 'row' }, h('button', { type: 'button', onclick: heroScreen }, '← Change hero')))), heroScreen);
+}
+
+/** What every hero can certainly do, in tiles; the generator never asks for more. */
+function heroLimits() {
+  const gravity = game.config.physics?.gravity ?? 2400;
+  let maxRise = Infinity, maxGap = Infinity;
+  for (const hero of heroes()) {
+    const m = hero.gameplay.movement;
+    const airTime = 2 * Math.sqrt(2 * m.jumpHeight / gravity);
+    maxRise = Math.min(maxRise, Math.floor(m.jumpHeight * 0.85 / TILE));
+    maxGap = Math.min(maxGap, Math.floor(m.walkSpeed * airTime * 0.9 / TILE));
+  }
+  return { maxRise: Math.max(1, maxRise), maxGap: Math.max(1, maxGap) };
+}
+
+function startRandom({ theme, length, difficulty, seed }) {
+  const tileset = game.assets.tilesets.find(t => t.id === theme) ?? game.assets.tilesets[0];
+  const ofKind = kind => Object.values(game.assets.entities).filter(e => e.kind === kind && e.gameplay).map(e => e.id);
+  const { doc } = generateLevel({ seed, tileset, tilesetId: tileset.id, length, difficulty,
+    enemies: ofKind('enemy'), bosses: ofKind('boss'), limits: heroLimits() });
+  // Put the recipe in the address bar so the level can be shared or replayed.
+  const query = new URLSearchParams({ seed, theme: tileset.id, length, difficulty });
+  history.replaceState(null, '', `${location.pathname}?${query}`);
+  startPlay({ id: doc.id, name: 'Random dungeon', doc, tileset, seed, recipe: { theme: tileset.id, length, difficulty } });
 }
 
 // --------------------------------------------------------------------- settings
@@ -148,6 +202,7 @@ function settingsScreen(returnTo) {
 // ------------------------------------------------------------------------- play
 
 function startPlay(entry) {
+  game.entry = entry;
   const level = new Level(entry.doc, entry.tileset);
   game.world = new World(level, game.hero, game.config);
   game.stage.showLevel(level);
@@ -178,7 +233,8 @@ function resume() {
   game.paused = false;
   game.debugText = h('div', { class: 'debug', hidden: !game.stage.debug });
   show(h('div', { class: 'screen play' }, game.hud.el,
-    h('div', { class: 'notice' }, game.world.level.name, ' · ', keyName(game.settings.keys('pause')[0] ?? 'Escape'), ' for the menu'),
+    h('div', { class: 'notice' }, game.world.level.name, game.entry.seed ? ` · seed ${game.entry.seed}` : '', ' · ',
+      keyName(game.settings.keys('pause')[0] ?? 'Escape'), ' for the menu'),
     game.debugText), null);
   game.input.setEnabled(true);
   game.canvas.focus();
@@ -187,13 +243,27 @@ function resume() {
 function pause() {
   game.paused = true;
   game.input.setEnabled(false);
+  const entry = game.entry;
   show(h('div', { class: 'screen centered scrim' }, panel('Paused',
+    entry.seed ? h('p', { class: 'muted' }, `Random dungeon · seed ${entry.seed} · ${entry.recipe.theme.replaceAll('_', ' ')} · `
+      + `length ${entry.recipe.length} · difficulty ${entry.recipe.difficulty}`) : null,
     h('div', { class: 'menu' },
       h('button', { type: 'button', autofocus: true, onclick: resume }, 'Resume'),
+      h('button', { type: 'button', onclick: () => startPlay(entry) }, 'Restart level'),
+      entry.seed ? h('button', { type: 'button', onclick: () => startRandom({ ...entry.recipe, seed: randomSeed() }) }, 'New random level') : null,
+      entry.seed ? h('button', { type: 'button', onclick: () => saveLevelFile(entry) }, 'Save level file') : null,
       h('button', { type: 'button', onclick: () => settingsScreen(pause) }, 'Settings'),
       h('button', { type: 'button', onclick: levelScreen }, 'Change level'),
       h('button', { type: 'button', onclick: heroScreen }, 'Change hero'),
       h('button', { type: 'button', onclick: titleScreen }, 'Quit to title')))), resume);
+}
+
+/** Download a generated level as a JSON file that can be added to levels/. */
+function saveLevelFile(entry) {
+  const blob = new Blob([levelToJson(entry.doc)], { type: 'application/json' });
+  const link = h('a', { href: URL.createObjectURL(blob), download: `${entry.doc.id}.json` });
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
 function tick(dt) {
