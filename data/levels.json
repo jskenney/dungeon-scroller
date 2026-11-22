@@ -2,7 +2,7 @@
   "schema": "dungeon-scroller/levels@1",
   "notes": [
     "Static levels offered on the level selection screen. Paths are relative to this file.",
-    "Both current levels are test courses for movement and collision; they contain no enemies or objects yet."
+    "Both current levels are test courses for movement, collision and combat: each has one of every kind of enemy, and no objects yet."
   ],
   "entries": [
     {

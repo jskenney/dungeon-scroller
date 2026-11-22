@@ -206,6 +206,7 @@
     "lich": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "lich",
+      "color": "#7fe3c8",
       "stats": { "hp": 70, "speed": 100, "touchDamage": 5, "score": 50 },
       "ai": {
         "archetype": "caster",

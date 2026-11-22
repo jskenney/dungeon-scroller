@@ -337,3 +337,178 @@ tests.push(
     assert(!checkReachable(['........', '..^^....', '........', '###.####'], from, to).ok, 'a pit under a low roof was accepted');
   }],
 );
+
+// ------------------------------------------------------------------- combat
+
+/** Six 100 ms frames, with optional events. */
+const clip = (slot, loop, events) => ({ slot, loop, durations: [100, 100, 100, 100, 100, 100], events });
+
+/** A stand-in hero whose three attacks are a melee swing, a bolt and a hex. */
+function fighter(overrides = {}) {
+  const hero = fakeHero({
+    abilities: {
+      attack1: { type: 'melee', mp: 0, damage: 10, air: false, box: { x: 10, y: -40, w: 40, h: 30 } },
+      attack2: { type: 'projectile', mp: 10, damage: 15, air: true, projectile: { speed: 500, range: 400 } },
+      attack3: { type: 'target', mp: 10, damage: 0, air: true, range: 500, effect: { damageTaken: 2, duration: 5 } },
+    },
+    ...overrides });
+  hero.animations.attack1 = clip('attack1', false, [{ frame: 3, until: 4, type: 'melee' }]);
+  hero.animations.attack2 = clip('attack2', false, [{ frame: 3, type: 'spawn' }]);
+  hero.animations.attack3 = clip('attack3', false, [{ frame: 2, type: 'cast' }]);
+  return hero;
+}
+
+/** A stand-in enemy: 30 HP, one melee attack that lands on frame 3. */
+function fakeEnemy(ai = {}, extra = {}) {
+  const animations = Object.fromEntries(['idle', 'walk', 'hit', 'death', 'attack1', 'attack2', 'attack3'].map(s => [s, clip(s, s === 'idle' || s === 'walk')]));
+  animations.attack1 = clip('attack1', false, [{ frame: 3, type: 'melee' }]);
+  animations.attack2 = clip('attack2', false, [{ frame: 3, type: 'spawn' }]);
+  return { id: 'dummy', kind: 'enemy', animations, gameplay: {
+    stats: { hp: 30, speed: 100, touchDamage: 4, score: 10 },
+    ai: { archetype: 'walker', sight: 400, leavesPlatform: false, dropsOffLedges: false, ...ai },
+    body: { x: -10, y: -50, w: 20, h: 50 },
+    attacks: { attack1: { type: 'melee', damage: 8, cooldown: 1, weight: 1, box: { x: 8, y: -40, w: 30, h: 30 } } },
+    ...extra } };
+}
+
+/** A world with enemies placed by column, standing on the row-3 floor of a flat room. */
+function arena(enemyCols, { hero = fighter(), enemy = fakeEnemy(), map, config = CONFIG } = {}) {
+  const rows = map ?? ['............', '............', 'S...........', '############'];
+  const level = mapLevel(rows);
+  level.doc.entities = enemyCols.map(col => ({ type: 'enemy', id: 'dummy', col, row: 2 }));
+  const world = new World(level, hero, config, { 'enemy/dummy': enemy });
+  runWorld(world, {}, 5);
+  return world;
+}
+const QUIET = { ...CONFIG, rules: { lives: 3, touchDamage: false } };
+/** An enemy that stands still and ignores the hero. */
+const dummy = () => fakeEnemy({ archetype: 'guard', sight: 0, leash: 100 });
+/** Put the hero just left of an enemy, within melee reach. */
+const faceUp = (world, enemy) => { world.hero.body.x = enemy.body.x - 40; world.hero.facing = 1; };
+
+tests.push(
+  ['a melee swing hurts an enemy in reach once, and not one out of reach', () => {
+    const world = arena([1, 5], { enemy: dummy(), config: QUIET });
+    const [near, far] = world.enemies;
+    faceUp(world, near);
+    runWorld(world, i => ({ attack1: i === 0 }), 50);
+    assert(near.hp === 20, `expected the near enemy at 20 HP, got ${near.hp}`);
+    assert(far.hp === 30, 'the far enemy was hit');
+  }],
+  ['a projectile flies, hits the first enemy and spends MP', () => {
+    const world = arena([3, 5], { enemy: dummy(), config: QUIET });
+    const [first, second] = world.enemies;
+    runWorld(world, i => ({ attack2: i === 0 }), 80);
+    assert(first.hp === 15 && second.hp === 30, `expected 15 and 30 HP, got ${first.hp} and ${second.hp}`);
+    assert(near(world.hero.mp, 90, 6), `expected about 90 MP, got ${world.hero.mp}`);
+    assert(world.projectiles.length === 0, 'the projectile was not removed');
+  }],
+  ['a projectile stops at a wall and at the end of its range', () => {
+    const walled = arena([5], { enemy: dummy(), config: QUIET, map: ['............', '....#.......', 'S...#.......', '############'] });
+    runWorld(walled, i => ({ attack2: i === 0 }), 80);
+    assert(walled.enemies[0].hp === 30, 'the projectile passed through a wall');
+    const open = arena([10], { enemy: dummy(), config: QUIET });
+    runWorld(open, i => ({ attack2: i === 0 }), 120);
+    assert(open.enemies[0].hp === 30 && open.projectiles.length === 0, 'the projectile flew past its range');
+  }],
+  ['a hex makes the target take double damage', () => {
+    const world = arena([1], { enemy: dummy(), config: QUIET });
+    faceUp(world, world.enemies[0]);
+    runWorld(world, i => ({ attack3: i === 0 }), 50);
+    runWorld(world, i => ({ attack1: i === 0 }), 50);
+    assert(world.enemies[0].hp === 10, `expected 10 HP after a doubled hit, got ${world.enemies[0].hp}`);
+  }],
+  ['killing an enemy scores points and removes it', () => {
+    const world = arena([1], { enemy: dummy(), config: QUIET });
+    faceUp(world, world.enemies[0]);
+    for (let i = 0; i < 3; i++) { world.hero.facing = 1; runWorld(world, t => ({ attack1: t === 0 }), 70); }
+    assert(world.hero.score === 10, `expected 10 points, got ${world.hero.score}`);
+    runWorld(world, {}, 200);
+    assert(world.enemies.length === 0, 'the dead enemy was never removed');
+  }],
+  ['an enemy that sees the hero walks up and hits', () => {
+    const world = arena([4], { config: QUIET });
+    const startX = world.enemies[0].body.x;
+    runWorld(world, {}, 400);
+    assert(world.enemies[0].body.x < startX - 100, 'the enemy did not approach');
+    assert(world.hero.hp < 100, 'the enemy never landed a hit');
+  }],
+  ['a patrolling enemy turns at ledges and walls and never falls', () => {
+    const world = arena([7], { enemy: fakeEnemy({ sight: 0 }), config: QUIET, map: ['............', '............', 'S...........', '####..####..'] });
+    const enemy = world.enemies[0];
+    let min = Infinity, max = -Infinity;
+    runWorld(world, {}, 1500, () => { min = Math.min(min, enemy.body.x); max = Math.max(max, enemy.body.x); });
+    assert(!enemy.gone && enemy.body.y === 3 * TILE, 'the enemy fell off its platform');
+    assert(max - min > 150, `the enemy barely moved (${(max - min).toFixed(0)} px)`);
+    assert(min > 6 * TILE && max < 10 * TILE, `the enemy left its platform: ${min.toFixed(0)}–${max.toFixed(0)}`);
+  }],
+  ['a guard returns to its post', () => {
+    const world = arena([8], { enemy: fakeEnemy({ archetype: 'guard', sight: 300, leash: 150 }), config: QUIET });
+    const guard = world.enemies[0], post = guard.body.x;
+    world.hero.body.x = 5.5 * TILE;
+    runWorld(world, {}, 200);
+    assert(guard.body.x < post - 60, 'the guard did not advance on the hero');
+    assert(guard.body.x > post - 170, `the guard left its post by ${(post - guard.body.x).toFixed(0)} px`);
+    world.hero.body.x = 0.5 * TILE;
+    runWorld(world, {}, 600);
+    assert(Math.abs(guard.body.x - post) < 12, 'the guard did not return to its post');
+  }],
+  ['a caster keeps its distance and shoots', () => {
+    const caster = fakeEnemy({ archetype: 'caster', sight: 600, preferredDistance: 300, hover: true },
+      { attacks: { attack2: { type: 'projectile', damage: 6, cooldown: 1.5, weight: 1, projectile: { speed: 300, range: 600 } } } });
+    const world = arena([3], { enemy: caster, config: QUIET });
+    let shots = 0;
+    runWorld(world, {}, 400, w => { shots = Math.max(shots, w.projectiles.length); });
+    assert(world.enemies[0].body.x - world.hero.body.x > 200, 'the caster stayed close');
+    assert(shots > 0 && world.hero.hp < 100, 'the caster never hit with a shot');
+  }],
+  ['touching an enemy hurts once, then the hero is briefly safe', () => {
+    const world = arena([1], { enemy: fakeEnemy({ sight: 0 }, { attacks: {} }) });
+    world.hero.body.x = world.enemies[0].body.x;
+    runWorld(world, {}, 2);
+    assert(world.hero.hp === 96, `expected 96 HP after a touch, got ${world.hero.hp}`);
+    world.hero.body.x = world.enemies[0].body.x;
+    runWorld(world, {}, 5);
+    assert(world.hero.hp === 96, 'the hero was hurt again while invulnerable');
+  }],
+  ['crouching lets a high attack pass overhead', () => {
+    const high = fakeEnemy({}, { attacks: { attack1: { type: 'melee', damage: 8, cooldown: 0.2, weight: 1, box: { x: 8, y: -50, w: 60, h: 15 } } } });
+    const standing = arena([1], { enemy: high, config: QUIET });
+    runWorld(standing, {}, 200);
+    assert(standing.hero.hp < 100, 'the high attack missed a standing hero');
+    const ducking = arena([1], { enemy: high, config: QUIET });
+    runWorld(ducking, { down: true }, 200);
+    assert(ducking.hero.hp === 100, 'the high attack hit a crouching hero');
+  }],
+  ['a stunned enemy cannot act', () => {
+    const world = arena([2], { config: QUIET });
+    world.enemies[0].applyEffect({ stun: 3 });
+    const x = world.enemies[0].body.x;
+    runWorld(world, {}, 150);
+    assert(Math.abs(world.enemies[0].body.x - x) < 8 && world.hero.hp === 100, 'a stunned enemy moved or attacked');
+  }],
+  ['a hero who runs out of health loses a life and returns to the start', () => {
+    const world = arena([1], { config: QUIET });
+    const start = world.hero.body.x;
+    world.hero.body.x = 5 * TILE;
+    world.hurtHero(500, world.enemies[0]);
+    assert(world.hero.dead && world.hero.hp === 0, 'the hero did not die');
+    runWorld(world, {}, 150);
+    assert(!world.hero.dead && world.hero.lives === 2 && world.hero.hp === 100, 'the hero did not come back with full health and one life fewer');
+    assert(Math.abs(world.hero.body.x - start) < 80, 'the hero did not return to the start');
+  }],
+  ['losing the last life ends the game', () => {
+    const world = arena([], { config: { ...QUIET, rules: { lives: 1, touchDamage: false } } });
+    world.hurtHero(500, { x: 0 });
+    runWorld(world, {}, 200);
+    assert(world.over && world.hero.dead, 'the game did not end');
+  }],
+  ['the difficulty settings scale damage and health', () => {
+    const hard = { ...QUIET, difficulty: { enemyHealth: 2, playerDamage: 0.5 } };
+    const world = arena([1], { enemy: dummy(), config: hard });
+    assert(world.enemies[0].hp === 60, `expected 60 HP, got ${world.enemies[0].hp}`);
+    faceUp(world, world.enemies[0]);
+    runWorld(world, i => ({ attack1: i === 0 }), 50);
+    assert(world.enemies[0].hp === 55, `expected 55 HP after a halved hit, got ${world.enemies[0].hp}`);
+  }],
+);

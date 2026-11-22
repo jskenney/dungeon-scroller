@@ -6,6 +6,7 @@ import { loadAssets } from './assets/loader.js';
 import { Settings, ACTIONS } from './settings.js';
 import { Input } from './input.js';
 import { Stage } from './render/stage.js';
+import { WorldView } from './render/worldView.js';
 import { Level, TILE } from './level/level.js';
 import { generateLevel } from './level/generate.js';
 import { levelToJson } from './level/build.js';
@@ -204,9 +205,8 @@ function settingsScreen(returnTo) {
 function startPlay(entry) {
   game.entry = entry;
   const level = new Level(entry.doc, entry.tileset);
-  game.world = new World(level, game.hero, game.config);
-  game.stage.showLevel(level);
-  game.view = game.stage.addActor(game.hero, game.world.hero.artShift);
+  game.world = new World(level, game.hero, game.config, game.assets.entities);
+  game.view = new WorldView(game.stage, game.world);
   game.hud = new Hud(game.hero, game.settings);
   const b = game.world.hero.body;
   game.lookAhead = 0;
@@ -258,6 +258,19 @@ function pause() {
       h('button', { type: 'button', onclick: titleScreen }, 'Quit to title')))), resume);
 }
 
+function gameOverScreen() {
+  game.paused = true;
+  game.input.setEnabled(false);
+  const entry = game.entry;
+  show(h('div', { class: 'screen centered scrim' }, panel('Game over',
+    h('p', { class: 'muted' }, `Score ${game.world.hero.score}.`),
+    h('div', { class: 'menu' },
+      h('button', { type: 'button', autofocus: true, onclick: () => startPlay(entry) }, 'Try again'),
+      h('button', { type: 'button', onclick: levelScreen }, 'Change level'),
+      h('button', { type: 'button', onclick: heroScreen }, 'Change hero'),
+      h('button', { type: 'button', onclick: titleScreen }, 'Quit to title')))), levelScreen);
+}
+
 /** Download a generated level as a JSON file that can be added to levels/. */
 function saveLevelFile(entry) {
   const blob = new Blob([levelToJson(entry.doc)], { type: 'application/json' });
@@ -276,29 +289,25 @@ function tick(dt) {
 
   // The simulation runs in fixed steps; key presses are kept until a step has used them.
   const steps = world.advance(dt, first => keyboardIntents(input, first));
-  world.events.length = 0;                    // sounds and effects will read these later
 
   // Draw between the last two simulation states so motion is smooth at any refresh rate.
-  const hero = world.hero, b = hero.body, a = world.alpha;
-  const x = hero.prev.x + (b.x - hero.prev.x) * a;
-  // The feet position and the stair smoothing are blended together; blending
-  // only one of them would make the picture dip for a frame at every step.
-  const y0 = hero.prev.y + hero.prev.lift, y1 = b.y + hero.visualLift;
-  const y = y0 + (y1 - y0) * a;
-  game.view.show(hero.pose.slot, hero.pose.frame, x, y, hero.facing);
+  const hero = world.hero, b = hero.body;
+  const { x, y } = game.view.update(dt);
+  const gameOver = world.events.some(e => e.type === 'gameOver');
+  world.events.length = 0;                    // sounds will read these later
   // Look a little ahead of a hero who keeps moving one way. The offset follows
   // the movement speed and eases slowly, so turning around does not jolt the view.
   const ahead = Math.max(-1, Math.min(1, b.vx / 280)) * 48;
   game.lookAhead += (ahead - game.lookAhead) * Math.min(1, dt * 1.5);
   stage.follow(x + game.lookAhead, y - 60, dt);
   if (stage.debug) {
-    stage.debugLive.clear();
-    stage.drawBody(b.x, b.y, b.w, b.h);
     game.debugText.textContent = `x ${b.x.toFixed(1)}  y ${b.y.toFixed(1)}  vx ${b.vx.toFixed(0)}  vy ${b.vy.toFixed(0)}  `
-      + `${b.grounded ? 'on ' + b.groundKind : 'in air'}  ${hero.pose.slot} ${hero.pose.frame + 1}  tick ${world.tick}`;
+      + `${b.grounded ? 'on ' + b.groundKind : 'in air'}  ${hero.pose.slot} ${hero.pose.frame + 1}  `
+      + `enemies ${world.enemies.length}  tick ${world.tick}`;
   }
   game.hud.update(hero);
   if (steps > 0) input.endFrame();
+  if (gameOver) gameOverScreen();
 }
 
 // ------------------------------------------------------------------------- boot

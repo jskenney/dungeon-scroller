@@ -27,7 +27,44 @@
     "col": 2,
     "row": 8
   },
-  "entities": [],
+  "entities": [
+    {
+      "type": "enemy",
+      "id": "normal_skeleton",
+      "col": 6,
+      "row": 8
+    },
+    {
+      "type": "enemy",
+      "id": "undead_wolf",
+      "col": 17,
+      "row": 6
+    },
+    {
+      "type": "enemy",
+      "id": "lich",
+      "col": 31,
+      "row": 8
+    },
+    {
+      "type": "enemy",
+      "id": "wight",
+      "col": 43,
+      "row": 7
+    },
+    {
+      "type": "enemy",
+      "id": "skeleton_knight",
+      "col": 54,
+      "row": 5
+    },
+    {
+      "type": "enemy",
+      "id": "normal_skeleton",
+      "col": 61,
+      "row": 8
+    }
+  ],
   "music": null,
   "layers": {
     "background": [

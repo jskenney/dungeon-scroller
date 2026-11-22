@@ -590,7 +590,7 @@ Built in `js/level/generate.js`, with the seeded random source in `js/level/rand
 - **Any tileset.** The generator writes a character map and `js/level/build.js` picks the art, so a new tileset with the same `runs` and shapes works without code changes.
 - **Output is an ordinary level document.** *Save level file* in the pause menu downloads it as JSON, ready to add to `levels/`. The document also carries the generator's recipe.
 
-**Not yet visible in play:** the enemies, objects, boss and relic the generator places are recorded in the level's `entities` list, but the simulation does not create them until phases 4–6. Today a generated level plays as terrain only. Low crawl passages and lever-and-grate locks will be added as sections when the low-passage tile and those mechanics exist.
+**Partly visible in play:** the enemies the generator places now appear and fight. The objects, boss and relic are recorded in the level's `entities` list but are not created until phases 5–6. Low crawl passages and lever-and-grate locks will be added as sections when the low-passage tile and those mechanics exist.
 
 **How it was checked.** Tests generate 300 levels across all difficulties and lengths and confirm each is valid, completable by the check, repeatable from its seed, and has every placed thing standing on something. Separately, a simple bot that only walks right and jumps at gaps and walls completed 120 of 120 generated levels on both tilesets using the real physics.
 
@@ -689,7 +689,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | **1. Skeleton, viewer and shell** | **Done:** `viewer.html`; configuration loading with the `example.dungeon.json` fallback; vendored PixiJS; the asset loader; and the game shell in `index.html` (§16.2). |
 | **2. Simulation core** | **Done:** fixed-step world, tile collision for every shape, the hero controller, the level format with loader and builder, two test courses, the debug overlay and in-browser tests (§16.3). |
 | **3. Procedural levels** | **Done:** seeded generator with section templates and a completion check, the Random dungeon options on the level screen, replay and sharing by seed, and saving a generated level as a file (§10.2). |
-| **4. Combat and enemies** | Abilities, projectiles, damage, enemy archetypes, HP/MP, HUD. |
+| **4. Combat and enemies** | **Done:** abilities with damage and effects, particle projectiles, four enemy behaviours, touch damage, hit reaction, death, respawn and game over, health bars and damage numbers (§16.4). |
 | **5. Objects and rules** | Pickups, chests, keys, levers, breakables, checkpoint flags, shrines, lives, respawn. |
 | **6. Bosses** | Phase machine, arenas, boss health bar, relic and results screen. |
 | **7. Front end** | Title, character cards, level selection, pause and settings including key rebinding, saved preferences. |
@@ -753,13 +753,48 @@ Everything under `js/sim/` and `js/level/` is plain data and arithmetic: no rend
 - **Level edges:** the left and right sides are walls, the top is open, and falling out of the bottom costs a life and returns the hero to the last checkpoint (the level start for now).
 - **Feel:** jumps can be made up to 0.1 s after leaving a ledge, a jump pressed up to 0.1 s before landing still happens, and releasing jump early gives a shorter hop.
 
-**Levels.** `dungeon.json` → `levels` names an index file (`data/levels.json`) listing the static levels to offer. Two test courses exist, `levels/dungeon-test.json` and `levels/graveyard-test.json`, covering stairs, slopes, stacked platforms, pits and ceilings. They contain no enemies or objects yet.
+**Levels.** `dungeon.json` → `levels` names an index file (`data/levels.json`) listing the static levels to offer. Two test courses exist, `levels/dungeon-test.json` and `levels/graveyard-test.json`, covering stairs, slopes, stacked platforms, pits and ceilings. Each holds one of every kind of enemy; neither has objects yet.
 
 **Debug overlay.** The debug key (`` ` `` by default) outlines every collision shape and the hero's body box, and shows position, velocity, ground type, animation frame and tick.
 
 **Tests.** `tests.html` runs the simulation tests in the browser: landing, walls, stairs up and down, slopes, platforms, ceilings, low passages, level edges, jump height, short hops, late jumps, crouching under a ceiling, ability rules, teleport, flight and pits. They build their own small levels and need no assets.
 
-Not in the simulation yet: enemies, objects, damage, projectiles and checkpoints (phases 4 and 5).
+### 16.4 Combat and enemies
+
+| Module | Role |
+|---|---|
+| `js/sim/actor.js` | What heroes and enemies share: body, health, hit and hurt boxes, and timed conditions (stun, slow, weakness, brief invulnerability). |
+| `js/sim/enemy.js` | Enemy movement, attacks and the four behaviours. |
+| `js/sim/projectile.js` | Bolts, arrows and stones that fly, and delayed ground bursts. |
+| `js/sim/world.js` | Runs the hero, enemies and projectiles each step; applies damage, touch damage, score and respawns. |
+| `js/render/worldView.js` | Draws all of it: sprites, enemy health bars, particle projectiles, damage numbers, status tints. |
+
+**Hero abilities** take effect on the frames the sheet JSON marks (§4.3), so a swing lands when the art shows it.
+
+- **Melee and close-range effects** (`melee`, `area`): while the marked frames show, every enemy overlapping the ability's box is hit once.
+- **Projectiles** leave on the `spawn` frame, fly `range` pixels, stop at walls, and hit the first enemy — or every enemy in their path if they pass through. Stones and arrows arc. They are drawn as particles in the hero's `color`.
+- **Targeted spells** (`target`) pick the nearest enemy in range, preferring one in front, on the `cast` frame.
+- **Heals** restore health on the `heal` frame (to the hero for now; allies come with multiplayer).
+- **Effects:** knock-back, stun, slow, and weakness (extra damage taken) with their durations. Enemies show them by tint: yellow stunned, blue slowed, purple weakened.
+
+**Enemies** sense the floor ahead, walls, the hero's position and whether the way to the hero is clear of walls, and remember the hero for a few seconds after losing sight.
+
+| Behaviour | What it does |
+|---|---|
+| `walker` | Patrols its platform, turning at ledges and walls; chases on sight but will not walk off a ledge. |
+| `guard` | Waits at its post; advances on a hero it sees but no farther than its leash; walks back when the hero is gone. |
+| `pouncer` | Chases fast and may drop off ledges; leaps from a distance; backs off after attacking. |
+| `caster` | Hovers; keeps its preferred distance; fires aimed bolts and volleys, and raises a warned ground burst under the hero. |
+
+An enemy uses an attack when the hero is inside that attack's box (or range, for shots and leaps) and its cooldown has passed, choosing by weight. A hit interrupts what an enemy is doing. Enemies far from the hero stand still until approached.
+
+**Taking damage.** A hit knocks the hero back, plays the hit reaction and gives a short spell of invulnerability, shown by flickering. Touching an enemy deals its `touchDamage`. A crouched hero's lower box lets high attacks pass. At zero health the death animation plays, then the hero returns to the last checkpoint with full health and one life fewer; when the last life goes, the game-over screen offers another try. Kills add the enemy's `score`.
+
+**Difficulty multipliers** from `dungeon.json` scale enemy health and damage, touch damage and the hero's damage.
+
+**Tests** cover melee reach and once-per-swing hits, projectiles (hit, wall, range), the hex, kills and score, each behaviour, touch damage and invulnerability, crouch dodging, stun, death and respawn, game over, and the multipliers.
+
+Not in the simulation yet: bosses, objects, loot drops and checkpoints (phases 5 and 6). The boss and objects a level lists are still ignored.
 
 ## 17. Open items
 

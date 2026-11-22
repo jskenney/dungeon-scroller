@@ -5,7 +5,8 @@
     "Boxes are in pixels relative to the actor's pivot (feet, on the ground line) for an actor facing right: x is the left edge, y is the top edge (negative is up). They mirror with the sprite.",
     "body and crouchBody are the collision boxes. An ability's box is active during the melee or area event window of its animation.",
     "Ability names come from the animation labels in the sheet JSON. 'air' says whether the ability can be used while jumping or flying.",
-    "Entries inherit every value in 'defaults' and may override any of them."
+    "Entries inherit every value in 'defaults' and may override any of them.",
+    "color tints the hero's projectiles and effects, which are drawn as particles."
   ],
   "defaults": {
     "stats": { "mpRegen": 4, "invulnerableAfterHit": 0.8 },
@@ -16,6 +17,7 @@
     "light_space_mage": {
       "sheet": "../assets/sprites/players/light_space_mage_spritesheet.json",
       "entity": "light_space_mage",
+      "color": "#c9a2ff",
       "card": "../assets/cards/light_space_mage_card.json",
       "role": "Support",
       "blurb": "Heals allies and bends space.",
@@ -44,6 +46,7 @@
     "fire_mage": {
       "sheet": "../assets/sprites/players/fire_mage_spritesheet.json",
       "entity": "fire_mage",
+      "color": "#ff8a3c",
       "card": "../assets/cards/fire_mage_card.json",
       "role": "High damage, fragile",
       "blurb": "Burns everything in front of him.",
@@ -78,6 +81,7 @@
     "water_mage": {
       "sheet": "../assets/sprites/players/water_mage_spritesheet.json",
       "entity": "water_mage",
+      "color": "#4cc3ff",
       "card": "../assets/cards/water_mage_card.json",
       "role": "Control",
       "blurb": "Pushes enemies back and slows them down.",
@@ -114,6 +118,7 @@
     "wind_mage": {
       "sheet": "../assets/sprites/players/wind_mage_spritesheet.json",
       "entity": "wind_mage",
+      "color": "#b8f5d0",
       "card": "../assets/cards/wind_mage_card.json",
       "role": "Mobility, ranged",
       "blurb": "Never touches the ground for long.",
@@ -149,6 +154,7 @@
     "earth_mage": {
       "sheet": "../assets/sprites/players/earth_mage_spritesheet.json",
       "entity": "earth_mage",
+      "color": "#b89b6a",
       "card": "../assets/cards/earth_mage_card.json",
       "role": "Tank",
       "blurb": "Slow, sturdy and hard to move.",
@@ -185,6 +191,7 @@
     "dark_swordsman": {
       "sheet": "../assets/sprites/players/dark_swordsman_spritesheet.json",
       "entity": "dark_swordsman",
+      "color": "#b06cff",
       "card": "../assets/cards/dark_swordsman_card.json",
       "role": "Melee",
       "blurb": "A blade for the body, a hex for the mind.",
