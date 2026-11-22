@@ -409,7 +409,7 @@ The boss sheet is 6912 px tall, taller than the 4096 px texture limit of some gr
 - **Pixel-perfect mode (default).** The scale is rounded to a whole number so every art pixel becomes an identical block of screen pixels. The canvas still fills the width; the number of visible tiles adjusts slightly instead. With this off, any fractional scale is allowed.
 - **Sampling.** Nearest-neighbour everywhere; no smoothing, no mipmaps. The camera position is snapped to whole physical pixels to avoid shimmer.
 - **Zoom.** `+` / `−` and the mouse wheel step the view between `minViewTiles` and `maxViewTiles`. In pixel-perfect mode each step is one whole device pixel per art pixel; otherwise one tile of view width. Zoom is remembered in `localStorage`. Zooming changes how much of the level is visible; it never changes game rules.
-- **Camera.** Follows the hero with a small dead zone and look-ahead in the facing direction, eases vertically only when the hero lands or leaves the dead zone, and clamps to the level bounds. Boss arenas lock the camera to the arena.
+- **Camera.** Follows the hero with a small look-ahead (up to half a tile) in the direction of travel. The look-ahead follows movement speed and eases over about a second, so turning around never jolts the view; eases vertically only when the hero lands or leaves the dead zone, and clamps to the level bounds. Boss arenas lock the camera to the arena.
 - **Layers, back to front:** parallax backgrounds, background tiles, rear details, terrain, objects, actors, effects and projectiles, foreground tiles, then the HTML layer (speech bubbles, HUD, menus).
 
 ---

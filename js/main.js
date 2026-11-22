@@ -17,6 +17,7 @@ const ui = document.getElementById('ui');
 const game = {
   config: null, assets: null, settings: null, input: null, stage: null,
   hero: null, world: null, view: null, hud: null, debugText: null,
+  lookAhead: 0,
   paused: false, back: null,       // back: what Escape does on the current screen
 };
 
@@ -153,6 +154,7 @@ function startPlay(entry) {
   game.view = game.stage.addActor(game.hero, game.world.hero.artShift);
   game.hud = new Hud(game.hero, game.settings);
   const b = game.world.hero.body;
+  game.lookAhead = 0;
   game.stage.follow(b.x, b.y - 60, 0, true);
   resume();
 }
@@ -211,7 +213,11 @@ function tick(dt) {
   const x = hero.prev.x + (b.x - hero.prev.x) * a;
   const y = hero.prev.y + (b.y - hero.prev.y) * a + hero.visualLift;
   game.view.show(hero.pose.slot, hero.pose.frame, x, y, hero.facing);
-  stage.follow(x + hero.facing * 40, y - 60, dt);
+  // Look a little ahead of a hero who keeps moving one way. The offset follows
+  // the movement speed and eases slowly, so turning around does not jolt the view.
+  const ahead = Math.max(-1, Math.min(1, b.vx / 280)) * 48;
+  game.lookAhead += (ahead - game.lookAhead) * Math.min(1, dt * 1.5);
+  stage.follow(x + game.lookAhead, y - 60, dt);
   if (stage.debug) {
     stage.debugLive.clear();
     stage.drawBody(b.x, b.y, b.w, b.h);
