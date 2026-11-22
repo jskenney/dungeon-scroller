@@ -18,7 +18,7 @@ export class Hud {
       return { el, fill, value };
     };
     this.hp = bar('hp', 'HP'); this.mp = bar('mp', 'MP');
-    this.lives = h('span'); this.score = h('span'); this.keys = h('span'); this.boost = h('span', { class: 'boost' });
+    this.lives = h('span'); this.score = h('span'); this.keys = h('span'); this.gold = h('span'); this.boost = h('span', { class: 'boost' });
     this.slots = [];
     const slot = (action, name, cost, title) => {
       const key = h('kbd');
@@ -39,7 +39,7 @@ export class Hud {
         h('div', { class: 'hud-name' }, hero.name),
         this.hp.el, this.mp.el,
         h('div', { class: 'hud-line' }, h('span', {}, 'Lives ', this.lives), h('span', {}, 'Score ', this.score),
-          h('span', {}, 'Keys ', this.keys), this.boost)),
+          h('span', {}, 'Gold ', this.gold), h('span', {}, 'Keys ', this.keys), this.boost)),
       h('div', { class: 'hud-abilities' }, abilities));
     this.last = {};
     this.refreshKeys();
@@ -67,15 +67,15 @@ export class Hud {
   /** @param {{hp:number, mp:number, lives:number, score:number}} s */
   update(s) {
     const g = this.hero.gameplay;
-    const hp = Math.ceil(s.hp), mp = Math.floor(s.mp);
-    if (hp !== this.last.hp) {
-      this.hp.fill.style.width = `${(hp / g.stats.hp) * 100}%`;
-      this.hp.value.textContent = `${hp} / ${g.stats.hp}`;
+    const hp = Math.ceil(s.hp), mp = Math.floor(s.mp), maxHp = s.maxHp ?? g.stats.hp, maxMp = s.maxMp ?? g.stats.mp;
+    if (hp !== this.last.hp || maxHp !== this.last.maxHp) {
+      this.hp.fill.style.width = `${(hp / maxHp) * 100}%`;
+      this.hp.value.textContent = `${hp} / ${maxHp}`;
       this.hp.el.setAttribute('aria-valuenow', hp);
     }
-    if (mp !== this.last.mp) {
-      this.mp.fill.style.width = `${(mp / g.stats.mp) * 100}%`;
-      this.mp.value.textContent = `${mp} / ${g.stats.mp}`;
+    if (mp !== this.last.mp || maxMp !== this.last.maxMp) {
+      this.mp.fill.style.width = `${(mp / maxMp) * 100}%`;
+      this.mp.value.textContent = `${mp} / ${maxMp}`;
       this.mp.el.setAttribute('aria-valuenow', mp);
       for (const slot of this.slots) slot.el.classList.toggle('unaffordable', mp < slot.cost);
     }
@@ -86,6 +86,8 @@ export class Hud {
     const boost = (s.boosts ?? []).map(b => `${BOOST_NAMES[b.stat] ?? b.stat} ${Math.ceil(b.time)}s`).join(' · ');
     if (keys !== this.last.keys) this.keys.textContent = keys;
     if (boost !== this.last.boost) this.boost.textContent = boost;
-    this.last = { ...this.last, hp, mp, lives: s.lives, score: s.score, keys, boost };
+    const gold = s.gold ?? 0;
+    if (gold !== this.last.gold) this.gold.textContent = gold;
+    this.last = { ...this.last, hp, mp, maxHp, maxMp, lives: s.lives, score: s.score, keys, gold, boost };
   }
 }

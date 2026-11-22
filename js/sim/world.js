@@ -5,6 +5,7 @@ import { Hero } from './hero.js';
 import { Enemy } from './enemy.js';
 import { Boss } from './boss.js';
 import { WorldObject } from './object.js';
+import { Npc } from './npc.js';
 import { overlap } from './actor.js';
 import { makeRng } from '../level/random.js';
 import { TILE } from '../level/level.js';
@@ -24,7 +25,7 @@ export class World {
    * @param {object} config      site configuration
    * @param {Record<string, object>} [entities]  sheet entities by "kind/id", for things the level places
    */
-  constructor(level, heroEntity, config, entities = {}) {
+  constructor(level, heroEntity, config, entities = {}, goods = {}) {
     this.level = level;
     this.config = config;
     this.step = 1 / (config.physics?.tickRate ?? 60);
@@ -46,7 +47,12 @@ export class World {
     this.objects = [];
     /** Gates: solid until opened by a lever or a key. {id, rect, open, locked, col, row, height} */
     this.gates = [];
-    this.prompt = null;            // the object the interact key would use right now
+    /** @type {Npc[]} */
+    this.npcs = [];
+    /** What merchants sell, from data/npcs.json. */
+    this.goods = goods;
+    this.shop = null;              // the merchant whose shop is open; the world waits while it is
+    this.prompt = null;            // the object or NPC the interact key would use right now
     this.complete = false;         // true once the goal has been reached
     this.deaths = 0;
     for (const placed of level.doc.entities ?? []) {
@@ -57,6 +63,9 @@ export class World {
       } else if (placed.type === 'boss') {
         const entity = entities[`boss/${placed.id}`];
         if (entity?.gameplay) this.enemies.push(new Boss(entity, config, x, y));
+      } else if (placed.type === 'npc') {
+        const entity = entities[`npc/${placed.id}`];
+        if (entity?.gameplay) this.npcs.push(new Npc(entity, x, y));
       } else if (placed.type === 'object') {
         this.addObject(placed.id, x, y, placed);
       } else if (placed.type === 'gate') {
@@ -149,8 +158,9 @@ export class World {
     const hero = this.hero;
     if (gives.hp) hero.hp = Math.min(hero.maxHp, hero.hp + gives.hp);
     if (gives.hpFraction) hero.hp = Math.min(hero.maxHp, Math.max(hero.hp, hero.maxHp * gives.hpFraction));
-    if (gives.mp) hero.mp = Math.min(hero.g.stats.mp, hero.mp + gives.mp);
-    if (gives.mpFraction) hero.mp = Math.min(hero.g.stats.mp, Math.max(hero.mp, hero.g.stats.mp * gives.mpFraction));
+    if (gives.mp) hero.mp = Math.min(hero.maxMp, hero.mp + gives.mp);
+    if (gives.mpFraction) hero.mp = Math.min(hero.maxMp, Math.max(hero.mp, hero.maxMp * gives.mpFraction));
+    if (gives.gold) hero.gold += gives.gold;
     if (gives.score) hero.score += gives.score;
     if (gives.keys) hero.keys += gives.keys;
     // A boost: one fixed, or one chosen by chance from a list.
@@ -160,6 +170,41 @@ export class World {
     if (boost) hero.addBoost(boost);
     this.events.push({ type: 'gave', gives, boost, x: at.x, y: at.rect().t });
   }
+
+  /** What one of a merchant's goods costs this hero now, and whether it can still be bought. */
+  priceOf(goodId) {
+    const good = this.goods[goodId];
+    if (!good) return null;
+    if (good.kind !== 'upgrade') return { price: good.price, level: 0, maxed: false };
+    const level = this.hero.upgrades[goodId] ?? 0;
+    return { price: Math.round(good.price * (good.priceGrowth ?? 1) ** level), level, maxed: level >= (good.maxLevel ?? 1) };
+  }
+
+  /**
+   * Buy one of a merchant's goods.
+   * @returns {'bought'|'poor'|'maxed'|'unavailable'}
+   */
+  buy(npc, goodId) {
+    const hero = this.hero, good = this.goods[goodId];
+    if (!good || !npc.g.stock?.includes(goodId)) return 'unavailable';
+    const { price, maxed } = this.priceOf(goodId);
+    if (maxed) return 'maxed';
+    if (hero.gold < price) { this.events.push({ type: 'cannotAfford', actor: npc, x: npc.x, y: npc.y }); return 'poor'; }
+    hero.gold -= price;
+    if (good.kind === 'upgrade') {
+      hero.upgrades[goodId] = (hero.upgrades[goodId] ?? 0) + 1;
+      hero.applyUpgrades(this.goods);
+    } else {
+      this.give(good.gives, npc);
+    }
+    npc.gesture('sell');
+    this.events.push({ type: 'bought', actor: npc, good: goodId, x: npc.x, y: npc.y });
+    return 'bought';
+  }
+
+  /** Open or close a merchant's shop. Everything but the NPCs waits while it is open. */
+  openShop(npc) { this.shop = npc; }
+  closeShop() { this.shop = null; }
 
   /** Start using an object: pick it up, open it, pull it, light it. */
   useObject(object) {
@@ -227,6 +272,10 @@ export class World {
 
   stepOnce(intents) {
     const hero = this.hero, dt = this.step;
+    if (this.shop) {                      // shopping: the world holds still
+      for (const npc of this.npcs) npc.update(this, dt);
+      return;
+    }
     hero.update(intents, this, dt);
     this.events.push(...hero.events.splice(0));
 
@@ -245,7 +294,14 @@ export class World {
         if (object.ready('touch') && overlap(body, object.rect())) this.useObject(object);
         else if (!this.prompt && object.ready('interact') && overlap(body, object.rect())) this.prompt = object;
       }
-      if (intents.interact && this.prompt) this.useObject(this.prompt);
+      for (const npc of this.npcs) {
+        if (!this.prompt && overlap(body, npc.rect())) this.prompt = npc;
+      }
+      if (intents.interact && this.prompt?.isNpc) {
+        const npc = this.prompt;
+        if (npc.g.role === 'merchant') this.events.push({ type: 'shop', actor: npc });
+        else { npc.gesture('wave'); this.events.push({ type: 'npcTalk', actor: npc, x: npc.x, y: npc.y }); }
+      } else if (intents.interact && this.prompt) this.useObject(this.prompt);
       for (const gate of this.gates) {
         if (gate.open || !gate.locked) continue;
         const near = { l: gate.rect.l - 10, t: gate.rect.t, r: gate.rect.r + 10, b: gate.rect.b };
@@ -255,6 +311,7 @@ export class World {
       }
     }
     for (const object of this.objects) object.update(this, dt);
+    for (const npc of this.npcs) npc.update(this, dt);
     // The relic appears once no boss is left.
     if (!this.enemies.some(e => e.boss && !e.dead)) for (const object of this.objects) object.hidden = false;
 

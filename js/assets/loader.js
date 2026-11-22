@@ -237,7 +237,7 @@ async function loadCatalogs(config, configUrl, result, problems) {
       for (const key of ['body', 'crouchBody', 'box']) {
         if (entry[key] && !isBox(entry[key])) problems.push({ level: 'error', file, message: `${id}.${key}: not a valid box.` });
       }
-      if (catalog.kind !== 'object' && !isBox(entry.body)) problems.push({ level: 'error', file, message: `${id}: has no body box.` });
+      if (catalog.kind !== 'object' && catalog.kind !== 'npc' && !isBox(entry.body)) problems.push({ level: 'error', file, message: `${id}: has no body box.` });
       for (const [slot, action] of Object.entries(entry.abilities ?? entry.attacks ?? {})) {
         const clip = entity.animations[slot];
         if (!clip) { problems.push({ level: 'error', file, message: `${id}.${slot}: the sheet has no such animation.` }); continue; }
@@ -248,6 +248,9 @@ async function loadCatalogs(config, configUrl, result, problems) {
             problems.push({ level: 'warning', file, message: `${id}.${slot}: the animation has no frame that triggers the hit.` });
           }
         }
+      }
+      for (const good of entry.stock ?? []) {
+        if (!catalog.goods?.[good]) problems.push({ level: 'error', file, message: `${id}: sells "${good}", which is not in the goods list.` });
       }
       for (const phase of entry.phases ?? []) {
         for (const slot of phase.attacks) {

@@ -33,7 +33,13 @@ export class Hero extends Actor {
     this.moves = locomotion(entity.animations, config.physics?.runSpeedMultiplier ?? 1.75);
     this.standH = this.body.h;
     this.crouchH = this.g.crouchBody?.h ?? Math.round(this.body.h * 0.6);
-    this.mp = this.g.stats.mp;
+    this.baseHp = this.maxHp;
+    this.maxMp = this.g.stats.mp;
+    this.mp = this.maxMp;
+    this.gold = 0;
+    /** Permanent upgrades bought from merchants: {goodId: level}, and the stat changes they add up to. */
+    this.upgrades = {};
+    this.permanent = {};
     this.lives = config.rules?.lives ?? 9999;
     this.score = 0;
     this.keys = 0;
@@ -61,7 +67,7 @@ export class Hero extends Actor {
   revive(x, y) {
     this.dead = false; this.deadTime = 0;
     this.hp = this.maxHp;
-    this.mp = this.g.stats.mp;
+    this.mp = this.maxMp;
     this.stun = 0; this.slow.time = 0; this.weak.time = 0;
     this.boosts = [];
     this.invulnerable = 1.5;
@@ -105,9 +111,27 @@ export class Hero extends Actor {
     this.events.push({ type: 'ability', slot, kind: ability.type, x: this.body.x, y: this.body.y });
   }
 
-  /** The current multiplier for a stat from active boosts (1 when there is none). */
+  /**
+   * Work out what the hero's upgrades add up to. Call after `upgrades` changes.
+   * @param {Record<string, object>} goods  the goods table from data/npcs.json
+   */
+  applyUpgrades(goods) {
+    this.permanent = {};
+    for (const [id, level] of Object.entries(this.upgrades)) {
+      const good = goods?.[id];
+      if (good?.kind === 'upgrade') this.permanent[good.stat] = (this.permanent[good.stat] ?? 0) + good.perLevel * level;
+    }
+    const oldHp = this.maxHp, oldMp = this.maxMp;
+    this.maxHp = this.baseHp + (this.permanent.maxHp ?? 0);
+    this.maxMp = this.g.stats.mp + (this.permanent.maxMp ?? 0);
+    // A larger maximum arrives filled.
+    this.hp = Math.min(this.maxHp, this.hp + Math.max(0, this.maxHp - oldHp));
+    this.mp = Math.min(this.maxMp, this.mp + Math.max(0, this.maxMp - oldMp));
+  }
+
+  /** The current multiplier for a stat: permanent upgrades and active boosts together (1 when there are none). */
   boost(stat) {
-    let factor = 1;
+    let factor = 1 + (this.permanent[stat] ?? 0);
     for (const b of this.boosts) if (b.stat === stat) factor *= b.factor;
     return factor;
   }
@@ -240,7 +264,7 @@ export class Hero extends Actor {
     }
     if (!this.flying) {
       const regen = (g.stats.mpRegen ?? 0) * (this.config.difficulty?.mpRegen ?? 1) * this.boost('mpRegen');
-      this.mp = Math.min(g.stats.mp, this.mp + regen * dt);
+      this.mp = Math.min(this.maxMp, this.mp + regen * dt);
     }
 
     if (intents.dir && !rooted) this.facing = intents.dir;

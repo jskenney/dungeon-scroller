@@ -58,6 +58,10 @@ export class LineDirector {
         case 'bossFight': this.say(e.actor, 'fight', 0.3); this.say(hero, 'bossFight', 2.4); break;
         case 'bossPhase': this.say(e.actor, e.phase === 2 ? 'phase2' : 'phase3'); break;
         case 'levelComplete': this.say(hero, 'complete'); break;
+        case 'npcGreet': this.say(e.actor, 'greet', 0.2); break;
+        case 'npcTalk': this.say(e.actor, 'talk'); break;
+        case 'bought': this.say(e.actor, 'bought'); break;
+        case 'cannotAfford': this.say(e.actor, 'poor'); break;
         default:
       }
     }

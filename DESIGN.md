@@ -336,7 +336,7 @@ Each JSON was generated from its guide and verified against the PNG: image size,
 
 All six hero sheets share one 14-row layout: idle, run, jump, three attacks (listed above), hit, death, teleport out/in, crouch, crawl, fly up, flight. In every hero sheet the first attack is a short-range spell, the second a ranged or targeted spell, and the third a physical weapon attack (the light and space mage's first is a heal).
 
-All five NPC sheets share one 12-row layout: idle, walk, death, take a hit, receive healing, buy, sell, wave, talking, hide, teleport out, teleport in. `buy` and `sell` are named from the NPC's point of view, and their `trade` events mark the frames where goods and payment visibly change hands; the game decides what is actually traded. The young villager's buy row runs in the opposite order to the others (he pays first). NPCs have art JSON only: there is no NPC gameplay catalog yet and the game does not place them.
+All five NPC sheets share one 12-row layout: idle, walk, death, take a hit, receive healing, buy, sell, wave, talking, hide, teleport out, teleport in. `buy` and `sell` are named from the NPC's point of view, and their `trade` events mark the frames where goods and payment visibly change hands; the game decides what is actually traded. The young villager's buy row runs in the opposite order to the others (he pays first). `data/npcs.json` holds what they do (§16.7).
 
 Not yet in the repository: cards for enemies, music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
 
@@ -857,6 +857,37 @@ The generator now also builds **gate sections**: a lever followed by a gated doo
 
 **Tests** cover each object above, locked chests and gates, crates as obstacles and as targets for melee and projectiles, loot from enemies, checkpoints as respawn points, the shrine's rest, and level completion. The walking bot, now pulling levers, still completes 120 of 120 generated levels.
 
+### 16.7 Gold, merchants and permanent upgrades
+
+Heroes grow stronger by buying upgrades from NPC merchants. Values are in `data/npcs.json`; the rules are in `js/sim/world.js` and `js/sim/npc.js`.
+
+- **Gold.** Coins give 1 gold and gems 10, along with the same score. The HUD shows the hero's gold. Gold is spent only at merchants; score is never spent.
+- **NPCs in levels.** A level places one with `{ "type": "npc", "id", "col", "row" }`. An NPC stands where it is put, turns to face a hero who comes near, waves and says a greeting. The interact key opens a **merchant's** shop; anyone else says a line. Enemies ignore NPCs and NPCs cannot be hurt.
+- **The shop.** While it is open the world waits: enemies, projectiles and timers hold still. The screen shows the merchant's card, the hero's gold and the merchant's `stock`; buying plays the merchant's sell animation and a line.
+- **Goods** are of two kinds:
+
+  | Kind | Behaviour |
+  |---|---|
+  | `upgrade` | Permanent. Each level bought adds `perLevel` to one stat, up to `maxLevel`. The price starts at `price` and is multiplied by `priceGrowth` for each level already owned. |
+  | `item` | Used at once and can be bought again: a full heal, full mana, both, or a key. |
+
+- **Upgrade stats.** `damage`, `attackSpeed`, `moveSpeed`, `mpRegen` and `toughness` add a fraction (0.1 is +10%) and combine with temporary boosts; `maxHp` and `maxMp` add points, and the extra arrives filled.
+
+  | Merchant | Sells |
+  |---|---|
+  | Shopkeeper | Healing draught, mana draught, iron key; maximum HP |
+  | Traveling merchant | Damage, attack speed, movement speed; iron key |
+  | Village elder | Toughness, mana regeneration |
+  | Village priest | Blessing (full HP and MP); maximum MP, maximum HP |
+  | Young villager | Nothing: he talks, with hints about the dungeon |
+
+- **Kept between levels.** Each hero's gold and upgrades are saved in the browser (`js/profile.js`) whenever they change, and are applied at the start of every level. Dying loses neither. The hero selection screen shows each hero's gold and upgrade count, and Settings has *Erase progress*.
+- **Where merchants appear.** `levels/village.json` has all five NPCs and enough gems to try the shops. In generated levels a rest stop sometimes has a merchant waiting in place of a shrine.
+
+Prices, amounts, limits and every line the NPCs say are first drafts.
+
+**Tests** cover gold from pickups, greeting and the shop prompt, prices that grow and stop at the limit, each kind of upgrade taking effect, buying without enough gold, repeatable items, the world waiting during shopping, talkers, and upgrades carried into a new level.
+
 ### 16.6 Bosses
 
 `js/sim/boss.js` extends the enemy with phases and the larger attacks. Values come from `data/bosses.json`.
@@ -893,7 +924,7 @@ Three small levels, `levels/arena-dragon.json`, `arena-fenrir.json` and `arena-m
 
 1. **Box review**: the drafted collision and hit boxes need checking in the viewer. **Low-passage tiles** need drawing (a 40 px gap). NPC, audio and level catalogs do not exist yet.
 2. **Cards**: the first card PNGs, and the rectangle of the common information area.
-3. **What NPCs do**: the five NPC sheets have art JSON, but there is no gameplay catalog for them (dialogue, shop stock and prices, where they stand) and the simulation does not place them yet.
+3. **NPC details**: prices, upgrade amounts and NPC lines are first drafts; NPCs do not walk, and cannot be bought *from* by selling them things (the buy animations are unused).
 4. **Parallax backgrounds** per theme.
 5. **Music and sound effects**: file formats as delivered, and a naming convention for `data/audio.json`.
 6. **`LICENSE` file** (MIT) and a short `README.md`.

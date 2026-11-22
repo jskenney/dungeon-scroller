@@ -2,9 +2,14 @@
   "schema": "dungeon-scroller/levels@1",
   "notes": [
     "Static levels offered on the level selection screen. Paths are relative to this file.",
-    "Two test courses with every kind of enemy and most kinds of object, and one arena for each boss."
+    "A village with every NPC, two test courses with every kind of enemy and most kinds of object, and one arena for each boss."
   ],
   "entries": [
+    {
+      "id": "village",
+      "file": "../levels/village.json",
+      "description": "All five villagers, four of them merchants, with gems to spend on upgrades."
+    },
     {
       "id": "dungeon-test",
       "file": "../levels/dungeon-test.json",

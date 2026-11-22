@@ -25,6 +25,7 @@ export const ENEMY_COST = { normal_skeleton: 1, undead_wolf: 2, skeleton_knight:
  * @param {number} [options.difficulty] 1 (gentle) to 5 (hard)
  * @param {string[]} [options.enemies] enemy ids that may appear
  * @param {string[]} [options.bosses]  boss ids to choose from
+ * @param {string[]} [options.npcs]    merchant ids that may wait at rest stops
  * @param {{maxRise?: number, maxGap?: number}} [options.limits] what every hero can do, in tiles
  * @returns {{doc: object, map: string[], seed: string, attempts: number}}
  */
@@ -46,6 +47,7 @@ function attemptLevel(options, attempt) {
   const hasCeiling = Object.values(tileset.tiles).some(t => t.shape === 'rect' && t.rect[2] === 96 && t.rect[3] < 96);
   const enemyPool = (options.enemies ?? Object.keys(ENEMY_COST)).filter(id => ENEMY_COST[id]);
   const bosses = options.bosses ?? [];
+  const merchants = options.npcs ?? [];
 
   /** One entry per column: the floor's surface row (null for a pit) and extra cells. */
   const columns = [];
@@ -154,7 +156,9 @@ function attemptLevel(options, attempt) {
       const from = col();
       flat(4);
       put('object', 'checkpoint_flag', from + 1, floor - 1);
-      if (rng.chance(0.35)) put('object', 'healing_shrine', from + 3, floor - 1);
+      // A rest stop may have a merchant waiting, or a shrine.
+      if (merchants.length && rng.chance(0.45)) put('npc', rng.pick(merchants), from + 3, floor - 1);
+      else if (rng.chance(0.35)) put('object', 'healing_shrine', from + 3, floor - 1);
     },
   };
 

@@ -977,3 +977,107 @@ tests.push(
     assert(seen.size === 2, `expected both boosts to turn up over 12 tries, saw ${[...seen].join(', ')}`);
   }],
 );
+
+// -------------------------------------------------------------------- shops
+
+const GOODS = {
+  power: { kind: 'upgrade', stat: 'damage', perLevel: 0.5, maxLevel: 2, price: 10, priceGrowth: 2 },
+  vitality: { kind: 'upgrade', stat: 'maxHp', perLevel: 20, maxLevel: 3, price: 10, priceGrowth: 1.5 },
+  haste: { kind: 'upgrade', stat: 'attackSpeed', perLevel: 1, maxLevel: 1, price: 5 },
+  draught: { kind: 'item', gives: { hpFraction: 1 }, price: 4 },
+};
+function fakeNpc(role = 'merchant', stock = ['power', 'vitality', 'haste', 'draught']) {
+  const animations = Object.fromEntries(['idle', 'walk', 'wave', 'talk', 'sell'].map(s => [s, clip(s, ['idle', 'walk', 'talk'].includes(s))]));
+  return { id: 'trader', kind: 'npc', animations, gameplay: { role, stock, box: { x: -24, y: -52, w: 48, h: 52 }, lines: { greet: ['Hello.'], talk: ['Nice day.'] } } };
+}
+/** A flat room with a merchant at column 3 and the hero carrying some gold. */
+function market(gold, npc = fakeNpc()) {
+  const level = mapLevel(['............', '............', 'S...........', '############']);
+  level.doc.entities = [{ type: 'npc', id: 'trader', col: 3, row: 2 }, { type: 'enemy', id: 'dummy', col: 8, row: 2 }];
+  const world = new World(level, fighter(), QUIET, { 'npc/trader': npc, 'enemy/dummy': dummy(), ...OBJECTS }, GOODS);
+  world.hero.gold = gold;
+  runWorld(world, {}, 5);
+  return world;
+}
+
+tests.push(
+  ['coins and gems give gold as well as score', () => {
+    const rich = { 'object/coin': fakeObject({ use: 'touch', behaviour: 'pickup', gives: { score: 1, gold: 1 } }),
+      'object/gem': fakeObject({ use: 'touch', behaviour: 'pickup', gives: { score: 10, gold: 10 } }) };
+    const level = mapLevel(['............', '............', 'S...........', '############']);
+    level.doc.entities = [{ type: 'object', id: 'coin', col: 2, row: 2 }, { type: 'object', id: 'gem', col: 3, row: 2 }];
+    const world = new World(level, fighter(), QUIET, rich);
+    walkTo(world, 4);
+    assert(world.hero.gold === 11 && world.hero.score === 11, `expected 11 gold and 11 points, got ${world.hero.gold} and ${world.hero.score}`);
+  }],
+  ['a merchant greets a hero who comes near and offers a shop', () => {
+    const world = market(0);
+    let greeted = 0, shop = 0;
+    const watch = w => { greeted += w.events.filter(e => e.type === 'npcGreet').length; shop += w.events.filter(e => e.type === 'shop').length; w.events.length = 0; };
+    for (let i = 0; i < 200 && world.hero.body.x < 3.4 * TILE; i++) runWorld(world, { dir: 1 }, 1, watch);
+    assert(greeted === 1, `expected one greeting, got ${greeted}`);
+    assert(world.prompt?.isNpc, 'no prompt was offered at the merchant');
+    runWorld(world, i => ({ interact: i === 0 }), 3, watch);
+    assert(shop === 1, 'the interact key did not open the shop');
+  }],
+  ['an upgrade costs gold, grows dearer, stops at its limit and strengthens the hero', () => {
+    const world = market(100), npc = world.npcs[0], hero = world.hero;
+    assert(world.priceOf('power').price === 10, 'wrong first price');
+    assert(world.buy(npc, 'power') === 'bought' && hero.gold === 90 && hero.upgrades.power === 1, 'the first purchase failed');
+    assert(world.priceOf('power').price === 20, `expected the second level to cost 20, got ${world.priceOf('power').price}`);
+    assert(world.buy(npc, 'power') === 'bought' && hero.gold === 70, 'the second purchase failed');
+    assert(world.buy(npc, 'power') === 'maxed' && hero.gold === 70, 'bought past the limit');
+    assert(hero.boost('damage') === 2, `expected doubled damage, got ${hero.boost('damage')}`);
+    faceUp(world, world.enemies[0]);
+    runWorld(world, i => ({ attack1: i === 0 }), 50);
+    assert(world.enemies[0].hp === 10, `expected a 20-damage swing, enemy at ${world.enemies[0].hp}`);
+  }],
+  ['maximum health upgrades raise the maximum and arrive filled', () => {
+    const world = market(100), hero = world.hero;
+    hero.hp = 50;
+    world.buy(world.npcs[0], 'vitality');
+    assert(hero.maxHp === 120 && hero.hp === 70, `expected 70 of 120 HP, got ${hero.hp} of ${hero.maxHp}`);
+    world.hurtHero(999, { x: 0 });
+    runWorld(world, {}, 150);
+    assert(hero.hp === 120 && hero.upgrades.vitality === 1, 'the upgrade was lost on dying');
+  }],
+  ['a hero without enough gold cannot buy, and items can be bought again', () => {
+    const world = market(9), npc = world.npcs[0], hero = world.hero;
+    assert(world.buy(npc, 'power') === 'poor' && hero.gold === 9 && !hero.upgrades.power, 'bought without enough gold');
+    hero.hp = 10;
+    assert(world.buy(npc, 'draught') === 'bought' && hero.hp === 100 && hero.gold === 5, 'the draught did not heal');
+    hero.hp = 10;
+    assert(world.buy(npc, 'draught') === 'bought' && hero.hp === 100 && hero.gold === 1, 'the draught could not be bought twice');
+    assert(world.buy(npc, 'nonsense') === 'unavailable', 'bought something the merchant does not sell');
+  }],
+  ['the world waits while a shop is open', () => {
+    const world = market(0);
+    const enemy = world.enemies[0];
+    world.hurtEnemy(enemy, 5, world.hero);
+    world.openShop(world.npcs[0]);
+    const x = world.hero.body.x, ex = enemy.body.x, tick = world.tick;
+    runWorld(world, { dir: 1 }, 60);
+    assert(world.hero.body.x === x && enemy.body.x === ex && world.tick === tick, 'the world kept moving during shopping');
+    world.closeShop();
+    runWorld(world, { dir: 1 }, 30);
+    assert(world.hero.body.x > x, 'the world did not resume');
+  }],
+  ['someone who does not trade just talks', () => {
+    const world = market(0, fakeNpc('talker', []));
+    let talked = 0, shop = 0;
+    const watch = w => { talked += w.events.filter(e => e.type === 'npcTalk').length; shop += w.events.filter(e => e.type === 'shop').length; w.events.length = 0; };
+    for (let i = 0; i < 200 && world.hero.body.x < 3.4 * TILE; i++) runWorld(world, { dir: 1 }, 1, watch);
+    runWorld(world, i => ({ interact: i === 0 }), 3, watch);
+    assert(talked === 1 && shop === 0, 'a talker opened a shop or stayed silent');
+  }],
+  ['upgrades carried into a level take effect at once', () => {
+    const level = mapLevel(['............', '............', 'S...........', '############']);
+    const world = new World(level, fighter(), QUIET, {}, GOODS);
+    world.hero.upgrades = { vitality: 2, haste: 1 };
+    world.hero.applyUpgrades(GOODS);
+    assert(world.hero.maxHp === 140 && world.hero.hp === 140, 'carried health upgrades were not applied');
+    let fired = -1;
+    runWorld(world, i => ({ attack2: i === 0 }), 40, (w, i) => { if (fired < 0 && w.projectiles.length) fired = i; });
+    assert(fired >= 5 && fired <= 7, `a carried haste upgrade fired after ${fired} ticks, expected about 6`);
+  }],
+);

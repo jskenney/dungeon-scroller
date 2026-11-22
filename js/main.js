@@ -14,7 +14,8 @@ import { randomSeed } from './level/random.js';
 import { World } from './sim/world.js';
 import { keyboardIntents } from './sim/controllers/keyboard.js';
 import { h, keyName } from './ui/dom.js';
-import { cardElement, spritePreview } from './ui/card.js';
+import { cardElement, plainCard, spritePreview } from './ui/card.js';
+import { loadProgress, saveProgress, resetProgress } from './profile.js';
 import { Hud } from './ui/hud.js';
 import { Bubbles } from './ui/bubbles.js';
 import { AudioEngine } from './audio/audio.js';
@@ -37,6 +38,12 @@ function show(element, back = null) {
   ui.replaceChildren(element);
   game.back = back;
   element.querySelector('[autofocus]')?.focus();
+}
+
+/** A short note on a hero's saved gold and upgrades, for the selection screen. */
+function progressNote(heroId) {
+  const saved = loadProgress(heroId), levels = Object.values(saved.upgrades).reduce((a, b) => a + b, 0);
+  return saved.gold || levels ? ` · ${saved.gold} gold · ${levels} upgrade${levels === 1 ? '' : 's'}` : '';
 }
 
 const heroes = () => Object.values(game.assets.entities).filter(e => e.kind === 'player' && e.gameplay);
@@ -75,7 +82,7 @@ function heroScreen() {
     chosen = entity;
     for (const b of grid.children) b.setAttribute('aria-pressed', String(b.dataset.id === entity.id));
     preview.replaceChildren(spritePreview(entity, 'idle', 1, true), h('div', {},
-      h('strong', {}, entity.name), h('div', { class: 'muted' }, entity.gameplay.role)));
+      h('strong', {}, entity.name), h('div', { class: 'muted' }, entity.gameplay.role, progressNote(entity.id))));
   };
   const confirm = () => { game.settings.lastHero = chosen.id; game.hero = chosen; levelScreen(); };
   const grid = h('div', { class: 'card-grid' }, list.map(entity => {
@@ -156,7 +163,8 @@ function startRandom({ theme, length, difficulty, seed }) {
   const tileset = game.assets.tilesets.find(t => t.id === theme) ?? game.assets.tilesets[0];
   const ofKind = kind => Object.values(game.assets.entities).filter(e => e.kind === kind && e.gameplay).map(e => e.id);
   const { doc } = generateLevel({ seed, tileset, tilesetId: tileset.id, length, difficulty,
-    enemies: ofKind('enemy'), bosses: ofKind('boss'), limits: heroLimits() });
+    enemies: ofKind('enemy'), bosses: ofKind('boss'), limits: heroLimits(),
+    npcs: Object.values(game.assets.entities).filter(e => e.kind === 'npc' && e.gameplay?.role === 'merchant').map(e => e.id) });
   // Put the recipe in the address bar so the level can be shared or replayed.
   const query = new URLSearchParams({ seed, theme: tileset.id, length, difficulty });
   history.replaceState(null, '', `${location.pathname}?${query}`);
@@ -205,6 +213,7 @@ function settingsScreen(returnTo) {
       h('h2', {}, 'Keys'),
       h('table', { class: 'keys' }, h('tbody', {}, rows)),
       h('div', { class: 'row' },
+        h('button', { type: 'button', onclick: e => { if (confirm('Erase every hero\'s gold and upgrades?')) { resetProgress(); e.target.textContent = 'Progress erased'; } } }, 'Erase progress'),
         h('button', { type: 'button', onclick: () => { s.resetKeys(); render(); } }, 'Reset all keys'),
         h('button', { type: 'button', class: 'primary', autofocus: true, onclick: returnTo }, 'Done')))),
       () => { if (capturing) { capturing = null; render(); } else returnTo(); });
@@ -219,10 +228,18 @@ function settingsScreen(returnTo) {
 
 // ------------------------------------------------------------------------- play
 
+const goods = () => game.assets.catalogs?.npcs?.goods ?? {};
+const progressKey = hero => `${hero.gold}|${JSON.stringify(hero.upgrades)}`;
+
 function startPlay(entry) {
   game.entry = entry;
   const level = new Level(entry.doc, entry.tileset);
-  game.world = new World(level, game.hero, game.config, game.assets.entities);
+  game.world = new World(level, game.hero, game.config, game.assets.entities, goods());
+  // Gold and upgrades bought earlier come along into every level.
+  const saved = loadProgress(game.hero.id);
+  Object.assign(game.world.hero, { gold: saved.gold, upgrades: saved.upgrades });
+  game.world.hero.applyUpgrades(goods());
+  game.savedState = progressKey(game.world.hero);
   game.view = new WorldView(game.stage, game.world);
   game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
   game.speech.stop();
@@ -279,6 +296,35 @@ function pause() {
       h('button', { type: 'button', onclick: levelScreen }, 'Change level'),
       h('button', { type: 'button', onclick: heroScreen }, 'Change hero'),
       h('button', { type: 'button', onclick: titleScreen }, 'Quit to title')))), resume);
+}
+
+/** A merchant's shop: their card, what they sell, and the hero's gold. The world waits while it is open. */
+function shopScreen(npc) {
+  const world = game.world, hero = world.hero;
+  world.openShop(npc);
+  game.input.setEnabled(false);
+  const close = () => { world.closeShop(); resume(); };
+  const render = (message = '') => {
+    const card = game.assets.cards.find(c => c.subjectEntity === npc.entity);
+    const rows = (npc.g.stock ?? []).map(id => {
+      const good = world.goods[id], { price, level, maxed } = world.priceOf(id);
+      const owned = good.kind === 'upgrade' ? `Level ${level} of ${good.maxLevel}` : '';
+      return h('li', { class: 'good' },
+        h('div', {}, h('strong', {}, good.name), h('span', { class: 'muted' }, good.description), owned ? h('span', { class: 'owned' }, owned) : null),
+        h('button', { type: 'button', class: 'primary', disabled: maxed || hero.gold < price,
+          onclick: () => { const result = world.buy(npc, id); render(result === 'bought' ? `Bought ${good.name}.` : ''); } },
+          maxed ? 'Owned' : `${price} gold`));
+    });
+    show(h('div', { class: 'screen centered scrim' }, h('section', { class: 'panel shop' },
+      card ? h('div', { class: 'shop-card' }, plainCard(card, npc.entity.name, 'Merchant', npc.entity.description)) : null,
+      h('div', { class: 'shop-goods' },
+        h('h1', {}, npc.entity.name),
+        h('p', { class: 'gold' }, `You have ${hero.gold} gold.`),
+        h('ul', {}, rows),
+        h('p', { class: 'muted', role: 'status' }, message || 'Upgrades are permanent and stay with this hero between levels.'),
+        h('div', { class: 'row' }, h('button', { type: 'button', autofocus: true, onclick: close }, 'Leave'))))), close);
+  };
+  render();
 }
 
 function completeScreen() {
@@ -351,6 +397,8 @@ function playCues(world) {
       case 'bossDefeated': audio.music(audio.musicFor('level', world.level.tileset.id)); break;
       case 'levelComplete': cue = 'complete'; audio.music(audio.musicFor('complete')); break;
       case 'gameOver': cue = 'gameover'; break;
+      case 'bought': cue = 'chest'; break;
+      case 'cannotAfford': cue = 'locked'; break;
       default:
     }
     // Sounds come from the left or right according to where they happen on screen.
@@ -376,6 +424,9 @@ function tick(dt) {
   playCues(world);
   for (const line of game.lines.update(world.events, world, dt)) game.speech.say(line.actor, line.text);
   game.bubbles.update(dt);
+  const shopAt = world.events.find(e => e.type === 'shop')?.actor;
+  // Keep gold and upgrades saved as they change.
+  if (progressKey(world.hero) !== game.savedState) { saveProgress(game.hero.id, world.hero); game.savedState = progressKey(world.hero); }
   const gameOver = world.events.some(e => e.type === 'gameOver');
   const complete = world.events.some(e => e.type === 'levelComplete');
   world.events.length = 0;                    // sounds will read these later
@@ -399,6 +450,7 @@ function tick(dt) {
   if (steps > 0) input.endFrame();
   if (gameOver) gameOverScreen();
   else if (complete) completeScreen();
+  else if (shopAt) shopScreen(shopAt);
 }
 
 // ------------------------------------------------------------------------- boot

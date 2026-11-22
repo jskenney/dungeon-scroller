@@ -46,6 +46,20 @@ export function cardElement(card, entity) {
     } }, text));
 }
 
+/** A card with a title and a few lines of text written into its text area (used for NPCs). */
+export function plainCard(card, title, subtitle, text) {
+  const pct = (v, total) => `${(v / total) * 100}%`;
+  const a = card.textArea;
+  return h('div', { class: 'card' },
+    h('img', { src: card.imageUrl, alt: '', draggable: 'false' }),
+    h('div', { class: 'card-area', style: {
+      left: pct(a.x, card.size.w), top: pct(a.y, card.size.h), width: pct(a.w, card.size.w), height: pct(a.h, card.size.h),
+    } }, h('div', { class: `card-text ${card.textTone === 'dark' ? 'dark' : 'light'}` },
+      h('div', { class: 'card-name' }, title),
+      h('div', { class: 'card-role' }, subtitle),
+      h('div', { class: 'card-blurb' }, text))));
+}
+
 /**
  * A looping preview of one animation, drawn straight from the sheet image.
  * Stops by itself once the element leaves the page.

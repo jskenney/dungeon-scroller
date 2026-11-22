@@ -24,6 +24,7 @@ export class WorldView {
     stage.world.addChildAt(this.effects, stage.world.getChildIndex(stage.actors) + 1);
     this.objectViews = new Map();
     this.gateViews = new Map();
+    this.npcViews = new Map();
     this.interactKey = 'E';
     this.prompt = new Text({ text: '', resolution: Math.max(1, Math.round(stage.perPixel)) * 2,
       style: { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 9, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x000000, width: 2 } } });
@@ -70,6 +71,11 @@ export class WorldView {
       if (world.objects.includes(object)) continue;
       view.sprite.destroy();
       this.objectViews.delete(object);
+    }
+    for (const npc of world.npcs) {
+      let view = this.npcViews.get(npc);
+      if (!view) { view = stage.addActor(npc.entity, 0, this.props); this.npcViews.set(npc, view); }
+      view.show(npc.pose.slot, npc.pose.frame, npc.x, npc.y, npc.facing);
     }
     for (const gate of world.gates) {
       let view = this.gateViews.get(gate);
@@ -179,7 +185,7 @@ export class WorldView {
       else if (e.type === 'checkpoint') this.float(e.x, e.y - 12, 'checkpoint', 0x7be495);
       else if (e.type === 'gateOpened') this.float(e.x, e.y + 60, 'opened', 0xffffff);
       else if (e.type === 'gave') {
-        const g = e.gives, label = g.keys ? 'key' : e.boost ? (BOOST_NAMES[e.boost.stat] ?? e.boost.stat) : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
+        const g = e.gives, label = g.keys ? 'key' : g.gold && !g.score ? `+${g.gold} gold` : e.boost ? (BOOST_NAMES[e.boost.stat] ?? e.boost.stat) : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
           : g.score ? `+${g.score}` : g.hpFraction && g.mpFraction ? 'restored' : null;
         if (label) this.float(e.x, e.y, label, g.hp || g.hpFraction ? 0x7be495 : g.mp ? 0x8fb8f2 : 0xffe08a);
       }

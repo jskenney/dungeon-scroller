@@ -1,0 +1,90 @@
+{
+  "schema": "dungeon-scroller/catalog@1",
+  "kind": "npc",
+  "notes": [
+    "NPCs stand where a level places them. A merchant opens a shop when the hero presses the interact key beside them; anyone else just talks.",
+    "goods are what can be bought with gold. kind 'upgrade' is permanent and kept by that hero between levels: each level bought adds 'perLevel' to a stat, up to 'maxLevel'. Its price starts at 'price' and is multiplied by 'priceGrowth' for each level already owned.",
+    "Upgrade stats: damage, attackSpeed, moveSpeed, mpRegen and toughness add a fraction (0.1 is +10%); maxHp and maxMp add points.",
+    "kind 'item' is used at once and can be bought again: 'gives' has the same meaning as for objects (hp, mp, hpFraction, mpFraction, keys, boost).",
+    "stock lists the goods a merchant sells. lines are what the NPC says: greet (hero comes near), bought, poor (not enough gold), talk (interact, for those who do not trade).",
+    "box is the area the hero must stand in to interact, relative to the NPC's pivot. All lines and prices are first drafts."
+  ],
+  "goods": {
+    "power": { "kind": "upgrade", "name": "Whetstone of Power", "description": "+10% damage", "stat": "damage", "perLevel": 0.1, "maxLevel": 5, "price": 30, "priceGrowth": 1.6 },
+    "haste": { "kind": "upgrade", "name": "Quickening Charm", "description": "+8% attack speed", "stat": "attackSpeed", "perLevel": 0.08, "maxLevel": 5, "price": 30, "priceGrowth": 1.6 },
+    "swiftness": { "kind": "upgrade", "name": "Traveler's Boots", "description": "+5% movement speed", "stat": "moveSpeed", "perLevel": 0.05, "maxLevel": 5, "price": 20, "priceGrowth": 1.5 },
+    "vitality": { "kind": "upgrade", "name": "Tonic of Vitality", "description": "+15 maximum HP", "stat": "maxHp", "perLevel": 15, "maxLevel": 5, "price": 25, "priceGrowth": 1.5 },
+    "spirit": { "kind": "upgrade", "name": "Sun Charm", "description": "+15 maximum MP", "stat": "maxMp", "perLevel": 15, "maxLevel": 5, "price": 25, "priceGrowth": 1.5 },
+    "focus": { "kind": "upgrade", "name": "Woven Charm of Focus", "description": "+20% mana regeneration", "stat": "mpRegen", "perLevel": 0.2, "maxLevel": 5, "price": 20, "priceGrowth": 1.5 },
+    "toughness": { "kind": "upgrade", "name": "Herbal Ward", "description": "+8% toughness", "stat": "toughness", "perLevel": 0.08, "maxLevel": 5, "price": 30, "priceGrowth": 1.6 },
+    "healing_draught": { "kind": "item", "name": "Healing Draught", "description": "Restores all HP now", "gives": { "hpFraction": 1 }, "price": 8 },
+    "mana_draught": { "kind": "item", "name": "Mana Draught", "description": "Restores all MP now", "gives": { "mpFraction": 1 }, "price": 6 },
+    "blessing": { "kind": "item", "name": "Blessing", "description": "Restores all HP and MP now", "gives": { "hpFraction": 1, "mpFraction": 1 }, "price": 12 },
+    "iron_key": { "kind": "item", "name": "Iron Key", "description": "Opens one locked chest or gate", "gives": { "keys": 1 }, "price": 15 }
+  },
+  "entries": {
+    "shopkeeper": {
+      "sheet": "../assets/sprites/NPCs/shopkeeper_spritesheet.json",
+      "entity": "shopkeeper",
+      "card": "../assets/cards/shopkeeper_card.json",
+      "role": "merchant",
+      "box": { "x": -30, "y": -52, "w": 48, "h": 52 },
+      "stock": ["healing_draught", "mana_draught", "iron_key", "vitality"],
+      "lines": {
+        "greet": ["Welcome, welcome! Mind the bottles.", "Coin first, friend. Then we talk."],
+        "bought": ["A pleasure.", "You won't regret it."],
+        "poor": ["Come back when your purse is heavier."]
+      }
+    },
+    "traveling_merchant": {
+      "sheet": "../assets/sprites/NPCs/traveling_merchant_spritesheet.json",
+      "entity": "traveling_merchant",
+      "card": "../assets/cards/traveling_merchant_card.json",
+      "role": "merchant",
+      "box": { "x": -44, "y": -60, "w": 68, "h": 60 },
+      "stock": ["power", "haste", "swiftness", "iron_key"],
+      "lines": {
+        "greet": ["Goods from every road I've walked.", "You look like someone who travels light. Too light."],
+        "bought": ["It served me well. It'll serve you better.", "Safe roads."],
+        "poor": ["I carry all this on my back. I can't carry your debts too."]
+      }
+    },
+    "village_elder": {
+      "sheet": "../assets/sprites/NPCs/village_elder_spritesheet.json",
+      "entity": "village_elder",
+      "card": "../assets/cards/village_elder_card.json",
+      "role": "merchant",
+      "box": { "x": -29, "y": -52, "w": 54, "h": 52 },
+      "stock": ["toughness", "focus"],
+      "lines": {
+        "greet": ["Sit a moment, child. The dead can wait.", "My charms have kept this village longer than its walls."],
+        "bought": ["Wear it close.", "May it hold when you cannot."],
+        "poor": ["The herbs cost me the walk, if nothing else."]
+      }
+    },
+    "village_priest": {
+      "sheet": "../assets/sprites/NPCs/village_priest_spritesheet.json",
+      "entity": "village_priest",
+      "card": "../assets/cards/village_priest_card.json",
+      "role": "merchant",
+      "box": { "x": -26, "y": -52, "w": 43, "h": 52 },
+      "stock": ["blessing", "spirit", "vitality"],
+      "lines": {
+        "greet": ["The sun still rises. Take heart.", "You carry a heavy road. Let me lighten it."],
+        "bought": ["Go in the light.", "Be whole."],
+        "poor": ["The temple roof leaks, friend. Even blessings need a little coin."]
+      }
+    },
+    "young_male_villager": {
+      "sheet": "../assets/sprites/NPCs/young_male_villager_spritesheet.json",
+      "entity": "young_male_villager",
+      "card": "../assets/cards/young_male_villager_card.json",
+      "role": "talker",
+      "box": { "x": -30, "y": -51, "w": 48, "h": 51 },
+      "lines": {
+        "greet": ["You're really going down there?"],
+        "talk": ["They say a king still sits his throne, below the crypt.", "My grandfather swore the big wolf was only a story.", "If you find a gate you can't open, look for a lever. Or a key.", "The old woman's charms work. Don't ask me how I know."]
+      }
+    }
+  }
+}

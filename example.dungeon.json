@@ -49,6 +49,7 @@
     "enemies": "data/enemies.json",
     "bosses": "data/bosses.json",
     "objects": "data/objects.json",
+    "npcs": "data/npcs.json",
     "audio": "data/audio.json"
   },
 
