@@ -1,0 +1,146 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "player",
+  "image": "water_mage_spritesheet.png",
+  "guide": "water_mage_spritesheet.md",
+  "sha256": "661f9559f7f3a593695c3c35770eeb884b4a5158ca60aa9f37d6ff1b5641f99c",
+  "size": { "w": 576, "h": 1344 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 14,
+  "facing": "right",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "F6 of every attack row and of the hit row equals idle F1.",
+    "Crouch F6 equals crawl F1; teleport_in F6 equals idle F1.",
+    "Flight rows are drawn above the ground line; do not realign them.",
+    "The travelling water bolt is a separate sprite or effect."
+  ],
+  "entities": {
+    "water_mage": {
+      "name": "Water Mage",
+      "description": "Dark-haired mage in a short sea-green mantle and deep navy coat with a silver clasp, carrying a compact spear with a leaf-shaped steel point. Water is deep teal with bright cyan edges and pale foam.",
+      "rows": [1, 14],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 1344 },
+      "idleBounds": { "x": 26, "y": 33, "w": 43, "h": 52 },
+      "animations": {
+        "idle": {
+          "id": "idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [140, 140, 140, 140, 140, 140]
+        },
+        "run": {
+          "id": "run",
+          "label": "Run",
+          "row": 2,
+          "loop": true,
+          "durations": [80, 80, 80, 80, 80, 80]
+        },
+        "jump": {
+          "id": "jump",
+          "label": "Jump",
+          "row": 3,
+          "end": "state",
+          "durations": [80, 70, 110, 120, 110, 100],
+          "events": [
+            { "frame": 2, "type": "takeoff", "note": "Begin the physical jump." },
+            { "frame": 6, "type": "land", "note": "Show on actual ground contact; hold F3 rising, F4 near apex, F5 falling." }
+          ]
+        },
+        "attack1": {
+          "id": "breaker_wave",
+          "label": "Breaker Wave",
+          "row": 4,
+          "end": "state",
+          "durations": [100, 110, 150, 100, 120, 120],
+          "events": [
+            { "frame": 4, "type": "area", "note": "Short ground-level wave; reach, duration and damage are gameplay data." }
+          ]
+        },
+        "attack2": {
+          "id": "water_bolt",
+          "label": "Water Bolt",
+          "row": 5,
+          "end": "state",
+          "durations": [90, 110, 150, 100, 100, 100],
+          "events": [
+            { "frame": 4, "type": "spawn", "note": "Travelling water bolt from the casting hand; only the release is in the sheet." }
+          ]
+        },
+        "attack3": {
+          "id": "spear_thrust",
+          "label": "Spear Thrust",
+          "row": 6,
+          "end": "state",
+          "durations": [75, 100, 85, 65, 105, 110],
+          "events": [
+            { "frame": 4, "type": "melee", "note": "Spear at full extension; narrow tip-aligned contact, no water effect." }
+          ]
+        },
+        "hit": {
+          "id": "hit",
+          "label": "Hit reaction",
+          "row": 7,
+          "end": "state",
+          "durations": [60, 75, 85, 90, 95, 110]
+        },
+        "death": {
+          "id": "death",
+          "label": "Death",
+          "row": 8,
+          "end": "hold",
+          "durations": [110, 150, 160, 180, 180, 200]
+        },
+        "teleport_out": {
+          "id": "teleport_out",
+          "label": "Teleport out",
+          "row": 9,
+          "end": "hold",
+          "durations": [90, 100, 110, 100, 90, 70],
+          "events": [
+            { "frame": 6, "type": "teleport", "note": "Sprite is invisible; move the actor, then play teleport_in." }
+          ],
+          "emptyFrames": [6]
+        },
+        "teleport_in": {
+          "id": "teleport_in",
+          "label": "Teleport in",
+          "row": 10,
+          "end": "state",
+          "durations": [80, 100, 110, 110, 90, 100]
+        },
+        "crouch": {
+          "id": "crouch",
+          "label": "Crouch entry",
+          "row": 11,
+          "end": "hold",
+          "durations": [70, 80, 80, 90, 90, 90]
+        },
+        "crawl": {
+          "id": "crawl",
+          "label": "Crawl",
+          "row": 12,
+          "loop": true,
+          "durations": [120, 120, 120, 120, 120, 120]
+        },
+        "fly_up": {
+          "id": "fly_up",
+          "label": "Fly up / ascent entry",
+          "row": 13,
+          "end": "hold",
+          "durations": [90, 110, 120, 140, 140, 160]
+        },
+        "fly": {
+          "id": "directional_flight",
+          "label": "Directional flight",
+          "row": 14,
+          "loop": true,
+          "durations": [90, 90, 90, 90, 90, 90]
+        }
+      }
+    }
+  }
+}

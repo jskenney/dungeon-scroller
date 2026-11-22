@@ -1,0 +1,148 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "player",
+  "image": "wind_mage_spritesheet.png",
+  "guide": "wind_mage_spritesheet.md",
+  "sha256": "a66cab95a73e0991d49625c9764a9f3308874f7f7ba4d1cd1b37b0b1452f05a0",
+  "size": { "w": 576, "h": 1344 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 14,
+  "facing": "right",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "F6 of every attack row and of the hit row equals idle F1.",
+    "Crouch F6 equals crawl F1; teleport_in F6 equals idle F1.",
+    "Flight rows are drawn above the ground line; do not realign them.",
+    "The travelling wind crescent and the arrow are separate sprites or effects.",
+    "Crouch F4 is a distinct lowering pose; only F5 and F6 are the low hold.",
+    "Known art limitation: the bow is incomplete in several poses (no clear drawn string in the bow shot; lower limb missing in some relaxed poses)."
+  ],
+  "entities": {
+    "wind_mage": {
+      "name": "Wind Mage",
+      "description": "Dark-haired mage in a short sage-green mantle over a pale gray coat with a split scarf, carrying a compact wooden recurve bow and a slim quiver. Wind is pale mint and ivory arcs with drifting flecks.",
+      "rows": [1, 14],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 1344 },
+      "idleBounds": { "x": 19, "y": 32, "w": 51, "h": 53 },
+      "animations": {
+        "idle": {
+          "id": "idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [140, 140, 140, 140, 140, 140]
+        },
+        "run": {
+          "id": "run",
+          "label": "Run",
+          "row": 2,
+          "loop": true,
+          "durations": [80, 80, 80, 80, 80, 80]
+        },
+        "jump": {
+          "id": "jump",
+          "label": "Jump",
+          "row": 3,
+          "end": "state",
+          "durations": [80, 70, 110, 120, 110, 100],
+          "events": [
+            { "frame": 2, "type": "takeoff", "note": "Begin the physical jump." },
+            { "frame": 6, "type": "land", "note": "Show on actual ground contact; hold F3 rising, F4 near apex, F5 falling." }
+          ]
+        },
+        "attack1": {
+          "id": "gust_burst",
+          "label": "Gust Burst",
+          "row": 4,
+          "end": "state",
+          "durations": [90, 100, 140, 90, 110, 110],
+          "events": [
+            { "frame": 4, "type": "area", "note": "Short close-range wind fan; reach, duration and force are gameplay data." }
+          ]
+        },
+        "attack2": {
+          "id": "wind_blade",
+          "label": "Wind Blade",
+          "row": 5,
+          "end": "state",
+          "durations": [90, 110, 150, 100, 100, 100],
+          "events": [
+            { "frame": 4, "type": "spawn", "note": "Travelling wind crescent from the free hand; only the launch is in the sheet." }
+          ]
+        },
+        "attack3": {
+          "id": "bow_shot",
+          "label": "Bow Shot",
+          "row": 6,
+          "end": "state",
+          "durations": [90, 110, 130, 160, 60, 110],
+          "events": [
+            { "frame": 5, "type": "spawn", "note": "Ordinary arrow leaves the bow; F4 still holds the arrow. No wind effect." }
+          ]
+        },
+        "hit": {
+          "id": "hit",
+          "label": "Hit reaction",
+          "row": 7,
+          "end": "state",
+          "durations": [60, 75, 85, 90, 95, 110]
+        },
+        "death": {
+          "id": "death",
+          "label": "Death",
+          "row": 8,
+          "end": "hold",
+          "durations": [110, 150, 160, 180, 180, 200]
+        },
+        "teleport_out": {
+          "id": "teleport_out",
+          "label": "Teleport out",
+          "row": 9,
+          "end": "hold",
+          "durations": [90, 100, 110, 100, 90, 70],
+          "events": [
+            { "frame": 6, "type": "teleport", "note": "Sprite is invisible; move the actor, then play teleport_in." }
+          ],
+          "emptyFrames": [6]
+        },
+        "teleport_in": {
+          "id": "teleport_in",
+          "label": "Teleport in",
+          "row": 10,
+          "end": "state",
+          "durations": [80, 100, 110, 110, 90, 100]
+        },
+        "crouch": {
+          "id": "crouch",
+          "label": "Crouch entry",
+          "row": 11,
+          "end": "hold",
+          "durations": [70, 80, 80, 90, 90, 90]
+        },
+        "crawl": {
+          "id": "crawl",
+          "label": "Crawl",
+          "row": 12,
+          "loop": true,
+          "durations": [120, 120, 120, 120, 120, 120]
+        },
+        "fly_up": {
+          "id": "fly_up",
+          "label": "Fly up / ascent entry",
+          "row": 13,
+          "end": "hold",
+          "durations": [90, 110, 120, 140, 140, 160]
+        },
+        "fly": {
+          "id": "directional_flight",
+          "label": "Directional flight",
+          "row": 14,
+          "loop": true,
+          "durations": [90, 90, 90, 90, 90, 90]
+        }
+      }
+    }
+  }
+}

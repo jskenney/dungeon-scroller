@@ -6,6 +6,11 @@
   "assets": {
     "spritesheets": [
       "assets/sprites/players/light_space_mage_spritesheet.json",
+      "assets/sprites/players/fire_mage_spritesheet.json",
+      "assets/sprites/players/water_mage_spritesheet.json",
+      "assets/sprites/players/wind_mage_spritesheet.json",
+      "assets/sprites/players/earth_mage_spritesheet.json",
+      "assets/sprites/players/dark_swordsman_spritesheet.json",
       "assets/sprites/enemies/undead_enemy_spritesheet.json",
       "assets/sprites/enemies/undead_tier2_spritesheet.json",
       "assets/sprites/bosses/undead_boss_spritesheet.json",

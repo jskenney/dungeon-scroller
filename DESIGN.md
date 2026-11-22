@@ -204,7 +204,7 @@ One JSON file per PNG, written from the sheet's markdown guide and checked again
 | `events` | Fired once on entering `frame` (1-based). With `until`, the event is a window that stays active through that frame. `note` carries the guide's advice. |
 | `emptyFrames` | Frames that are intentionally fully transparent (teleport-out's last frame, the last frame of every object's vanish row). |
 
-Event types: `melee` (hit window), `spawn` (launch a projectile or remote effect), `emit` (start a sustained effect such as a breath or howl), `heal`, `takeoff`, `land`, `leap`, `impact`, `teleport`, `footstep`.
+Event types: `melee` (hit window), `spawn` (launch a projectile or remote effect), `emit` (start a sustained effect such as a breath or howl), `area` (enable a short close-range area attack drawn in the frame), `cast` (apply a targeted spell with no travelling projectile), `heal`, `takeoff`, `land`, `leap`, `impact`, `teleport`, `footstep`.
 
 Object entities add `registration` (`ground`, `float`, or `wall` — how the art sits relative to the ground line), `commit` (`accept`: the reward is applied when the interaction starts; `complete`: when the interact row finishes), `persistent` (keeps its activated look instead of vanishing: flag, lever, shrine, torch), and `resultBounds` (measured bounds of the final interact frame).
 
@@ -261,9 +261,12 @@ Tiles are static. The tileset JSON names each cell and gives its default collisi
 
 | Sheet | Contents | Guide | JSON |
 |---|---|---|---|
-| `players/light_space_mage` | 14 rows: idle, run, jump, heal, space cast, staff strike, hit, death, teleport out/in, crouch, crawl, fly up, forward flight | yes | **done** |
-| `players/fire_mage`, `water_mage`, `wind_mage`, `earth_mage` | PNG only | not yet | waiting for guide |
-| `players/swordsman` | in production | — | — |
+| `players/light_space_mage` | Heal, space cast, staff strike | yes | **done** |
+| `players/fire_mage` | Flame burst, firebolt, dagger slash | yes | **done** |
+| `players/water_mage` | Breaker wave, water bolt, spear thrust | yes | **done** |
+| `players/wind_mage` | Gust burst, wind blade, bow shot | yes | **done** |
+| `players/earth_mage` | Stone eruption, stone shot, shield bash | yes | **done** |
+| `players/dark_swordsman` | Mind jolt, mind hex, sword slash | yes | **done** |
 | `enemies/undead_enemy` | normal skeleton, skeleton knight, death knight (7 rows each) | yes | **done** |
 | `enemies/undead_tier2` | undead wolf, wight, lich (7 rows each) | yes | **done** |
 | `bosses/undead_boss` | undead dragon, undead Fenrir, death monarch (9 rows each, 1536×6912) | yes | **done** |
@@ -272,6 +275,8 @@ Tiles are static. The tileset JSON names each cell and gives its default collisi
 | `tilesheets/ruined_graveyard` | 40 tiles (one blank): ground, platforms, 45° slopes, entrance, ruins, props | yes | **done** |
 
 Each JSON was generated from its guide and verified against the PNG: image size, grid, the SHA-256 printed in the guide, every row assigned exactly once, and measured bounds matching the sizes the guides quote.
+
+All six hero sheets share one 14-row layout: idle, run, jump, three attacks (listed above), hit, death, teleport out/in, crouch, crawl, fly up, flight. In every hero sheet the first attack is a short-range spell, the second a ranged or targeted spell, and the third a physical weapon attack (the light and space mage's first is a heal).
 
 Not yet in the repository: cards, music, sound effects, NPC sheets, parallax backgrounds, and travelling projectile/effect sprites.
 
@@ -599,11 +604,10 @@ Each phase ends with something that can be opened in a browser and checked.
 
 ## 17. Open items
 
-1. **Guides for the fire, water, wind and earth mages** (and the swordsman, in production). Their JSON is written when each guide is uploaded.
-2. **Gameplay catalogs** (`data/*.json`): stats, abilities, collision and hit boxes, AI archetypes, dialogue. These are design choices, not art facts, and need agreeing.
-3. **Cards**: the first card PNGs, and the rectangle of the common information area.
-4. **NPC sheet layout** and what NPCs do in version 1.
-5. **Parallax backgrounds** per theme.
-6. **Music and sound effects**: file formats as delivered, and a naming convention for `data/audio.json`.
-7. **`LICENSE` file** (MIT) and a short `README.md`.
-8. **Spell scroll effect** and scoring rules.
+1. **Gameplay catalogs** (`data/*.json`): stats, abilities, collision and hit boxes, AI archetypes, dialogue. These are design choices, not art facts, and need agreeing.
+2. **Cards**: the first card PNGs, and the rectangle of the common information area.
+3. **NPC sheet layout** and what NPCs do in version 1.
+4. **Parallax backgrounds** per theme.
+5. **Music and sound effects**: file formats as delivered, and a naming convention for `data/audio.json`.
+6. **`LICENSE` file** (MIT) and a short `README.md`.
+7. **Spell scroll effect** and scoring rules.
