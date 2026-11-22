@@ -255,7 +255,7 @@ One JSON file per PNG, written from the sheet's markdown guide and checked again
 | `events` | Fired once on entering `frame` (1-based). With `until`, the event is a window that stays active through that frame. `note` carries the guide's advice. |
 | `emptyFrames` | Frames that are intentionally fully transparent (teleport-out's last frame, the last frame of every object's vanish row). |
 
-Event types: `melee` (hit window), `spawn` (launch a projectile or remote effect), `emit` (start a sustained effect such as a breath or howl), `area` (enable a short close-range area attack drawn in the frame), `cast` (apply a targeted spell with no travelling projectile), `heal`, `takeoff`, `land`, `leap`, `impact`, `teleport`, `footstep`.
+Event types: `melee` (hit window), `spawn` (launch a projectile or remote effect), `emit` (start a sustained effect such as a breath or howl), `area` (enable a short close-range area attack drawn in the frame), `cast` (apply a targeted spell with no travelling projectile), `heal`, `takeoff`, `land`, `leap`, `impact`, `teleport`, `footstep`. NPC sheets add `healed` (the NPC receives healing), `arrive` (a teleport-in has finished) and `trade`, which carries a `step` — `goods_received`, `payment_given`, `goods_given` or `payment_received` — and the guide's own event `name`.
 
 Object entities add `registration` (`ground`, `float`, or `wall` — how the art sits relative to the ground line), `commit` (`accept`: the reward is applied when the interaction starts; `complete`: when the interact row finishes), `persistent` (keeps its activated look instead of vanishing: flag, lever, shrine, torch), and `resultBounds` (measured bounds of the final interact frame).
 
@@ -269,7 +269,7 @@ Object entities add `registration` (`ground`, `float`, or `wall` — how the art
 | Enemy | 96 | `idle`, `walk` and/or `run`, `hit`, `death`, `attack1`, `attack2`, `attack3` |
 | Boss | 256 | `idle`, `walk` and/or `run`, `fly`, `hit`, `death`, `attack1`, `attack2`, `attack3`, `attack4` |
 | Object | 96 | `idle`, `interact`, `vanish` |
-| NPC | 96 | pending — at least `idle`; `walk` and `talk` if drawn |
+| NPC | 96 | `idle`, `walk`, `death`, `hit`, `heal`, `buy`, `sell`, `wave`, `talk`, `hide`, `teleport_out`, `teleport_in` |
 
 **Walk and run.** A sheet may provide `walk`, `run`, or both.
 
@@ -318,6 +318,11 @@ Tiles are static. The tileset JSON names each cell and gives its default collisi
 | `players/wind_mage` | Gust burst, wind blade, bow shot | yes | **done** |
 | `players/earth_mage` | Stone eruption, stone shot, shield bash | yes | **done** |
 | `players/dark_swordsman` | Mind jolt, mind hex, sword slash | yes | **done** |
+| `NPCs/shopkeeper` | Buys a wrapped parcel; sells a green bottle | yes | **done** |
+| `NPCs/traveling_merchant` | Buys a loose pouch; sells a rolled map | yes | **done** |
+| `NPCs/village_elder` | Buys dried herbs; sells a woven charm | yes | **done** |
+| `NPCs/village_priest` | Buys an incense bundle; sells a sun charm | yes | **done** |
+| `NPCs/young_male_villager` | Buys and sells a wrapped parcel | yes | **done** |
 | `enemies/undead_enemy` | normal skeleton, skeleton knight, death knight (7 rows each) | yes | **done** |
 | `enemies/undead_tier2` | undead wolf, wight, lich (7 rows each) | yes | **done** |
 | `bosses/undead_boss` | undead dragon, undead Fenrir, death monarch (9 rows each, 1536×6912) | yes | **done** |
@@ -329,7 +334,9 @@ Each JSON was generated from its guide and verified against the PNG: image size,
 
 All six hero sheets share one 14-row layout: idle, run, jump, three attacks (listed above), hit, death, teleport out/in, crouch, crawl, fly up, flight. In every hero sheet the first attack is a short-range spell, the second a ranged or targeted spell, and the third a physical weapon attack (the light and space mage's first is a heal).
 
-Not yet in the repository: cards, music, sound effects, NPC sheets, parallax backgrounds, and travelling projectile/effect sprites.
+All five NPC sheets share one 12-row layout: idle, walk, death, take a hit, receive healing, buy, sell, wave, talking, hide, teleport out, teleport in. `buy` and `sell` are named from the NPC's point of view, and their `trade` events mark the frames where goods and payment visibly change hands; the game decides what is actually traded. The young villager's buy row runs in the opposite order to the others (he pays first). NPCs have art JSON only: there is no NPC gameplay catalog yet and the game does not place them.
+
+Not yet in the repository: cards for enemies and NPCs, music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
 
 **Cards.** Each card is a PNG with no lettering and a quiet reserved area that the game writes into, plus a guide and a JSON file (`dungeon-scroller/card@1`):
 
@@ -861,7 +868,7 @@ Three small levels, `levels/arena-dragon.json`, `arena-fenrir.json` and `arena-m
 
 1. **Box review**: the drafted collision and hit boxes need checking in the viewer. **Low-passage tiles** need drawing (a 40 px gap). NPC, audio and level catalogs do not exist yet.
 2. **Cards**: the first card PNGs, and the rectangle of the common information area.
-3. **NPC sheet layout** and what NPCs do in version 1.
+3. **What NPCs do**: the five NPC sheets have art JSON, but there is no gameplay catalog for them (dialogue, shop stock and prices, where they stand) and the simulation does not place them yet.
 4. **Parallax backgrounds** per theme.
 5. **Music and sound effects**: file formats as delivered, and a naming convention for `data/audio.json`.
 6. **`LICENSE` file** (MIT) and a short `README.md`.

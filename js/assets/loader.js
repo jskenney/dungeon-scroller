@@ -262,8 +262,10 @@ async function loadCatalogs(config, configUrl, result, problems) {
     }
   }));
   if (paths.length) {
+    // Only kinds that have a catalog are expected to have gameplay values (NPCs have none yet).
+    const kinds = new Set(Object.values(result.catalogs).map(c => c.kind));
     for (const [key, entity] of Object.entries(result.entities)) {
-      if (!entity.gameplay) problems.push({ level: 'warning', file: shortName(entity.sheet.url), message: `${key} has no gameplay values in any catalog.` });
+      if (!entity.gameplay && kinds.has(entity.kind)) problems.push({ level: 'warning', file: shortName(entity.sheet.url), message: `${key} has no gameplay values in any catalog.` });
     }
   }
 }

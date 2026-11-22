@@ -14,7 +14,12 @@
       "assets/sprites/enemies/undead_enemy_spritesheet.json",
       "assets/sprites/enemies/undead_tier2_spritesheet.json",
       "assets/sprites/bosses/undead_boss_spritesheet.json",
-      "assets/sprites/objects/interactive_world_objects_spritesheet.json"
+      "assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "assets/sprites/NPCs/shopkeeper_spritesheet.json",
+      "assets/sprites/NPCs/traveling_merchant_spritesheet.json",
+      "assets/sprites/NPCs/village_elder_spritesheet.json",
+      "assets/sprites/NPCs/village_priest_spritesheet.json",
+      "assets/sprites/NPCs/young_male_villager_spritesheet.json"
     ],
     "tilesets": [
       "assets/tilesheets/old_stone_dungeon_tileset.json",

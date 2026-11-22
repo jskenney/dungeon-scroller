@@ -1,0 +1,136 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "npc",
+  "image": "traveling_merchant_spritesheet.png",
+  "guide": "traveling_merchant_spritesheet.md",
+  "sha256": "4d4e03615d6b7bf850dda0b5f13a392c0b4ddd01f6d8c43ce072f24d6cdfd183",
+  "size": { "w": 576, "h": 1152 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 12,
+  "facing": "right",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "buy and sell are named from the NPC's point of view, facing a customer on the right.",
+    "Trade events are visual cues for a trade the game has already agreed; the game keeps the stock, prices and payments.",
+    "The heal row shows the NPC receiving healing, not casting it.",
+    "hide ends in a visible crouch; cover must come from the level. There is no stand-up or crouch-walk row.",
+    "F6 of hit, heal, buy, sell and wave equals idle F1; teleport_in F6 equals idle F1.",
+    "The hat and tall pack make the idle silhouette about 60 px tall; the body is the usual height.",
+    "Buying shows a loose pouch and a coin; selling shows a rolled map and a coin. They are drawn into the frames, not separate items."
+  ],
+  "entities": {
+    "traveling_merchant": {
+      "name": "Traveling Merchant",
+      "description": "Bearded merchant in a broad brown felt hat and weathered teal cloak, carrying a tall canvas trade pack with a bedroll, a front satchel and a hip purse. Buys a loose pouch; sells a rolled map.",
+      "rows": [1, 12],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 1152 },
+      "idleBounds": { "x": 14, "y": 25, "w": 48, "h": 60 },
+      "animations": {
+        "idle": {
+          "id": "idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [160, 160, 160, 160, 160, 160]
+        },
+        "walk": {
+          "id": "walk",
+          "label": "Walk",
+          "row": 2,
+          "loop": true,
+          "durations": [160, 160, 160, 160, 160, 160]
+        },
+        "death": {
+          "id": "death",
+          "label": "Death",
+          "row": 3,
+          "end": "hold",
+          "durations": [100, 140, 160, 150, 180, 200]
+        },
+        "hit": {
+          "id": "hit",
+          "label": "Take a hit",
+          "row": 4,
+          "end": "state",
+          "durations": [60, 80, 100, 100, 120, 120]
+        },
+        "heal": {
+          "id": "heal",
+          "label": "Heal / receive healing",
+          "row": 5,
+          "end": "state",
+          "durations": [100, 120, 150, 180, 140, 120],
+          "events": [
+            { "frame": 3, "type": "healed", "name": "healing_received" }
+          ]
+        },
+        "buy": {
+          "id": "buy",
+          "label": "Buy",
+          "row": 6,
+          "end": "state",
+          "durations": [130, 160, 170, 150, 170, 140],
+          "events": [
+            { "frame": 1, "type": "trade", "step": "goods_received", "name": "buy_goods_received" },
+            { "frame": 5, "type": "trade", "step": "payment_given", "name": "buy_payment_offered" }
+          ]
+        },
+        "sell": {
+          "id": "sell",
+          "label": "Sell",
+          "row": 7,
+          "end": "state",
+          "durations": [140, 160, 170, 140, 150, 140],
+          "events": [
+            { "frame": 4, "type": "trade", "step": "goods_given", "name": "sell_goods_handoff" },
+            { "frame": 5, "type": "trade", "step": "payment_received", "name": "sell_payment_received" }
+          ]
+        },
+        "wave": {
+          "id": "wave",
+          "label": "Wave",
+          "row": 8,
+          "end": "state",
+          "durations": [100, 130, 100, 100, 120, 120]
+        },
+        "talk": {
+          "id": "talking",
+          "label": "Talking",
+          "row": 9,
+          "loop": true,
+          "durations": [160, 130, 150, 170, 140, 150]
+        },
+        "hide": {
+          "id": "hide",
+          "label": "Hide",
+          "row": 10,
+          "end": "hold",
+          "durations": [110, 120, 130, 140, 160, 180]
+        },
+        "teleport_out": {
+          "id": "teleport_out",
+          "label": "Teleport out",
+          "row": 11,
+          "end": "hold",
+          "durations": [90, 100, 120, 110, 100, 80],
+          "events": [
+            { "frame": 6, "type": "teleport", "name": "invisible_destination_transfer" }
+          ],
+          "emptyFrames": [6]
+        },
+        "teleport_in": {
+          "id": "teleport_in",
+          "label": "Teleport in",
+          "row": 12,
+          "end": "state",
+          "durations": [90, 100, 120, 120, 100, 120],
+          "events": [
+            { "frame": 6, "type": "arrive", "name": "arrival_complete" }
+          ]
+        }
+      }
+    }
+  }
+}
