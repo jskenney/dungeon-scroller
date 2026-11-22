@@ -6,7 +6,9 @@ import { loadAssets } from './assets/loader.js';
 import { Settings, ACTIONS } from './settings.js';
 import { Input } from './input.js';
 import { Stage } from './render/stage.js';
-import { StagingRoom } from './shell/staging.js';
+import { Level } from './level/level.js';
+import { World } from './sim/world.js';
+import { keyboardIntents } from './sim/controllers/keyboard.js';
 import { h, keyName } from './ui/dom.js';
 import { cardElement, spritePreview } from './ui/card.js';
 import { Hud } from './ui/hud.js';
@@ -14,7 +16,7 @@ import { Hud } from './ui/hud.js';
 const ui = document.getElementById('ui');
 const game = {
   config: null, assets: null, settings: null, input: null, stage: null,
-  hero: null, tileset: null, room: null, hud: null,
+  hero: null, world: null, view: null, hud: null, debugText: null,
   paused: false, back: null,       // back: what Escape does on the current screen
 };
 
@@ -27,7 +29,6 @@ function show(element, back = null) {
 
 const heroes = () => Object.values(game.assets.entities).filter(e => e.kind === 'player' && e.gameplay);
 const cardFor = entity => game.assets.cards.find(c => c.subjectEntity === entity);
-const tilesetName = t => t.id.replaceAll('_', ' ');
 
 function panel(title, ...children) {
   return h('section', { class: 'panel' }, h('h1', {}, title), ...children);
@@ -86,13 +87,13 @@ function heroScreen() {
 
 function levelScreen() {
   stopPlay();
-  const rooms = game.assets.tilesets.map((tileset, i) => h('button', { type: 'button', class: 'level', autofocus: i === 0,
-    onclick: () => startPlay(tileset) },
-    h('strong', {}, `Staging room — ${tilesetName(tileset)}`),
-    h('span', { class: 'muted' }, 'A flat floor for trying out movement, abilities, zoom and key bindings.')));
+  const levels = game.assets.levels.map((level, i) => h('button', { type: 'button', class: 'level', autofocus: i === 0,
+    onclick: () => startPlay(level) },
+    h('strong', {}, level.name),
+    h('span', { class: 'muted' }, level.description)));
   show(h('div', { class: 'screen centered' }, panel('Choose a level',
     h('p', { class: 'muted' }, `Playing as ${game.hero.name}.`),
-    h('div', { class: 'levels' }, rooms,
+    h('div', { class: 'levels' }, levels,
       h('button', { type: 'button', class: 'level', disabled: true },
         h('strong', {}, 'Random dungeon'),
         h('span', { class: 'muted' }, 'Not built yet: arrives with the level generator.'))),
@@ -145,22 +146,38 @@ function settingsScreen(returnTo) {
 
 // ------------------------------------------------------------------------- play
 
-function startPlay(tileset) {
-  game.tileset = tileset;
-  game.room = new StagingRoom(game.stage, game.input, game.config, game.hero, tileset);
+function startPlay(entry) {
+  const level = new Level(entry.doc, entry.tileset);
+  game.world = new World(level, game.hero, game.config);
+  game.stage.showLevel(level);
+  game.view = game.stage.addActor(game.hero, game.world.hero.artShift);
   game.hud = new Hud(game.hero, game.settings);
+  const b = game.world.hero.body;
+  game.stage.follow(b.x, b.y - 60, 0, true);
   resume();
 }
 
 function stopPlay() {
-  game.room = null; game.hud = null; game.paused = false;
+  if (game.world) showBackdrop();
+  game.world = null; game.view = null; game.hud = null; game.paused = false;
   game.input.setEnabled(false);
+}
+
+/** A level behind the menus, so they are not shown over an empty screen. */
+function showBackdrop() {
+  const entry = game.assets.levels[0];
+  if (!entry) { game.stage.clear(); return; }
+  const level = new Level(entry.doc, entry.tileset);
+  game.stage.showLevel(level);
+  game.stage.follow(level.spawn.x + 300, level.spawn.y - 120, 0, true);
 }
 
 function resume() {
   game.paused = false;
+  game.debugText = h('div', { class: 'debug', hidden: !game.stage.debug });
   show(h('div', { class: 'screen play' }, game.hud.el,
-    h('div', { class: 'notice' }, 'Staging room · movement test · ', keyName(game.settings.keys('pause')[0] ?? 'Escape'), ' for the menu')), null);
+    h('div', { class: 'notice' }, game.world.level.name, ' · ', keyName(game.settings.keys('pause')[0] ?? 'Escape'), ' for the menu'),
+    game.debugText), null);
   game.input.setEnabled(true);
   game.canvas.focus();
 }
@@ -178,15 +195,31 @@ function pause() {
 }
 
 function tick(dt) {
-  const { input, settings, room } = game;
-  if (room && !game.paused) {
-    if (input.pressed('pause')) { input.endFrame(); pause(); return; }
-    if (input.pressed('zoomIn')) game.stage.zoomBy(1);
-    if (input.pressed('zoomOut')) game.stage.zoomBy(-1);
-    room.update(dt);
-    game.hud.update(room.s);
+  const { input, world, stage } = game;
+  if (!world || game.paused) { input.endFrame(); return; }
+  if (input.pressed('pause')) { input.endFrame(); pause(); return; }
+  if (input.pressed('zoomIn')) stage.zoomBy(1);
+  if (input.pressed('zoomOut')) stage.zoomBy(-1);
+  if (input.pressed('debug')) { stage.setDebug(!stage.debug); game.debugText.hidden = !stage.debug; }
+
+  // The simulation runs in fixed steps; key presses are kept until a step has used them.
+  const steps = world.advance(dt, first => keyboardIntents(input, first));
+  world.events.length = 0;                    // sounds and effects will read these later
+
+  // Draw between the last two simulation states so motion is smooth at any refresh rate.
+  const hero = world.hero, b = hero.body, a = world.alpha;
+  const x = hero.prev.x + (b.x - hero.prev.x) * a;
+  const y = hero.prev.y + (b.y - hero.prev.y) * a + hero.visualLift;
+  game.view.show(hero.pose.slot, hero.pose.frame, x, y, hero.facing);
+  stage.follow(x + hero.facing * 40, y - 60, dt);
+  if (stage.debug) {
+    stage.debugLive.clear();
+    stage.drawBody(b.x, b.y, b.w, b.h);
+    game.debugText.textContent = `x ${b.x.toFixed(1)}  y ${b.y.toFixed(1)}  vx ${b.vx.toFixed(0)}  vy ${b.vy.toFixed(0)}  `
+      + `${b.grounded ? 'on ' + b.groundKind : 'in air'}  ${hero.pose.slot} ${hero.pose.frame + 1}  tick ${world.tick}`;
   }
-  input.endFrame();
+  game.hud.update(hero);
+  if (steps > 0) input.endFrame();
 }
 
 // ------------------------------------------------------------------------- boot
@@ -207,11 +240,7 @@ async function main() {
     });
     if (!heroes().length) throw new Error('No playable heroes were loaded. Open viewer.html to see what is wrong.');
 
-    // A room behind the menus, so the title is not an empty screen.
-    if (game.assets.tilesets[0]) {
-      const room = game.stage.buildFlatRoom(game.assets.tilesets[0]);
-      game.stage.follow(room.width / 2, 0);
-    }
+    showBackdrop();
     game.stage.onTick = tick;
 
     window.addEventListener('keydown', e => {
@@ -223,7 +252,7 @@ async function main() {
       if (e.code === 'Escape' && game.back) { e.preventDefault(); game.back(); }
     });
     game.canvas.addEventListener('wheel', e => {
-      if (!game.room || game.paused) return;
+      if (!game.world || game.paused) return;
       e.preventDefault();
       game.stage.zoomBy(e.deltaY > 0 ? -1 : 1);
     }, { passive: false });

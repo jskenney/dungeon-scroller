@@ -1,0 +1,19 @@
+{
+  "schema": "dungeon-scroller/levels@1",
+  "notes": [
+    "Static levels offered on the level selection screen. Paths are relative to this file.",
+    "Both current levels are test courses for movement and collision; they contain no enemies or objects yet."
+  ],
+  "entries": [
+    {
+      "id": "dungeon-test",
+      "file": "../levels/dungeon-test.json",
+      "description": "Stairs, stacked platforms, a pit, a low ceiling and a two-flight climb."
+    },
+    {
+      "id": "graveyard-test",
+      "file": "../levels/graveyard-test.json",
+      "description": "Slopes and hills, platforms and a pit."
+    }
+  ]
+}

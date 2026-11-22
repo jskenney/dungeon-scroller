@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dungeon Scroller — Tests</title>
+  <style>
+    html { color-scheme: dark; background: #0d0f14; color: #dfe4ee; font: 15px/1.5 system-ui, sans-serif; }
+    body { max-width: 52em; margin: 32px auto; padding: 0 20px; }
+    li { margin: 3px 0; list-style: none; }
+    .ok::before { content: "✓ "; color: #63c98a; }
+    .fail::before { content: "✗ "; color: #ef6b6b; }
+    .fail span { display: block; margin-left: 1.4em; color: #ef6b6b; }
+    a { color: #e0b354; }
+  </style>
+</head>
+<body>
+  <h1>Simulation tests</h1>
+  <p id="summary">Running…</p>
+  <ul id="results" style="padding: 0"></ul>
+  <p><a href="index.html">Game</a> · <a href="viewer.html">Asset viewer</a></p>
+  <script type="module">
+    import { runAll } from './js/tests/sim.test.js';
+    const results = runAll();
+    const list = document.getElementById('results');
+    for (const r of results) {
+      const li = document.createElement('li');
+      li.className = r.ok ? 'ok' : 'fail';
+      li.textContent = r.name;
+      if (!r.ok) { const s = document.createElement('span'); s.textContent = r.error; li.append(s); }
+      list.append(li);
+    }
+    const failed = results.filter(r => !r.ok).length;
+    document.getElementById('summary').textContent = failed
+      ? `${failed} of ${results.length} tests failed.` : `All ${results.length} tests passed.`;
+  </script>
+</body>
+</html>

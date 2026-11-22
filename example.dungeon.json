@@ -38,6 +38,8 @@
     "objects": "data/objects.json"
   },
 
+  "levels": "data/levels.json",
+
   "display": {
     "defaultViewTiles": 8,
     "minViewTiles": 4,

@@ -6,6 +6,7 @@
 import { ImageSource, Texture, Rectangle } from '../../vendor/pixi.min.mjs';
 import { fetchJson, resolve } from '../config.js';
 import { REQUIRED_SLOTS, locomotion } from './animation.js';
+import { Level } from '../level/level.js';
 
 /**
  * @typedef {{level: 'error'|'warning', file: string, message: string}} Problem
@@ -163,6 +164,37 @@ async function loadCard(jsonUrl, problems) {
     subjectSheetUrl: json.subject?.sheet ? resolve(json.subject.sheet, jsonUrl) : null };
 }
 
+/** Load the static levels listed in the level index and check each against its tileset. */
+async function loadLevels(config, configUrl, result, problems) {
+  result.levels = [];
+  if (!config.levels) return;
+  const indexUrl = resolve(config.levels, configUrl), indexFile = shortName(indexUrl);
+  let index;
+  try {
+    index = await fetchJson(indexUrl);
+  } catch (error) {
+    problems.push({ level: 'error', file: indexFile, message: `Could not load: ${error.message}` });
+    return;
+  }
+  const loaded = await Promise.all((index.entries ?? []).map(async entry => {
+    const url = resolve(entry.file, indexUrl), file = shortName(url);
+    try {
+      const doc = await fetchJson(url);
+      const tileset = result.tilesets.find(t => t.id === doc.tileset);
+      if (!tileset) { problems.push({ level: 'error', file, message: `Uses tileset "${doc.tileset}", which is not loaded.` }); return null; }
+      const found = Level.validate(doc, tileset);
+      for (const message of found) problems.push({ level: 'error', file, message });
+      if (found.length) return null;
+      if (doc.id !== entry.id) problems.push({ level: 'warning', file, message: `Its id "${doc.id}" differs from "${entry.id}" in ${indexFile}.` });
+      return { id: entry.id, name: doc.name ?? entry.id, description: entry.description ?? '', doc, tileset, url };
+    } catch (error) {
+      problems.push({ level: 'error', file, message: `Could not load: ${error.message}` });
+      return null;
+    }
+  }));
+  result.levels = loaded.filter(Boolean);
+}
+
 /** Deep-merge catalog defaults under an entry (the entry wins). */
 function withDefaults(defaults, entry) {
   if (!defaults || typeof defaults !== 'object' || Array.isArray(defaults)) return entry ?? defaults;
@@ -280,6 +312,7 @@ export async function loadAssets(config, configUrl, onProgress = () => {}) {
     }
   }
   await loadCatalogs(config, configUrl, result, problems);
+  await loadLevels(config, configUrl, result, problems);
 
   // Cards must point at an entity that was loaded.
   for (const card of result.cards) {

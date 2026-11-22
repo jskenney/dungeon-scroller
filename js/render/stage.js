@@ -1,9 +1,8 @@
 // The game canvas: a PixiJS stage that fills the window, a camera with
-// whole-pixel zoom, tile rooms and actor sprites.
+// whole-pixel zoom, level tiles, actor sprites and a debug overlay.
 
 import { Application, Container, Graphics, Sprite } from '../../vendor/pixi.min.mjs';
-
-const TILE = 96;
+import { TILE, slopeSurface } from '../level/level.js';
 
 export class Stage {
   /** @param {HTMLCanvasElement} canvas @param {import('../settings.js').Settings} settings */
@@ -12,10 +11,13 @@ export class Stage {
     this.settings = settings;
     this.app = new Application();
     this.world = new Container();
-    this.camera = { x: 0, groundY: 0 };
-    this.bounds = { left: 0, right: TILE * 10 };
+    this.camera = { x: 0, y: 0 };
+    this.bounds = { left: 0, top: 0, right: TILE * 10, bottom: TILE * 8 };
     this.scale = 1;             // CSS pixels per world pixel
+    this.perPixel = 1;          // device pixels per world pixel
     this.onTick = null;         // (seconds) => void
+    this.debug = false;
+    this.level = null;
   }
 
   async init() {
@@ -34,7 +36,7 @@ export class Stage {
     this.settings.onChange(() => this.layout());
     this.app.ticker.add(ticker => {
       // Clamp long gaps (tab in the background) so nothing teleports.
-      this.onTick?.(Math.min(ticker.deltaMS, 50) / 1000);
+      this.onTick?.(Math.min(ticker.deltaMS, 100) / 1000);
     });
     this.layout();
   }
@@ -76,70 +78,104 @@ export class Stage {
   /** Tiles visible across the window at the current scale. */
   get visibleTiles() { return this.app.screen.width / (this.scale * TILE); }
 
+  /** Position the world so the camera point is centred, without showing past the level's edges. */
   place() {
     const { width, height } = this.app.screen;
-    const half = width / 2 / this.scale;
-    const roomWidth = this.bounds.right - this.bounds.left;
-    const x = roomWidth <= half * 2
-      ? this.bounds.left + roomWidth / 2
-      : Math.max(this.bounds.left + half, Math.min(this.bounds.right - half, this.camera.x));
-    this.world.position.set(this.snap(width / 2 - x * this.scale), this.snap(height * 0.78 - this.camera.groundY * this.scale));
+    const halfW = width / 2 / this.scale, halfH = height / 2 / this.scale;
+    const b = this.bounds;
+    const x = b.right - b.left <= halfW * 2 ? (b.left + b.right) / 2
+      : Math.max(b.left + halfW, Math.min(b.right - halfW, this.camera.x));
+    // A level shorter than the window sits at the bottom of it.
+    const y = b.bottom - b.top <= halfH * 2 ? b.bottom - halfH
+      : Math.max(b.top + halfH, Math.min(b.bottom - halfH, this.camera.y));
+    this.world.position.set(this.snap(width / 2 - x * this.scale), this.snap(height / 2 - y * this.scale));
   }
 
-  /** Point the camera at a world x; the ground line sits at 78% of the window height. */
-  follow(x, groundY) {
+  /**
+   * Move the camera toward a point. Horizontal movement is immediate;
+   * vertical movement eases so stairs and jumps do not jolt the view.
+   */
+  follow(x, y, dt = 0, immediate = false) {
     this.camera.x = x;
-    this.camera.groundY = groundY;
+    this.camera.y = immediate ? y : this.camera.y + (y - this.camera.y) * Math.min(1, dt * 6);
     this.place();
   }
 
   clear() {
     for (const child of this.world.removeChildren()) child.destroy({ children: true });
+    this.actors = this.debugLayer = this.debugLive = null;
   }
 
-  /**
-   * Build a flat room from a tileset's "runs": a floor with fill beneath it,
-   * and background masonry behind when the tileset has some.
-   * @returns {{width: number, groundY: number}}
-   */
-  buildFlatRoom(tileset, columns = 40) {
+  /** Draw a level's tile layers and prepare the actor and debug layers. */
+  showLevel(level) {
     this.clear();
-    const run = Object.values(tileset.runs ?? {}).find(r => r.below) ?? Object.values(tileset.runs ?? {})[0];
-    const members = ref => tileset.groups?.[ref] ?? [ref];
-    const pick = (ref, i) => tileset.tiles[members(ref)[(i * 7 + (i >> 2)) % members(ref).length]];
-    // Background: mostly plain masonry, with an occasional recess.
-    const plain = (back => back?.filter(id => !id.includes('recess')))(tileset.groups?.background);
-    const backdrop = (col, row) => {
-      const n = Math.abs((col * 73856093) ^ (row * 19349663));
-      if (n % 17 === 0 && row > -6 && row < -1) return tileset.tiles[tileset.groups.background.find(id => id.includes('recess')) ?? plain[0]];
-      return tileset.tiles[plain[n % plain.length]];
+    this.level = level;
+    const tiles = level.tileset.tiles;
+    const textures = level.palette.map(id => (id ? tiles[id]?.texture : null));
+    const drawLayer = rows => {
+      const layer = new Container();
+      if (!rows) return layer;
+      for (let row = 0; row < level.rows; row++) {
+        for (let col = 0; col < level.cols; col++) {
+          const texture = textures[rows[row][col]];
+          if (!texture) continue;
+          const sprite = new Sprite(texture);
+          sprite.position.set(col * TILE, row * TILE);
+          layer.addChild(sprite);
+        }
+      }
+      layer.cullable = true;
+      return layer;
     };
-    const place = (tile, col, row) => {
-      if (!tile) return;
-      const sprite = new Sprite(tile.texture);
-      sprite.position.set(col * TILE, row * TILE);
-      this.world.addChild(sprite);
-    };
-    const back = tileset.groups?.background;
-    if (back) {
-      for (let row = -8; row < 0; row++) for (let col = 0; col < columns; col++) place(backdrop(col, row), col, row);
-    } else {
-      const sky = new Graphics();
-      sky.rect(0, -8 * TILE, columns * TILE, 8 * TILE).fill({ color: 0x0c1220 });
-      this.world.addChild(sky);
-    }
-    for (let col = 0; col < columns; col++) {
-      place(col === 0 ? pick(run.left, 0) : col === columns - 1 ? pick(run.right, 0) : pick(run.center, col), col, 0);
-      for (let row = 1; row < 7; row++) place(pick(run.below ?? run.center, col + row), col, row);
-    }
     this.actors = new Container();
-    this.world.addChild(this.actors);
-    this.bounds = { left: 0, right: columns * TILE };
-    return { width: columns * TILE, groundY: 0 };
+    this.debugLayer = new Graphics();
+    this.debugLive = new Graphics();
+    this.world.addChild(drawLayer(level.layers.background), drawLayer(level.layers.terrain), this.actors,
+      drawLayer(level.layers.foreground), this.debugLayer, this.debugLive);
+    this.bounds = { left: 0, top: 0, right: level.width, bottom: level.height };
+    this.drawCollision();
+  }
+
+  setDebug(on) {
+    this.debug = on;
+    this.drawCollision();
+    if (!on) this.debugLive?.clear();
+  }
+
+  /** Outline every collision shape in the level (debug overlay). */
+  drawCollision() {
+    const g = this.debugLayer, level = this.level;
+    if (!g || !level) return;
+    g.clear();
+    if (!this.debug) return;
+    for (let row = 0; row < level.rows; row++) {
+      for (let col = 0; col < level.cols; col++) {
+        const cell = level.cellAt(col, row);
+        if (!cell) continue;
+        const ox = col * TILE, oy = row * TILE;
+        if (cell.kind === 'slope') {
+          const s = { l: ox, t: oy, r: ox + TILE, b: oy + TILE, dir: cell.dir };
+          g.poly([ox, slopeSurface(s, ox), ox + TILE, slopeSurface(s, ox + TILE), ox + TILE, oy + TILE, ox, oy + TILE])
+            .fill({ color: 0xc084fc, alpha: 0.25 }).stroke({ width: 1, color: 0xc084fc });
+          continue;
+        }
+        const color = cell.kind === 'platform' ? 0x5ac8fa : 0xef6b6b;
+        for (const q of cell.rects) {
+          g.rect(ox + q[0], oy + q[1], q[2] - q[0], q[3] - q[1]).fill({ color, alpha: 0.2 }).stroke({ width: 1, color });
+        }
+      }
+    }
+  }
+
+  /** Outline a body box (debug overlay). Call once per frame after clearing. */
+  drawBody(x, y, w, h, color = 0x63c98a) {
+    if (!this.debug || !this.debugLive) return;
+    this.debugLive.rect(x - w / 2, y - h, w, h).stroke({ width: 1, color })
+      .moveTo(x - 4, y).lineTo(x + 4, y).stroke({ width: 1, color: 0xe0b354 });
   }
 
   /** Add a sprite for a sheet entity; returns a view the caller updates each frame. */
-  addActor(entity) {
+  addActor(entity, artShift = 0) {
     const pivot = entity.pivot ?? entity.sheet.pivot;
     const sprite = new Sprite(entity.animations.idle.frames[0]);
     sprite.pivot.set(pivot.x, pivot.y);
@@ -147,14 +183,17 @@ export class Stage {
     const drawnRight = entity.sheet.facing === 'right';
     return {
       sprite,
-      /** Show one frame of an animation at a world position, facing 1 (right) or -1 (left). */
+      /**
+       * Show one frame of an animation with the actor's feet at (x, y), facing 1 or -1.
+       * artShift moves the art so the body box, not the cell centre, sits on x.
+       */
       show(slot, frame, x, y, facing) {
         const clip = entity.animations[slot];
         const mirror = (facing === 1) === drawnRight ? 1 : -1;
         const [dx, dy] = clip.offsets?.[frame] ?? [0, 0];
         sprite.texture = clip.frames[frame];
         sprite.scale.set(mirror, 1);
-        sprite.position.set(Math.round(x + dx * mirror), Math.round(y + dy));
+        sprite.position.set(Math.round(x + dx * mirror + artShift * facing), Math.round(y + dy));
       },
     };
   }

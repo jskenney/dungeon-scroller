@@ -71,6 +71,7 @@ vendor/pixi.min.mjs        vendored PixiJS 8.23.0 (MIT; licence in vendor/pixi.L
 data/                      catalogs: which assets exist and their gameplay values (§4.2)
 levels/                    static level files (§10)
 tests.html                 in-browser simulation tests
+levels/                    static level files
 assets/
   cards/                   character and enemy cards
   music/                   background music
@@ -116,6 +117,7 @@ The site configuration, fetched from the directory the game was loaded from. **`
 | `catalogs` | Paths to the gameplay catalogs (§4.2). |
 | `display` | Default, minimum and maximum view width in tiles; pixel-perfect scaling on or off. |
 | `controls` | Default key bindings: action → list of `KeyboardEvent.code` values. |
+| `levels` | Path to the index of static levels (`data/levels.json`). |
 | `rules` | Lives (default 9999), respawn behaviour, and whether touching an enemy hurts. |
 | `difficulty` | Multipliers applied on top of the catalog values (enemy health, enemy damage, touch damage, player damage, MP regeneration, loot). All are 1 for now; changing them here retunes the whole game without editing the catalogs. |
 | `physics` | World constants: tick rate, gravity, terminal speed, run multiplier. |
@@ -666,7 +668,7 @@ Each phase ends with something that can be opened in a browser and checked.
 |---|---|
 | **0. Asset JSON** | **Done:** JSON for every sprite sheet, tileset and hero card, `example.dungeon.json`, and the gameplay catalogs in `data/` with drafted boxes. Boxes and values are refined through the viewer and play-testing. |
 | **1. Skeleton, viewer and shell** | **Done:** `viewer.html`; configuration loading with the `example.dungeon.json` fallback; vendored PixiJS; the asset loader; and the game shell in `index.html` (§16.2). |
-| **2. Simulation core** | Fixed-step loop, hero movement, all tile shapes, camera and zoom, on a small hand-written test level. In-browser tests for collision. |
+| **2. Simulation core** | **Done:** fixed-step world, tile collision for every shape, the hero controller, the level format with loader and builder, two test courses, the debug overlay and in-browser tests (§16.3). |
 | **3. Procedural levels** | Seeded generator with section templates and reachability check; level schema loader; three or four generated levels saved as static test files. |
 | **4. Combat and enemies** | Abilities, projectiles, damage, enemy archetypes, HP/MP, HUD. |
 | **5. Objects and rules** | Pickups, chests, keys, levers, breakables, checkpoint flags, shrines, lives, respawn. |
@@ -700,14 +702,45 @@ Keys: Space play/pause, ←/→ step a frame, Shift + arrows nudge a frame, F mi
 |---|---|
 | Title | Play, Settings, and a link to the asset viewer. Notes when `example.dungeon.json` is in use and when the loader found asset problems. |
 | Hero selection | Every hero that has gameplay values, shown as its card with name, role, statistics and abilities written into the card's text area from the catalog. The chosen hero's idle animation plays in the header; the choice is remembered. |
-| Level selection | Lists what can be played. For now that is a **staging room** per tileset; "Random dungeon" is shown but disabled until the generator exists. |
+| Level selection | Lists the static levels from the level index. "Random dungeon" is shown but disabled until the generator exists. |
 | Settings | Zoom, pixel-perfect scaling, and key rebinding: choose *Change*, press a key; shared keys are flagged; any action or all of them can be reset to the site defaults. Stored in the browser. |
 | Play | The canvas with the HUD: hero name, HP and MP bars with numbers, lives, score, and each ability with its key and MP cost (dimmed when unaffordable). |
 | Pause | Resume, Settings, Change level, Change hero, Quit to title. Escape goes back on every screen. |
 
 Modules: `js/main.js` (boot and screens), `js/settings.js`, `js/input.js` (keys to actions through the bindings), `js/render/stage.js` (canvas, camera, whole-pixel zoom, rooms, actor sprites), `js/ui/` (cards, HUD, DOM helpers).
 
-**The staging room is temporary.** `js/shell/staging.js` moves the chosen hero on a flat floor so that input, bindings, animation selection, camera, zoom and the HUD can be tried before the simulation exists. It applies the catalog's movement, MP, flight, teleport and air-attack rules, but has no collision beyond the floor, no enemies, and attacks hit nothing. Phase 2 replaces it with the real simulation; the screens around it stay.
+**The play screen runs the simulation** (§16.3). Each frame it gives the elapsed time to the world, which advances in fixed steps, then draws the hero between the last two simulated positions so motion is smooth at any refresh rate. Key presses are held until a simulation step has used them, so none are lost or counted twice.
+
+### 16.3 The simulation core
+
+Everything under `js/sim/` and `js/level/` is plain data and arithmetic: no rendering, no DOM, no network. It can be run in a test, on a server, or headless.
+
+| Module | Role |
+|---|---|
+| `js/level/level.js` | A level document turned into a collision grid: solid rectangles (blocks, walls, ceilings, each stair step), one-way platforms and 45° slopes. Validates level documents. |
+| `js/level/build.js` | Builds a level document from a character map, choosing the right art for each cell from any tileset (caps, fills, variants, stairs or slopes, ceilings, backdrop). The level generator will use it too. |
+| `js/sim/physics.js` | Moves a box against the level. |
+| `js/sim/hero.js` | The hero's rules: walking, running, jumping, crouching, dropping through platforms, flight, teleport, abilities, MP, and which animation frame to show. |
+| `js/sim/world.js` | Owns the level and the actors; advances in fixed 1/60 s steps; respawns a hero that falls out of the level. |
+| `js/sim/controllers/keyboard.js` | Turns key state into intents. AI and network controllers will produce the same intents. |
+
+**Collision rules as built**
+
+- A body is a box described by the point between its feet. It moves horizontally, then vertically.
+- **Steps:** a grounded body walks up any ledge of 16 px or less (one stair step) and is kept on the ground when walking down steps or slopes, so stairs and ramps need no jumping and do not launch the hero. The picture eases over each 16 px step so stairs look smooth.
+- **Slopes:** the feet follow the slope's surface at the body's centre line.
+- **One-way platforms** hold a body that arrives from above and ignore one moving up through them; crouch + jump drops through.
+- **Ceilings** stop upward movement; a crouched hero cannot stand up without headroom.
+- **Level edges:** the left and right sides are walls, the top is open, and falling out of the bottom costs a life and returns the hero to the last checkpoint (the level start for now).
+- **Feel:** jumps can be made up to 0.1 s after leaving a ledge, a jump pressed up to 0.1 s before landing still happens, and releasing jump early gives a shorter hop.
+
+**Levels.** `dungeon.json` → `levels` names an index file (`data/levels.json`) listing the static levels to offer. Two test courses exist, `levels/dungeon-test.json` and `levels/graveyard-test.json`, covering stairs, slopes, stacked platforms, pits and ceilings. They contain no enemies or objects yet.
+
+**Debug overlay.** The debug key (`` ` `` by default) outlines every collision shape and the hero's body box, and shows position, velocity, ground type, animation frame and tick.
+
+**Tests.** `tests.html` runs the simulation tests in the browser: landing, walls, stairs up and down, slopes, platforms, ceilings, low passages, level edges, jump height, short hops, late jumps, crouching under a ceiling, ability rules, teleport, flight and pits. They build their own small levels and need no assets.
+
+Not in the simulation yet: enemies, objects, damage, projectiles and checkpoints (phases 4 and 5).
 
 ## 17. Open items
 
