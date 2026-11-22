@@ -102,7 +102,8 @@
           "label": "Idle",
           "row": 8,
           "loop": true,
-          "durations": [180, 180, 180, 180, 180, 180]
+          "durations": [180, 180, 180, 180, 180, 180],
+          "offsets": [[0, 0], [0, 0], [1, 0], [1, 0], [1, 0], [1, 0]]
         },
         "walk": {
           "id": "wight_move",
@@ -145,6 +146,7 @@
           "row": 13,
           "end": "state",
           "durations": [100, 120, 180, 90, 140, 150],
+          "offsets": [[0, 0], [1, 0], [2, 0], [3, 0], [0, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "melee", "until": 5, "note": "Grasp reaches at F4 and may resolve at F5." }
           ]
@@ -155,6 +157,7 @@
           "row": 14,
           "end": "state",
           "durations": [120, 150, 260, 90, 170, 170],
+          "offsets": [[0, 0], [0, 0], [2, 0], [-5, 0], [-7, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "melee", "note": "Charge is held at F3." }
           ]

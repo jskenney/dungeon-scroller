@@ -30,14 +30,16 @@
           "label": "Idle",
           "row": 1,
           "loop": true,
-          "durations": [170, 170, 170, 170, 170, 170]
+          "durations": [170, 170, 170, 170, 170, 170],
+          "offsets": [[1, 0], [0, 0], [3, 0], [-2, 0], [0, 0], [0, 0]]
         },
         "walk": {
           "id": "normal_skeleton_walk",
           "label": "Walk",
           "row": 2,
           "loop": true,
-          "durations": [85, 85, 85, 85, 85, 85]
+          "durations": [85, 85, 85, 85, 85, 85],
+          "offsets": [[-5, 0], [-6, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
         },
         "hit": {
           "id": "normal_skeleton_hit",
@@ -59,6 +61,7 @@
           "row": 5,
           "end": "state",
           "durations": [60, 60, 45, 75, 90, 100],
+          "offsets": [[0, 0], [-1, 0], [1, 0], [-6, 0], [-5, 0], [0, 0]],
           "events": [
             { "frame": 3, "type": "melee", "until": 4 }
           ]
@@ -69,6 +72,7 @@
           "row": 6,
           "end": "state",
           "durations": [90, 110, 100, 70, 120, 120],
+          "offsets": [[0, 0], [-6, 0], [-1, 0], [-17, 0], [-14, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "melee" }
           ]
@@ -79,6 +83,7 @@
           "row": 7,
           "end": "state",
           "durations": [110, 130, 240, 70, 160, 160],
+          "offsets": [[0, 0], [-1, 0], [1, 0], [-6, 0], [-7, 0], [4, 0]],
           "events": [
             { "frame": 4, "type": "melee" }
           ]
@@ -97,7 +102,8 @@
           "label": "Idle",
           "row": 8,
           "loop": true,
-          "durations": [180, 180, 180, 180, 180, 180]
+          "durations": [180, 180, 180, 180, 180, 180],
+          "offsets": [[0, 0], [-5, 0], [5, 0], [2, 0], [-5, 0], [4, 0]]
         },
         "walk": {
           "id": "skeleton_knight_walk",
@@ -126,6 +132,7 @@
           "row": 12,
           "end": "state",
           "durations": [70, 80, 55, 80, 110, 110],
+          "offsets": [[0, 0], [-6, 0], [0, 0], [-5, 0], [-7, 0], [0, 0]],
           "events": [
             { "frame": 3, "type": "melee", "until": 4 }
           ]
@@ -136,6 +143,7 @@
           "row": 13,
           "end": "state",
           "durations": [120, 140, 220, 80, 150, 140],
+          "offsets": [[0, 0], [10, 0], [10, 0], [1, 0], [-6, 0], [3, 0]],
           "events": [
             { "frame": 4, "type": "melee" }
           ]
@@ -146,6 +154,7 @@
           "row": 14,
           "end": "state",
           "durations": [120, 150, 220, 90, 180, 160],
+          "offsets": [[0, 0], [-8, 0], [6, 0], [-11, 0], [-27, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "melee", "until": 5 }
           ]
@@ -193,6 +202,7 @@
           "row": 19,
           "end": "state",
           "durations": [100, 110, 70, 90, 140, 140],
+          "offsets": [[0, 0], [3, 0], [3, 0], [0, 0], [3, 0], [-4, 0]],
           "events": [
             { "frame": 3, "type": "melee", "until": 4 }
           ]
@@ -203,6 +213,7 @@
           "row": 20,
           "end": "state",
           "durations": [140, 160, 210, 100, 180, 180],
+          "offsets": [[0, 0], [9, 0], [10, 0], [-4, 0], [-2, 0], [-3, 0]],
           "events": [
             { "frame": 4, "type": "melee" }
           ]
@@ -213,6 +224,7 @@
           "row": 21,
           "end": "state",
           "durations": [160, 180, 320, 110, 220, 220],
+          "offsets": [[0, 0], [5, 0], [5, 0], [-3, 0], [-5, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "melee" }
           ]

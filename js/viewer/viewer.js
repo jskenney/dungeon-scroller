@@ -79,6 +79,17 @@ function saveEdits() {
 
 function loadEdits() {
   try { state.edits = JSON.parse(localStorage.getItem(EDITS_KEY)) ?? {}; } catch { state.edits = {}; }
+  // Drop adjustments that the JSON files now contain, or that no longer match anything.
+  const saved = {};
+  for (const entity of Object.values(state.assets.entities)) {
+    for (const clip of Object.values(entity.animations)) {
+      saved[editKey(entity, clip)] = JSON.stringify(clip.offsets ?? clip.durations.map(() => [0, 0]));
+    }
+  }
+  for (const [key, offsets] of Object.entries(state.edits)) {
+    if (!(key in saved) || saved[key] === JSON.stringify(offsets)) delete state.edits[key];
+  }
+  saveEdits();
 }
 
 /** Move the frame on screen by (dx, dy) art pixels and remember it as an unsaved edit. */

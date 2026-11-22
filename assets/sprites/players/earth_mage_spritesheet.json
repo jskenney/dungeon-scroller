@@ -32,7 +32,8 @@
           "label": "Idle",
           "row": 1,
           "loop": true,
-          "durations": [140, 140, 140, 140, 140, 140]
+          "durations": [140, 140, 140, 140, 140, 140],
+          "offsets": [[0, 0], [0, 0], [0, 0], [0, 0], [1, 0], [1, 0]]
         },
         "run": {
           "id": "run",
@@ -58,6 +59,7 @@
           "row": 4,
           "end": "state",
           "durations": [90, 110, 140, 100, 110, 100],
+          "offsets": [[0, 0], [0, 0], [3, 0], [4, 0], [5, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "area", "note": "Short ground-spire hit area as the spires rise." }
           ]
@@ -68,6 +70,7 @@
           "row": 5,
           "end": "state",
           "durations": [90, 100, 140, 90, 100, 100],
+          "offsets": [[0, 0], [2, 0], [3, 0], [-1, 0], [2, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "spawn", "note": "Travelling stone from the free hand; animated separately." }
           ]
@@ -78,6 +81,7 @@
           "row": 6,
           "end": "state",
           "durations": [80, 100, 110, 75, 105, 110],
+          "offsets": [[0, 0], [5, 0], [6, 0], [0, 0], [6, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "melee", "note": "Short contact window at the shield boss." }
           ]
@@ -87,7 +91,8 @@
           "label": "Hit reaction",
           "row": 7,
           "end": "state",
-          "durations": [60, 75, 85, 90, 95, 110]
+          "durations": [60, 75, 85, 90, 95, 110],
+          "offsets": [[0, 0], [2, 0], [-3, 0], [1, 0], [-1, 0], [-1, 0]]
         },
         "death": {
           "id": "death",
@@ -102,6 +107,7 @@
           "row": 9,
           "end": "hold",
           "durations": [90, 100, 110, 100, 90, 70],
+          "offsets": [[0, 0], [1, 0], [-4, 0], [0, 0], [0, 0], [0, 0]],
           "events": [
             { "frame": 6, "type": "teleport", "note": "Sprite is invisible; move the actor, then play teleport_in." }
           ],

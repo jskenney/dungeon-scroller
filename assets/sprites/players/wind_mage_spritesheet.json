@@ -58,6 +58,7 @@
           "row": 4,
           "end": "state",
           "durations": [90, 100, 140, 90, 110, 110],
+          "offsets": [[0, 0], [0, 0], [6, 0], [10, 0], [12, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "area", "note": "Short close-range wind fan; reach, duration and force are gameplay data." }
           ]
@@ -68,6 +69,7 @@
           "row": 5,
           "end": "state",
           "durations": [90, 110, 150, 100, 100, 100],
+          "offsets": [[0, 0], [4, 0], [7, 0], [12, 0], [12, 0], [0, 0]],
           "events": [
             { "frame": 4, "type": "spawn", "note": "Travelling wind crescent from the free hand; only the launch is in the sheet." }
           ]
@@ -78,6 +80,7 @@
           "row": 6,
           "end": "state",
           "durations": [90, 110, 130, 160, 60, 110],
+          "offsets": [[0, 0], [6, 0], [9, 0], [12, 0], [11, 0], [0, 0]],
           "events": [
             { "frame": 5, "type": "spawn", "note": "Ordinary arrow leaves the bow; F4 still holds the arrow. No wind effect." }
           ]
@@ -102,6 +105,7 @@
           "row": 9,
           "end": "hold",
           "durations": [90, 100, 110, 100, 90, 70],
+          "offsets": [[0, 0], [3, 0], [5, 0], [0, 0], [0, 0], [0, 0]],
           "events": [
             { "frame": 6, "type": "teleport", "note": "Sprite is invisible; move the actor, then play teleport_in." }
           ],
@@ -112,7 +116,8 @@
           "label": "Teleport in",
           "row": 10,
           "end": "state",
-          "durations": [80, 100, 110, 110, 90, 100]
+          "durations": [80, 100, 110, 110, 90, 100],
+          "offsets": [[0, 0], [0, 0], [7, 0], [4, 0], [4, 0], [0, 0]]
         },
         "crouch": {
           "id": "crouch",
