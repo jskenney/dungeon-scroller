@@ -354,7 +354,7 @@ function fighter(overrides = {}) {
   const hero = fakeHero({
     abilities: {
       attack1: { type: 'melee', mp: 0, damage: 10, air: false, box: { x: 10, y: -40, w: 40, h: 30 } },
-      attack2: { type: 'projectile', mp: 10, damage: 15, air: true, mobile: true, projectile: { speed: 500, range: 400 } },
+      attack2: { type: 'projectile', mp: 10, damage: 15, air: true, mobile: true, crouch: true, projectile: { speed: 500, range: 400 } },
       attack3: { type: 'target', mp: 10, damage: 0, air: true, range: 500, effect: { damageTaken: 2, duration: 5 } },
     },
     ...overrides });
@@ -429,6 +429,26 @@ tests.push(
     const start = swinging.hero.body.x;
     runWorld(swinging, i => ({ dir: 1, attack1: i === 0 }), 30);
     assert(swinging.hero.body.x - start < 30, `the hero kept walking through a melee swing (moved ${(swinging.hero.body.x - start).toFixed(0)} px)`);
+  }],
+  ['magic can be cast from a crouch without standing up; a melee swing cannot', () => {
+    const world = arena([3], { enemy: dummy(), config: QUIET });
+    runWorld(world, { down: true }, 10);
+    assert(world.hero.crouching, 'the hero did not crouch');
+    runWorld(world, i => ({ down: true, attack1: i === 0 }), 5);
+    assert(!world.hero.action, 'a melee swing started from a crouch');
+    let low = true, shotY = null;
+    runWorld(world, i => ({ down: true, attack2: i === 0 }), 60, w => {
+      low = low && w.hero.crouching && w.hero.body.h === 30;
+      if (w.projectiles[0] && shotY === null) shotY = w.projectiles[0].y;
+    });
+    assert(low, 'the hero stood up while casting');
+    assert(shotY !== null && world.hero.body.y - shotY < 25, `the shot did not leave from crouch height (${shotY})`);
+    assert(world.enemies[0].hp === 15, 'the crouched shot did not hit');
+    const crawling = arena([], { config: QUIET });
+    runWorld(crawling, { down: true, dir: 1 }, 20);
+    const x = crawling.hero.body.x;
+    runWorld(crawling, i => ({ down: true, dir: 1, attack2: i === 0 }), 30);
+    assert(crawling.hero.action?.slot === 'attack2' && crawling.hero.body.x > x + 15 && crawling.hero.crouching, 'could not cast while crawling');
   }],
   ['a melee ability marked for the air can be used in a jump', () => {
     const hero = fighter();

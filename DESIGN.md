@@ -166,6 +166,7 @@ A catalog holds the **gameplay** values for every thing of one kind: `data/playe
 - **Ability names** come from the animation labels in the sheet JSON and are not repeated here.
 - **Ability types:** `melee`, `area` (short-range effect in front), `projectile`, `target` (applies to a chosen enemy, no projectile), `heal`. Optional `effect` values: `knockback` (px/s), `slow` (speed factor) and `stun` (seconds) with `duration`, `damageTaken` (multiplier on the target).
 - **`air`** says whether the ability can be used while jumping or flying. Every ability can, except the earth mage's ground spires.
+- **`crouch`** abilities can be used while crouching or crawling; the hero stays low and the shot leaves from crouch height. The ranged abilities have it; melee and close-range effects do not.
 - **`mobile`** abilities can be used while walking or running. Ranged abilities (bolts, the arrow, the stone, the hex, the heal) are mobile; melee swings and close-range effects stop the hero until they finish.
 - **`flight.mode`** is `"none"`, `"mp"` (drains `mpPerSecond` while airborne) or `"free"`.
 

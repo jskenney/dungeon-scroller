@@ -89,7 +89,8 @@ export class Hero extends Actor {
 
   tryAbility(slot) {
     const ability = this.g.abilities[slot];
-    if (!ability || this.action || this.crouching) return;
+    if (!ability || this.action) return;
+    if (this.crouching && !ability.crouch) return;        // only some abilities work from a crouch
     if (!this.body.grounded && !ability.air) return;      // a few abilities only work from the ground
     if (this.mp < ability.mp) return;
     this.mp -= ability.mp;
@@ -225,7 +226,8 @@ export class Hero extends Actor {
       b.vy = rooted ? 0 : intents.vertical * flight.speed;
     } else {
       // Crouch while down is held on the ground; stay crouched under a low ceiling.
-      const wantCrouch = b.grounded && intents.down && !busy;
+      // An ability used from a crouch keeps the hero down, so the low profile is not lost.
+      const wantCrouch = b.grounded && intents.down && (!busy || (this.crouching && Boolean(this.action.ability?.crouch)));
       if (wantCrouch && !this.crouching) { this.crouching = true; b.h = this.crouchH; }
       else if (!wantCrouch && this.crouching) this.standUp(level);
 

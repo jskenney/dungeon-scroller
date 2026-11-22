@@ -4,7 +4,7 @@
   "notes": [
     "Boxes are in pixels relative to the actor's pivot (feet, on the ground line) for an actor facing right: x is the left edge, y is the top edge (negative is up). They mirror with the sprite.",
     "body and crouchBody are the collision boxes. An ability's box is active during the melee or area event window of its animation.",
-    "Ability names come from the animation labels in the sheet JSON. 'air' says whether the ability can be used while jumping or flying. 'mobile' abilities can be used while walking or running; the others stop the hero until they finish.",
+    "Ability names come from the animation labels in the sheet JSON. 'air' says whether the ability can be used while jumping or flying. 'mobile' abilities can be used while walking or running; the others stop the hero until they finish. 'crouch' abilities can be used while crouching or crawling, without standing up.",
     "Entries inherit every value in 'defaults' and may override any of them.",
     "color tints the hero's projectiles and effects, which are drawn as particles."
   ],
@@ -34,13 +34,13 @@
       "body": { "x": -20, "y": -53, "w": 23, "h": 53 },
       "crouchBody": { "x": -20, "y": -37, "w": 23, "h": 37 },
       "abilities": {
-        "attack1": { "type": "heal", "mp": 25, "amount": 30, "radius": 96, "air": true, "mobile": true },
+        "attack1": { "type": "heal", "mp": 25, "amount": 30, "radius": 96, "air": true, "mobile": true, "crouch": true },
         "attack2": {
           "type": "projectile",
           "mp": 12,
           "damage": 16,
           "projectile": { "speed": 520, "range": 600 },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         },
         "attack3": {
           "type": "melee",
@@ -83,7 +83,7 @@
           "mp": 10,
           "damage": 18,
           "projectile": { "speed": 560, "range": 600 },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         },
         "attack3": {
           "type": "melee",
@@ -128,7 +128,7 @@
           "damage": 14,
           "projectile": { "speed": 500, "range": 600 },
           "effect": { "slow": 0.5, "duration": 2.5 },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         },
         "attack3": {
           "type": "melee",
@@ -172,14 +172,14 @@
           "mp": 12,
           "damage": 14,
           "projectile": { "speed": 600, "range": 650, "pierce": true },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         },
         "attack3": {
           "type": "projectile",
           "mp": 0,
           "damage": 9,
           "projectile": { "speed": 720, "range": 700, "gravity": 300 },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         }
       }
     },
@@ -216,7 +216,7 @@
           "mp": 10,
           "damage": 16,
           "projectile": { "speed": 480, "range": 520, "gravity": 900 },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         },
         "attack3": {
           "type": "melee",
@@ -262,7 +262,7 @@
           "damage": 0,
           "range": 500,
           "effect": { "damageTaken": 1.5, "duration": 6 },
-          "air": true, "mobile": true
+          "air": true, "mobile": true, "crouch": true
         },
         "attack3": {
           "type": "melee",
