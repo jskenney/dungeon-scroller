@@ -1,0 +1,23 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "light_space_mage_card.png",
+  "guide": "light_space_mage_card.md",
+  "sha256": "a11bdb41ead2c367fd6d6769826f8a8852fad1796451aa2df5e8ac3c2e0a2c89",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "player",
+    "sheet": "../sprites/players/light_space_mage_spritesheet.json",
+    "entity": "light_space_mage"
+  },
+  "textArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#010921",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "The gold border and corner stars lie outside textArea and must stay visible."
+  ]
+}

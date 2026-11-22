@@ -19,6 +19,9 @@
     "tilesets": [
       "assets/tilesheets/old_stone_dungeon_tileset.json",
       "assets/tilesheets/ruined_graveyard_tileset.json"
+    ],
+    "cards": [
+      "assets/cards/light_space_mage_card.json"
     ]
   },
 

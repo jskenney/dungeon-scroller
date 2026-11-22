@@ -93,6 +93,7 @@ Loading is a chain. Every path inside a JSON file is **relative to the file that
 ```
 index.html
   └─ dungeon.json  (or example.dungeon.json)     site config, controls, asset list, catalog paths, api
+       ├─ assets.cards[]         →  <card>.json     →  <card>.png       card art and text area (§4.5)
        ├─ assets.spritesheets[]  →  <sheet>.json    →  <sheet>.png      art facts (§4.3)
        ├─ assets.tilesets[]      →  <tileset>.json  →  <tileset>.png    art facts (§4.4)
        ├─ data/players.json   ─┐
@@ -280,7 +281,25 @@ All six hero sheets share one 14-row layout: idle, run, jump, three attacks (lis
 
 Not yet in the repository: cards, music, sound effects, NPC sheets, parallax backgrounds, and travelling projectile/effect sprites.
 
-**Cards** are PNG files with a common blank information area. The game draws the name, statistics and abilities into that area from the catalog; the area's rectangle will be recorded once per card design when the first cards arrive.
+**Cards.** Each card is a PNG with no lettering and a quiet reserved area that the game writes into, plus a guide and a JSON file (`dungeon-scroller/card@1`):
+
+```json
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "light_space_mage_card.png",
+  "size": { "w": 1000, "h": 1400 },
+  "subject": { "kind": "player", "sheet": "../sprites/players/light_space_mage_spritesheet.json", "entity": "light_space_mage" },
+  "textArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#010921",
+  "textTone": "light"
+}
+```
+
+- `subject` ties the card to a sheet entity, so the selection screen can find a character's card (and the reverse) without a separate table.
+- `textArea` is in card pixels and scales with the displayed card. The game lays out name, statistics and abilities from the gameplay catalog inside it as an HTML overlay; `textTone` (`light` or `dark`) and `textBackground` (the measured average colour of the area) choose a readable text colour.
+- Cards are listed under `assets.cards` in `dungeon.json`. Cards are 5:7 and are drawn with smooth scaling when shown smaller than native size, nearest-neighbour when larger.
+
+One card exists so far: the light and space mage.
 
 **Projectiles and travelling effects.** The guides state that bolts, breath streams and arena effects are not part of the character sheets. Where an ability has no projectile sprite — neither rows in its own sheet nor a dedicated effect sheet named in the catalog — the game draws it with a **particle effect** tinted to the character's magic colour. Supplying a sprite later replaces the particles without code changes.
 
