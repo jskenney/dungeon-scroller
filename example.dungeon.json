@@ -21,7 +21,11 @@
       "assets/tilesheets/ruined_graveyard_tileset.json"
     ],
     "cards": [
-      "assets/cards/light_space_mage_card.json"
+      "assets/cards/light_space_mage_card.json",
+      "assets/cards/fire_mage_card.json",
+      "assets/cards/water_mage_card.json",
+      "assets/cards/wind_mage_card.json",
+      "assets/cards/earth_mage_card.json"
     ]
   },
 

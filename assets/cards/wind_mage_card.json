@@ -1,0 +1,26 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "wind_mage_card.png",
+  "guide": "wind_mage_card.md",
+  "sha256": "7c9cbad76021305bddcf0253fa8f6adfaf8172805110bb41bc7a23e18c7bb22a",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "player",
+    "sheet": "../sprites/players/wind_mage_spritesheet.json",
+    "entity": "wind_mage"
+  },
+  "textArea": { "x": 430, "y": 630, "w": 510, "h": 700 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#000824",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended over the measured area that is equally dark and empty, clear of the figure, border and corner ornaments.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
+    "The gold border and corner ornaments lie outside textArea and must stay visible."
+  ]
+}
