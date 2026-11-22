@@ -90,7 +90,7 @@ export class Hero extends Actor {
   tryAbility(slot) {
     const ability = this.g.abilities[slot];
     if (!ability || this.action || this.crouching) return;
-    if (!this.body.grounded && !ability.air) return;      // melee and ground effects need the ground
+    if (!this.body.grounded && !ability.air) return;      // a few abilities only work from the ground
     if (this.mp < ability.mp) return;
     this.mp -= ability.mp;
     this.action = { slot, t: 0, frame: -1, ability, struck: new Set() };
@@ -179,7 +179,8 @@ export class Hero extends Actor {
       }
     }
     const busy = Boolean(this.action);
-    const rooted = busy && (b.grounded || this.teleporting) && this.action.slot !== 'hit';
+    // Ranged abilities can be used on the move; melee, close-range effects and teleport plant the feet.
+    const rooted = busy && (b.grounded || this.teleporting) && this.action.slot !== 'hit' && !this.action.ability?.mobile;
 
     if (!busy) {
       if (intents.attack1) this.tryAbility('attack1');

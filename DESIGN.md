@@ -165,7 +165,8 @@ A catalog holds the **gameplay** values for every thing of one kind: `data/playe
 - **Boxes were drafted from the sprite pixels** and are adjusted by eye in the viewer (§16.1).
 - **Ability names** come from the animation labels in the sheet JSON and are not repeated here.
 - **Ability types:** `melee`, `area` (short-range effect in front), `projectile`, `target` (applies to a chosen enemy, no projectile), `heal`. Optional `effect` values: `knockback` (px/s), `slow` (speed factor) and `stun` (seconds) with `duration`, `damageTaken` (multiplier on the target).
-- **`air`** says whether the ability can be used while jumping or flying. Ranged abilities can; melee and ground effects cannot.
+- **`air`** says whether the ability can be used while jumping or flying. Every ability can, except the earth mage's ground spires.
+- **`mobile`** abilities can be used while walking or running. Ranged abilities (bolts, the arrow, the stone, the hex, the heal) are mobile; melee swings and close-range effects stop the hero until they finish.
 - **`flight.mode`** is `"none"`, `"mp"` (drains `mpPerSecond` while airborne) or `"free"`.
 
 **Heroes**
@@ -461,7 +462,7 @@ Entering flight plays `fly_up` once, then holds its last frame while hovering or
 
 **Crouching** has two uses. In combat the lower `crouchBody` box lets projectiles and high swings pass overhead. In levels it opens **low passages**: a standing hero is about 52 px tall and fits any one-tile gap, so a passage that forces a crawl must leave less than that. Crouched heroes are 29–37 px tall, so a low-passage tile should leave a **40 px gap** (solid from the top of the cell down to 56 px). Such a tile needs no new collision shape — it is a `rect` of `[0, 0, 96, 56]` — but the current tilesets do not contain one yet. A hero cannot stand up while under a low ceiling.
 
-**Attacking in the air.** Ranged abilities (`air: true`) can be used while jumping or flying; melee and ground effects only on the ground.
+**Attacking while moving.** Every ability can be used while jumping or flying, keeping the hero's momentum, except the earth mage's ground spires, which rise from the floor. On the ground, ranged abilities can be used on the move; a melee swing or close-range effect plants the hero's feet until it finishes. The attack pose shows in place of the run or jump pose while it plays.
 
 **Scale reference** for level design and the generator: the hero is about half a tile tall; a jump clears 1.5 tiles vertically, and about 1.1 tiles horizontally at walking speed or 2 when running.
 

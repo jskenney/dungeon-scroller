@@ -354,7 +354,7 @@ function fighter(overrides = {}) {
   const hero = fakeHero({
     abilities: {
       attack1: { type: 'melee', mp: 0, damage: 10, air: false, box: { x: 10, y: -40, w: 40, h: 30 } },
-      attack2: { type: 'projectile', mp: 10, damage: 15, air: true, projectile: { speed: 500, range: 400 } },
+      attack2: { type: 'projectile', mp: 10, damage: 15, air: true, mobile: true, projectile: { speed: 500, range: 400 } },
       attack3: { type: 'target', mp: 10, damage: 0, air: true, range: 500, effect: { damageTaken: 2, duration: 5 } },
     },
     ...overrides });
@@ -416,6 +416,29 @@ tests.push(
     const open = arena([10], { enemy: dummy(), config: QUIET });
     runWorld(open, i => ({ attack2: i === 0 }), 120);
     assert(open.enemies[0].hp === 30 && open.projectiles.length === 0, 'the projectile flew past its range');
+  }],
+  ['a ranged ability can be used on the move; a melee swing plants the feet', () => {
+    const casting = arena([], { config: QUIET });
+    runWorld(casting, { dir: 1 }, 30);
+    const before = casting.hero.body.x;
+    runWorld(casting, i => ({ dir: 1, attack2: i === 0 }), 30);
+    assert(casting.hero.action?.slot === 'attack2', 'the ranged ability did not start while walking');
+    assert(casting.hero.body.x - before > 60, `the hero stopped to cast (moved ${(casting.hero.body.x - before).toFixed(0)} px)`);
+    const swinging = arena([], { config: QUIET });
+    runWorld(swinging, { dir: 1 }, 30);
+    const start = swinging.hero.body.x;
+    runWorld(swinging, i => ({ dir: 1, attack1: i === 0 }), 30);
+    assert(swinging.hero.body.x - start < 30, `the hero kept walking through a melee swing (moved ${(swinging.hero.body.x - start).toFixed(0)} px)`);
+  }],
+  ['a melee ability marked for the air can be used in a jump', () => {
+    const hero = fighter();
+    hero.gameplay.abilities.attack1.air = true;
+    const world = arena([], { hero, config: QUIET });
+    runWorld(world, i => ({ jumpPressed: i === 0, jumpHeld: true, attack1: i === 6 }), 10);
+    assert(!world.hero.body.grounded && world.hero.action?.slot === 'attack1', 'the swing did not start in mid-air');
+    const x = world.hero.body.x;
+    runWorld(world, { dir: 1, jumpHeld: true }, 10);
+    assert(world.hero.body.x > x + 10, 'the hero could not steer during an air attack');
   }],
   ['a hex makes the target take double damage', () => {
     const world = arena([1], { enemy: dummy(), config: QUIET });
