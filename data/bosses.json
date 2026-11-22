@@ -11,6 +11,7 @@
     "undead_dragon": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "undead_dragon",
+      "card": "../assets/cards/undead_dragon_card.json",
       "stats": { "hp": 600, "speed": 90, "flySpeed": 220, "touchDamage": 10, "score": 500 },
       "body": { "x": -72, "y": -124, "w": 138, "h": 124 },
       "phases": [
@@ -63,6 +64,7 @@
     "undead_fenrir": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "undead_fenrir",
+      "card": "../assets/cards/undead_fenrir_card.json",
       "stats": { "hp": 700, "speed": 150, "flySpeed": 300, "touchDamage": 10, "score": 500 },
       "body": { "x": -73, "y": -124, "w": 146, "h": 124 },
       "phases": [
@@ -114,6 +116,7 @@
     "death_monarch": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "death_monarch",
+      "card": "../assets/cards/death_monarch_card.json",
       "stats": { "hp": 800, "speed": 80, "flySpeed": 180, "touchDamage": 10, "score": 500 },
       "body": { "x": -68, "y": -158, "w": 65, "h": 158 },
       "phases": [

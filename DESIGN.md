@@ -349,7 +349,7 @@ Not yet in the repository: cards, music, sound effects, NPC sheets, parallax bac
 - `textArea` is in card pixels and scales with the displayed card. Every card is 1000 × 1400, but **each card has its own text area**, so the layout adapts to the rectangle it is given (font size and line count are fitted to it) and never assumes a fixed position. Where the art allows, `textArea` is extended beyond the guide's rectangle over pixels measured to be just as dark and empty, keeping clear of the figure, border and corner ornaments; the guide's original is kept as `guideTextArea`. The game lays out name, statistics and abilities from the gameplay catalog inside it as an HTML overlay; `textTone` (`light` or `dark`) and `textBackground` (the measured average colour of the area) choose a readable text colour.
 - Cards are listed under `assets.cards` in `dungeon.json`. Cards are 5:7 and are drawn with smooth scaling when shown smaller than native size, nearest-neighbour when larger.
 
-All six heroes have a card with JSON. Enemy and boss cards are still to come.
+All six heroes and all three bosses have a card with JSON. The boss artwork fills most of each card, so their text areas stay close to the guide's rectangle (about 510 × 378), roughly half the room of a hero card. Enemy cards are still to come.
 
 **When a guide and this design disagree, this design wins.** The markdown guides are the source for facts about the art (grid, rows, measurements); rendering and gameplay choices — scaling filters, text areas, collision, timing — follow this document and the JSON files.
 
