@@ -59,14 +59,15 @@ Where local storage does earn its place later:
 ## 3. Repository layout
 
 ```
-index.html                 the only page; loads js/main.js as a module
+index.html                 the game page (a placeholder linking to the viewer until the game is built)
+viewer.html                asset viewer: every sheet entity, tileset and card, with checks (§16)
 dungeon.json               site configuration; the first file fetched (§4). Not in the repository.
 example.dungeon.json       documented example; used when dungeon.json is missing
 LICENSE                    MIT
 DESIGN.md                  this document
 css/                       page, HUD, menu and speech-bubble styles
 js/                        game source (§5)
-vendor/pixi.min.mjs        vendored PixiJS 8
+vendor/pixi.min.mjs        vendored PixiJS 8.23.0 (MIT; licence in vendor/pixi.LICENSE)
 data/                      catalogs: which assets exist and their gameplay values (§4.2)
 levels/                    static level files (§10)
 tests.html                 in-browser simulation tests
@@ -611,7 +612,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | Phase | Deliverable |
 |---|---|
 | **0. Asset JSON** | **Done for all guided sheets:** the JSON file for every sprite sheet and tileset that has a markdown guide, in the formats of §4.3 and §4.4, plus `example.dungeon.json`. New sheets get their JSON when their guide is uploaded. Still to come in this phase: the gameplay catalogs in `data/`. |
-| **1. Skeleton and viewer** | `index.html`, config loading with the `example.dungeon.json` fallback, vendored PixiJS, loader with sheet slicing. An asset-viewer screen that plays every animation of every entity with pivots, bounds and event frames drawn, and reports any JSON/PNG mismatch — the visual proof of phase 0. |
+| **1. Skeleton and viewer** | **Done:** `viewer.html`, configuration loading with the `example.dungeon.json` fallback (`js/config.js`), vendored PixiJS, the asset loader with per-entity sheet slicing and JSON-against-image checks (`js/assets/loader.js`), and animation playback maths shared with the future simulation (`js/assets/animation.js`). Still to come in this phase: the real `index.html` game shell. |
 | **2. Simulation core** | Fixed-step loop, hero movement, all tile shapes, camera and zoom, on a small hand-written test level. In-browser tests for collision. |
 | **3. Procedural levels** | Seeded generator with section templates and reachability check; level schema loader; three or four generated levels saved as static test files. |
 | **4. Combat and enemies** | Abilities, projectiles, damage, enemy archetypes, HP/MP, HUD. |
@@ -623,6 +624,17 @@ Each phase ends with something that can be opened in a browser and checked.
 | **Later** | NPC behaviour, gamepad and touch, text-to-speech, offline support, Tiled import, backend and multiplayer (§15). |
 
 ---
+
+### 16.1 The asset viewer
+
+`viewer.html` loads the site configuration and every asset it lists through the same loader the game will use, so what it shows is what the game will draw.
+
+- **Characters, enemies, bosses, objects:** one animation at a time with a frame-by-frame timeline (durations, event frames, blank frames), or every animation at once. Play, pause, step, slow motion, mirror to the other facing, integer zoom. Overlays show the cell, the pivot and ground line, and the measured idle bounds.
+- **Tilesets:** the sheet with each tile's collision shape drawn over it and details on hover, plus example constructions built from the tileset's `runs` and `assemblies`.
+- **Cards:** the card with its text area outlined and sample text laid out inside it.
+- **Checks:** image size, grid, checksum, row usage, required animation slots, event frames, tile references and card subjects. The header shows the number of problems found.
+
+Keys: Space play/pause, ←/→ step a frame, F mirror, A single/all, +/− zoom. Each view has its own address (for example `viewer.html#boss/undead_dragon/attack3`), so a specific animation can be linked.
 
 ## 17. Open items
 

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dungeon Scroller — Asset Viewer</title>
+  <link rel="stylesheet" href="css/viewer.css">
+</head>
+<body>
+  <header>
+    <h1>Asset Viewer</h1>
+    <span id="config-source" class="muted"></span>
+    <span class="spacer"></span>
+    <button id="problems-button" type="button" hidden></button>
+  </header>
+
+  <nav id="nav" aria-label="Assets"></nav>
+
+  <main>
+    <div id="toolbar" class="toolbar" hidden>
+      <span class="group" data-for="entity">
+        <button id="view-single" type="button" aria-pressed="true" title="One animation (A)">Single</button>
+        <button id="view-all" type="button" aria-pressed="false" title="Every animation at once (A)">All</button>
+      </span>
+      <span class="group" data-for="tileset">
+        <button id="view-atlas" type="button" aria-pressed="true">Tiles</button>
+        <button id="view-built" type="button" aria-pressed="false">Assemblies</button>
+      </span>
+      <span class="group">
+        <button id="zoom-out" type="button" title="Zoom out (−)">−</button>
+        <output id="zoom-label">4×</output>
+        <button id="zoom-in" type="button" title="Zoom in (+)">+</button>
+      </span>
+      <span class="group" data-for="entity">
+        <button id="play" type="button" title="Play / pause (Space)">Pause</button>
+        <button id="step-back" type="button" title="Previous frame (←)">◀</button>
+        <button id="step-forward" type="button" title="Next frame (→)">▶</button>
+        <label>Speed
+          <select id="speed">
+            <option value="0.1">0.1×</option>
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+          </select>
+        </label>
+        <button id="flip" type="button" aria-pressed="false" title="Mirror to the other facing (F)">Flip</button>
+      </span>
+      <span class="group" data-for="entity">
+        <label><input type="checkbox" id="show-cell" checked> Cell</label>
+        <label><input type="checkbox" id="show-pivot" checked> Pivot &amp; ground</label>
+        <label><input type="checkbox" id="show-bounds"> Idle bounds</label>
+      </span>
+      <span class="group" data-for="tileset">
+        <label><input type="checkbox" id="show-shapes" checked> Collision shapes</label>
+        <label><input type="checkbox" id="show-grid" checked> Grid</label>
+      </span>
+      <span class="group" data-for="card">
+        <label><input type="checkbox" id="show-areas" checked> Text area outlines</label>
+        <label><input type="checkbox" id="show-sample" checked> Sample text</label>
+      </span>
+    </div>
+
+    <div id="stage">
+      <canvas id="canvas"></canvas>
+      <div id="readout" class="readout" hidden></div>
+      <div id="card-view" hidden></div>
+      <div id="problems-view" hidden></div>
+      <div id="loading">Loading…</div>
+    </div>
+
+    <div id="timeline" hidden></div>
+  </main>
+
+  <aside id="details" aria-label="Details"></aside>
+
+  <script type="module" src="js/viewer/viewer.js"></script>
+</body>
+</html>
