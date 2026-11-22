@@ -172,6 +172,23 @@ export const tests = [
     runWorld(world, i => ({ jumpPressed: i === 0, jumpHeld: i < 4 }), 60, w => { top = Math.min(top, w.hero.body.y); });
     assert(floor - top < 100, `expected a short hop, got ${(floor - top).toFixed(1)}`);
   }],
+  ['stairs look like an even ramp, with no pauses or dips', () => {
+    for (const run of [false, true]) {
+      for (const map of [['........', 'S../####', '########'], ['........', '####\\...', '########']]) {
+        const world = new World(mapLevel(map), fakeHero(), CONFIG);
+        if (map[1][0] === '#') world.hero.placeAt(300, TILE);
+        runWorld(world, {}, 30);
+        const seen = [];
+        runWorld(world, { dir: 1, run }, 140, w => seen.push(w.hero.body.y + w.hero.visualLift));
+        const steps = seen.slice(1).map((y, i) => y - seen[i]);
+        const first = steps.findIndex(v => Math.abs(v) > 0.01), last = steps.length - [...steps].reverse().findIndex(v => Math.abs(v) > 0.01);
+        const during = steps.slice(first, last);
+        assert(!during.some((v, i) => i && v * during[i - 1] < 0), 'the picture moved up and down on the stairs');
+        assert(during.filter(v => Math.abs(v) < 0.01).length <= 1, `the picture paused ${during.filter(v => Math.abs(v) < 0.01).length} times on the stairs`);
+        assert(Math.max(...during.map(Math.abs)) < 8, 'the picture jumped more than 8 px in one tick');
+      }
+    }
+  }],
   ['a jump still works just after walking off a ledge', () => {
     const world = new World(mapLevel(['......', '......', 'S.....', '##....', '######']), fakeHero(), CONFIG);
     runWorld(world, {}, 20);

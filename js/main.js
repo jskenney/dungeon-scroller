@@ -211,7 +211,10 @@ function tick(dt) {
   // Draw between the last two simulation states so motion is smooth at any refresh rate.
   const hero = world.hero, b = hero.body, a = world.alpha;
   const x = hero.prev.x + (b.x - hero.prev.x) * a;
-  const y = hero.prev.y + (b.y - hero.prev.y) * a + hero.visualLift;
+  // The feet position and the stair smoothing are blended together; blending
+  // only one of them would make the picture dip for a frame at every step.
+  const y0 = hero.prev.y + hero.prev.lift, y1 = b.y + hero.visualLift;
+  const y = y0 + (y1 - y0) * a;
   game.view.show(hero.pose.slot, hero.pose.frame, x, y, hero.facing);
   // Look a little ahead of a hero who keeps moving one way. The offset follows
   // the movement speed and eases slowly, so turning around does not jolt the view.

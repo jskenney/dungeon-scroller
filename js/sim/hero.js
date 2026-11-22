@@ -44,13 +44,13 @@ export class Hero {
     this.visualLift = 0;         // smooths stair steps on screen; decays to 0
     this.anim = 'idle'; this.animTime = 0;
     this.pose = { slot: 'idle', frame: 0 };
-    this.prev = { x: 0, y: 0 };
+    this.prev = { x: 0, y: 0, lift: 0 };
     this.events = [];
   }
 
   placeAt(x, y) {
     Object.assign(this.body, { x, y, vx: 0, vy: 0, grounded: false, groundKind: null, h: this.standH });
-    this.prev = { x, y };
+    this.prev = { x, y, lift: 0 };
     this.crouching = this.flying = false;
     this.action = this.teleporting = null;
     this.visualLift = 0;
@@ -69,7 +69,7 @@ export class Hero {
   /** Advance one fixed step. */
   update(intents, level, dt) {
     const b = this.body, g = this.g, move = g.movement;
-    this.prev = { x: b.x, y: b.y };
+    this.prev = { x: b.x, y: b.y, lift: this.visualLift };
     this.running = intents.run;
 
     // One-shot actions: attacks and the two halves of a teleport.
@@ -82,7 +82,7 @@ export class Hero {
             const x = b.x + d * this.facing;
             if (x > b.w && x < level.width - b.w && isFree(level, x, b.y, b.w, b.h)) { b.x = x; break; }
           }
-          this.prev = { x: b.x, y: b.y };
+          this.prev = { x: b.x, y: b.y, lift: this.visualLift };
           this.teleporting = 'in';
           this.action = { slot: 'teleport_in', t: 0 };
         } else {
@@ -170,8 +170,10 @@ export class Hero {
     }
     this.landPose = Math.max(0, this.landPose - dt);
     // Stair steps move the feet instantly; the picture catches up over a few frames.
+    // Steps rise 16 px over 16 px, so catching up at walking pace turns the
+    // staircase into one even ramp instead of a series of hops and pauses.
     this.visualLift -= moved.stepDy;
-    const settle = 260 * dt;
+    const settle = Math.max(Math.abs(b.vx) * 1.05, 120) * dt;
     this.visualLift = Math.abs(this.visualLift) <= settle ? 0 : this.visualLift - Math.sign(this.visualLift) * settle;
 
     this.choosePose(intents, dt);
