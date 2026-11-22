@@ -1,0 +1,264 @@
+{
+  "schema": "dungeon-scroller/tileset@1",
+  "image": "old_stone_dungeon_tileset.png",
+  "guide": "old_stone_dungeon_tileset.md",
+  "sha256": "b71be8eae5c8a6d3c633306c810d4613ed4d549a736a6753bd306d2f720b6ee9",
+  "size": { "w": 768, "h": 480 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 8,
+  "rows": 5,
+  "surfaceY": 0,
+  "tiles": {
+    "floor_left": { "row": 1, "col": 1, "name": "Left end", "shape": "solid", "layer": "terrain" },
+    "floor_center_a": { "row": 1, "col": 2, "name": "Repeatable center A", "shape": "solid", "layer": "terrain" },
+    "floor_right": { "row": 1, "col": 3, "name": "Right end", "shape": "solid", "layer": "terrain" },
+    "floor_single": { "row": 1, "col": 4, "name": "Standalone block", "shape": "solid", "layer": "terrain" },
+    "floor_center_b": { "row": 1, "col": 5, "name": "Repeatable center B", "shape": "solid", "layer": "terrain" },
+    "floor_cracked": { "row": 1, "col": 6, "name": "Cracked center", "shape": "solid", "layer": "terrain" },
+    "fill_a": { "row": 1, "col": 7, "name": "Solid masonry fill A", "shape": "solid", "layer": "terrain" },
+    "fill_b": { "row": 1, "col": 8, "name": "Solid masonry fill B", "shape": "solid", "layer": "terrain" },
+    "platform_left": {
+      "row": 2,
+      "col": 1,
+      "name": "Left cap",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_center_a": {
+      "row": 2,
+      "col": 2,
+      "name": "Repeatable middle A",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_right": {
+      "row": 2,
+      "col": 3,
+      "name": "Right cap",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_single": {
+      "row": 2,
+      "col": 4,
+      "name": "Standalone platform",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_center_b": {
+      "row": 2,
+      "col": 5,
+      "name": "Repeatable middle B",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_cracked": {
+      "row": 2,
+      "col": 6,
+      "name": "Cracked middle",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_bracket_left": {
+      "row": 2,
+      "col": 7,
+      "name": "Left support bracket",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 64 }
+    },
+    "platform_bracket_right": {
+      "row": 2,
+      "col": 8,
+      "name": "Right support bracket",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 64 }
+    },
+    "landing_left_lower": { "row": 3, "col": 1, "name": "Left lower landing", "shape": "solid", "layer": "terrain" },
+    "stairs_right": { "row": 3, "col": 2, "name": "Stairs rising right", "shape": "stairs_right", "layer": "terrain" },
+    "landing_right_upper": { "row": 3, "col": 3, "name": "Right upper landing", "shape": "solid", "layer": "terrain" },
+    "landing_right_lower": { "row": 3, "col": 4, "name": "Right lower landing", "shape": "solid", "layer": "terrain" },
+    "stairs_left": { "row": 3, "col": 5, "name": "Stairs rising left", "shape": "stairs_left", "layer": "terrain" },
+    "landing_left_upper": { "row": 3, "col": 6, "name": "Left upper landing", "shape": "solid", "layer": "terrain" },
+    "landing_upper_repeat": { "row": 3, "col": 7, "name": "Repeatable upper landing", "shape": "solid", "layer": "terrain" },
+    "landing_lower_repeat": { "row": 3, "col": 8, "name": "Repeatable lower landing", "shape": "solid", "layer": "terrain" },
+    "wall_left": {
+      "row": 4,
+      "col": 1,
+      "name": "Left boundary wall face",
+      "shape": "rect",
+      "rect": [0, 0, 24, 96],
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 24, "h": 96 }
+    },
+    "wall_right": {
+      "row": 4,
+      "col": 2,
+      "name": "Right boundary wall face",
+      "shape": "rect",
+      "rect": [72, 0, 24, 96],
+      "layer": "terrain",
+      "bounds": { "x": 72, "y": 0, "w": 24, "h": 96 }
+    },
+    "ceiling_center": {
+      "row": 4,
+      "col": 3,
+      "name": "Repeatable ceiling underside",
+      "shape": "rect",
+      "rect": [0, 0, 96, 32],
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 32 }
+    },
+    "ceiling_left": {
+      "row": 4,
+      "col": 4,
+      "name": "Ceiling left cap",
+      "shape": "rect",
+      "rect": [0, 0, 96, 32],
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 32 }
+    },
+    "ceiling_right": {
+      "row": 4,
+      "col": 5,
+      "name": "Ceiling right cap",
+      "shape": "rect",
+      "rect": [0, 0, 96, 32],
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 32 }
+    },
+    "background_a": { "row": 4, "col": 6, "name": "Background masonry A", "shape": "none", "layer": "background" },
+    "background_b": { "row": 4, "col": 7, "name": "Background masonry B", "shape": "none", "layer": "background" },
+    "background_recess": { "row": 4, "col": 8, "name": "Background with shallow recess", "shape": "none", "layer": "background" },
+    "arch_jamb_left": {
+      "row": 5,
+      "col": 1,
+      "name": "Left arch jamb",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 0, "y": 0, "w": 20, "h": 96 }
+    },
+    "arch_jamb_right": {
+      "row": 5,
+      "col": 2,
+      "name": "Right arch jamb",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 76, "y": 0, "w": 20, "h": 96 }
+    },
+    "arch_crown": { "row": 5, "col": 3, "name": "Arch crown", "shape": "none", "layer": "decor" },
+    "iron_grate": { "row": 5, "col": 4, "name": "Repeatable iron grate", "shape": "none", "layer": "decor" },
+    "torch_sconce_unlit": {
+      "row": 5,
+      "col": 5,
+      "name": "Unlit torch sconce",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 29, "y": 17, "w": 35, "h": 59 }
+    },
+    "hanging_chain": {
+      "row": 5,
+      "col": 6,
+      "name": "Hanging chain",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 42, "y": 0, "w": 13, "h": 96 }
+    },
+    "loose_rubble": {
+      "row": 5,
+      "col": 7,
+      "name": "Loose rubble",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 2, "y": 61, "w": 94, "h": 34 }
+    },
+    "pillar_segment": {
+      "row": 5,
+      "col": 8,
+      "name": "Chipped pillar segment",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 32, "y": 0, "w": 32, "h": 96 }
+    }
+  },
+  "shapes": {
+    "none": "no collision",
+    "solid": "full 96x96 block",
+    "platform": "one-way surface at y 0 with a 16 px deck; standable from above",
+    "rect": "solid sub-rectangle [x, y, w, h] in cell pixels",
+    "slope_right": "45 degree ramp, low left to high right: surfaceY = 96 - localX",
+    "slope_left": "45 degree ramp, high left to low right: surfaceY = localX",
+    "stairs_right": "six 16 px steps rising to the right: tread y = 80 - 16 * floor(x / 16)",
+    "stairs_left": "six 16 px steps rising to the left: tread y = 16 * floor(x / 16)"
+  },
+  "layers": {
+    "terrain": "collidable ground and structures",
+    "background": "opaque backdrop behind everything",
+    "decor": "overlay scenery; draw behind actors unless the level says otherwise"
+  },
+  "groups": {
+    "floor_center": [
+      "floor_center_a",
+      "floor_center_b",
+      "floor_cracked"
+    ],
+    "fill": [
+      "fill_a",
+      "fill_b"
+    ],
+    "platform_center": [
+      "platform_center_a",
+      "platform_center_b",
+      "platform_cracked"
+    ],
+    "background": [
+      "background_a",
+      "background_b",
+      "background_recess"
+    ]
+  },
+  "runs": {
+    "floor": { "left": "floor_left", "center": "floor_center", "right": "floor_right", "single": "floor_single", "below": "fill" },
+    "platform": { "left": "platform_left", "center": "platform_center", "right": "platform_right", "single": "platform_single" }
+  },
+  "assemblies": {
+    "stairs_rising_right": {
+      "note": "Climbs one tile; the lower landing is one map row below the stair.",
+      "parts": [
+        { "tile": "landing_left_lower", "dx": -1, "dy": 1 },
+        { "tile": "stairs_right", "dx": 0, "dy": 0 },
+        { "tile": "landing_right_upper", "dx": 1, "dy": 0 }
+      ]
+    },
+    "stairs_rising_left": {
+      "note": "Mirror of stairs_rising_right.",
+      "parts": [
+        { "tile": "landing_left_upper", "dx": -1, "dy": 0 },
+        { "tile": "stairs_left", "dx": 0, "dy": 0 },
+        { "tile": "landing_right_lower", "dx": 1, "dy": 1 }
+      ]
+    },
+    "arch": {
+      "note": "One column wide. Both jambs are drawn in the same cell, leaving a 56 px passage; repeat the jamb row for height.",
+      "parts": [
+        { "tile": "arch_crown", "dx": 0, "dy": 0 },
+        { "tile": "arch_jamb_left", "dx": 0, "dy": 1 },
+        { "tile": "arch_jamb_right", "dx": 0, "dy": 1 }
+      ]
+    }
+  },
+  "notes": [
+    "Extend landings with landing_lower_repeat and landing_upper_repeat.",
+    "Platform brackets include the deck; the brace below is decoration.",
+    "arch, iron_grate and pillar_segment have no default collision; the level decides.",
+    "torch_sconce_unlit is static; use the wall_torch object for a lit, animated torch.",
+    "loose_rubble's lowest pixel is y 94."
+  ]
+}

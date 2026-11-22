@@ -1,0 +1,89 @@
+{
+  "$comment": "Example site configuration. Copy to dungeon.json and edit. The game loads dungeon.json from its own directory and falls back to this file if dungeon.json is missing. Every path is relative to this file.",
+  "schema": "dungeon-scroller/config@1",
+  "title": "Dungeon Scroller",
+
+  "assets": {
+    "spritesheets": [
+      "assets/sprites/players/light_space_mage_spritesheet.json",
+      "assets/sprites/enemies/undead_enemy_spritesheet.json",
+      "assets/sprites/enemies/undead_tier2_spritesheet.json",
+      "assets/sprites/bosses/undead_boss_spritesheet.json",
+      "assets/sprites/objects/interactive_world_objects_spritesheet.json"
+    ],
+    "tilesets": [
+      "assets/tilesheets/old_stone_dungeon_tileset.json",
+      "assets/tilesheets/ruined_graveyard_tileset.json"
+    ]
+  },
+
+  "catalogs": {
+    "$comment": "Gameplay definitions (stats, abilities, behaviour, dialogue). These files are planned and do not exist yet.",
+    "players": "data/players.json",
+    "enemies": "data/enemies.json",
+    "bosses": "data/bosses.json",
+    "npcs": "data/npcs.json",
+    "objects": "data/objects.json",
+    "audio": "data/audio.json",
+    "levels": "data/levels.json"
+  },
+
+  "display": {
+    "defaultViewTiles": 11,
+    "minViewTiles": 5,
+    "maxViewTiles": 24,
+    "pixelPerfect": true
+  },
+
+  "controls": {
+    "$comment": "KeyboardEvent.code values; each action accepts several keys. Players can rebind these in the settings screen; their choices are stored in the browser and override these defaults.",
+    "left": ["ArrowLeft"],
+    "right": ["ArrowRight"],
+    "up": ["ArrowUp"],
+    "down": ["ArrowDown"],
+    "jump": ["Space"],
+    "run": ["ShiftLeft", "ShiftRight"],
+    "attack1": ["KeyZ"],
+    "attack2": ["KeyX"],
+    "attack3": ["KeyC"],
+    "teleport": ["KeyV"],
+    "fly": ["KeyF"],
+    "interact": ["KeyE"],
+    "zoomIn": ["Equal", "NumpadAdd"],
+    "zoomOut": ["Minus", "NumpadSubtract"],
+    "pause": ["Escape"],
+    "mute": ["KeyM"],
+    "debug": ["Backquote"]
+  },
+
+  "rules": {
+    "lives": 9999,
+    "respawn": "checkpoint"
+  },
+
+  "physics": {
+    "tickRate": 60,
+    "gravity": 2400,
+    "maxFallSpeed": 1400,
+    "runSpeedMultiplier": 1.75
+  },
+
+  "audio": {
+    "master": 1.0,
+    "music": 0.6,
+    "sfx": 0.8,
+    "voice": 1.0
+  },
+
+  "speech": {
+    "provider": "bubble"
+  },
+
+  "generator": {
+    "defaultTheme": "old_stone_dungeon",
+    "defaultLength": 120,
+    "defaultDifficulty": 1
+  },
+
+  "api": null
+}

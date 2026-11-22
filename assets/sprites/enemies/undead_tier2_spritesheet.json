@@ -1,0 +1,233 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "enemy",
+  "image": "undead_tier2_spritesheet.png",
+  "guide": "undead_tier2_spritesheet.md",
+  "sha256": "99a965d7a421fdafdf91592c66f607605ff5a25f88d02261326661e0e413f888",
+  "size": { "w": 576, "h": 2016 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 21,
+  "facing": "left",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "F6 of every hit and attack row equals idle F1 for that enemy.",
+    "The lich hovers: its hem is drawn about 10 px above the ground line (y 73-75) and it only touches ground in death.",
+    "Wolf pounce F4 is drawn 10 px off the ground; apply real travel in the game object.",
+    "Travelling bolts, volleys and eruptions are separate effects, not part of the sheet."
+  ],
+  "entities": {
+    "undead_wolf": {
+      "name": "Undead Wolf",
+      "description": "Low, long quadruped with patchy ash-gray fur, exposed ivory ribs, a cracked muzzle and faint grave-colored eyes.",
+      "rows": [1, 7],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 672 },
+      "idleBounds": { "x": 11, "y": 52, "w": 59, "h": 33 },
+      "animations": {
+        "idle": {
+          "id": "undead_wolf_idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [160, 160, 160, 160, 160, 160]
+        },
+        "walk": {
+          "id": "undead_wolf_move",
+          "label": "Stalking trot",
+          "row": 2,
+          "loop": true,
+          "durations": [90, 90, 90, 90, 90, 90],
+          "events": [
+            { "frame": 1, "type": "footstep" },
+            { "frame": 4, "type": "footstep" }
+          ]
+        },
+        "hit": {
+          "id": "undead_wolf_hit",
+          "label": "Hit reaction",
+          "row": 3,
+          "end": "state",
+          "durations": [60, 90, 100, 100, 100, 100]
+        },
+        "death": {
+          "id": "undead_wolf_death",
+          "label": "Death",
+          "row": 4,
+          "end": "hold",
+          "durations": [120, 140, 160, 180, 200, 200]
+        },
+        "attack1": {
+          "id": "undead_wolf_bite",
+          "label": "Light — Snap bite",
+          "row": 5,
+          "end": "state",
+          "durations": [70, 70, 60, 80, 100, 120],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "undead_wolf_rake",
+          "label": "Medium — Raking lunge",
+          "row": 6,
+          "end": "state",
+          "durations": [90, 110, 80, 90, 120, 130],
+          "events": [
+            { "frame": 4, "type": "melee", "note": "Forward movement can begin at F3." }
+          ]
+        },
+        "attack3": {
+          "id": "undead_wolf_pounce",
+          "label": "Heavy — Pounce",
+          "row": 7,
+          "end": "state",
+          "durations": [100, 130, 220, 100, 140, 140],
+          "events": [
+            { "frame": 4, "type": "leap" },
+            { "frame": 5, "type": "melee", "note": "Landing contact; gate through collision." }
+          ]
+        }
+      }
+    },
+    "wight": {
+      "name": "Wight",
+      "description": "Lean undead warrior with a sunken face, chainmail, a charcoal mantle, a pitted blade and free-hand grave magic.",
+      "rows": [8, 14],
+      "region": { "x": 0, "y": 672, "w": 576, "h": 672 },
+      "idleBounds": { "x": 20, "y": 32, "w": 54, "h": 53 },
+      "animations": {
+        "idle": {
+          "id": "wight_idle",
+          "label": "Idle",
+          "row": 8,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "walk": {
+          "id": "wight_move",
+          "label": "Measured walk",
+          "row": 9,
+          "loop": true,
+          "durations": [130, 130, 130, 130, 130, 130],
+          "events": [
+            { "frame": 1, "type": "footstep" },
+            { "frame": 4, "type": "footstep" }
+          ]
+        },
+        "hit": {
+          "id": "wight_hit",
+          "label": "Hit reaction",
+          "row": 10,
+          "end": "state",
+          "durations": [70, 100, 110, 110, 110, 110]
+        },
+        "death": {
+          "id": "wight_death",
+          "label": "Death",
+          "row": 11,
+          "end": "hold",
+          "durations": [140, 160, 180, 190, 220, 220]
+        },
+        "attack1": {
+          "id": "wight_rising_cut",
+          "label": "Light — Rising cut",
+          "row": 12,
+          "end": "state",
+          "durations": [80, 80, 70, 90, 120, 130],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "wight_grave_grasp",
+          "label": "Medium — Grave grasp",
+          "row": 13,
+          "end": "state",
+          "durations": [100, 120, 180, 90, 140, 150],
+          "events": [
+            { "frame": 4, "type": "melee", "until": 5, "note": "Grasp reaches at F4 and may resolve at F5." }
+          ]
+        },
+        "attack3": {
+          "id": "wight_empowered_cleave",
+          "label": "Heavy — Empowered cleave",
+          "row": 14,
+          "end": "state",
+          "durations": [120, 150, 260, 90, 170, 170],
+          "events": [
+            { "frame": 4, "type": "melee", "note": "Charge is held at F3." }
+          ]
+        }
+      }
+    },
+    "lich": {
+      "name": "Lich",
+      "description": "Hovering skeletal archmage with a narrow crown, ragged robes and a crooked staff with a pale blue-green crystal.",
+      "rows": [15, 21],
+      "region": { "x": 0, "y": 1344, "w": 576, "h": 672 },
+      "registration": "hover",
+      "idleBounds": { "x": 31, "y": 20, "w": 44, "h": 55 },
+      "animations": {
+        "idle": {
+          "id": "lich_idle",
+          "label": "Hovering idle",
+          "row": 15,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "walk": {
+          "id": "lich_move",
+          "label": "Glide",
+          "row": 16,
+          "loop": true,
+          "durations": [120, 120, 120, 120, 120, 120]
+        },
+        "hit": {
+          "id": "lich_hit",
+          "label": "Hit reaction",
+          "row": 17,
+          "end": "state",
+          "durations": [70, 100, 110, 120, 130, 120]
+        },
+        "death": {
+          "id": "lich_death",
+          "label": "Death",
+          "row": 18,
+          "end": "hold",
+          "durations": [140, 170, 180, 200, 240, 240]
+        },
+        "attack1": {
+          "id": "lich_grave_bolt",
+          "label": "Light — Grave bolt",
+          "row": 19,
+          "end": "state",
+          "durations": [80, 80, 70, 90, 120, 140],
+          "events": [
+            { "frame": 3, "type": "spawn", "note": "One travelling bolt from the staff tip." }
+          ]
+        },
+        "attack2": {
+          "id": "lich_spectral_volley",
+          "label": "Medium — Spectral volley",
+          "row": 20,
+          "end": "state",
+          "durations": [100, 130, 190, 90, 160, 160],
+          "events": [
+            { "frame": 4, "type": "spawn", "note": "Three-light volley, spawned once." }
+          ]
+        },
+        "attack3": {
+          "id": "lich_grave_eruption",
+          "label": "Heavy — Grave eruption",
+          "row": 21,
+          "end": "state",
+          "durations": [130, 160, 280, 100, 180, 170],
+          "events": [
+            { "frame": 4, "type": "spawn", "note": "Separate ground or arena effect; destination chosen by gameplay." }
+          ]
+        }
+      }
+    }
+  }
+}

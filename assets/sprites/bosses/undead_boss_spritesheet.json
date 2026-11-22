@@ -1,0 +1,282 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "boss",
+  "image": "undead_boss_spritesheet.png",
+  "guide": "undead_boss_spritesheet.md",
+  "sha256": "0476b3f3b33b7ca2bbe2b03b3e6a6c8c6ba17cb8281bbd95676c5b2b79b4c070",
+  "size": { "w": 1536, "h": 6912 },
+  "cell": { "w": 256, "h": 256 },
+  "columns": 6,
+  "rows": 27,
+  "facing": "left",
+  "pivot": { "x": 128, "y": 233 },
+  "groundY": 232,
+  "notes": [
+    "The sheet is 6912 px tall: load each entity's region as its own texture.",
+    "Flight rows are drawn airborne inside the cell; do not floor-align them.",
+    "Each boss's attack4 is its final attack and holds F6 until the controller moves on.",
+    "Long breath streams, travelling projectiles and arena-wide effects are separate game effects."
+  ],
+  "entities": {
+    "undead_dragon": {
+      "name": "Undead Dragon",
+      "description": "Horned skeletal skull, connected neck, exposed ribs, four legs, two membrane wings and a segmented tail; gravefire charges the ribs and jaws.",
+      "rows": [1, 9],
+      "region": { "x": 0, "y": 0, "w": 1536, "h": 2304 },
+      "idleBounds": { "x": 34, "y": 109, "w": 170, "h": 124 },
+      "animations": {
+        "idle": {
+          "id": "dragon_idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [150, 150, 150, 150, 150, 150]
+        },
+        "walk": {
+          "id": "dragon_walk",
+          "label": "Walk",
+          "row": 2,
+          "loop": true,
+          "durations": [130, 130, 130, 130, 130, 130]
+        },
+        "fly": {
+          "id": "dragon_fly",
+          "label": "Fly",
+          "row": 3,
+          "loop": true,
+          "durations": [100, 100, 100, 100, 100, 100]
+        },
+        "hit": {
+          "id": "dragon_hit",
+          "label": "Hit reaction",
+          "row": 4,
+          "end": "state",
+          "durations": [60, 80, 100, 100, 100, 120]
+        },
+        "death": {
+          "id": "dragon_death",
+          "label": "Death",
+          "row": 5,
+          "end": "hold",
+          "durations": [110, 140, 150, 150, 200, 200]
+        },
+        "attack1": {
+          "id": "dragon_snap_bite",
+          "label": "Snap bite",
+          "row": 6,
+          "end": "state",
+          "durations": [90, 90, 60, 100, 100, 140],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "dragon_tail_sweep",
+          "label": "Tail sweep",
+          "row": 7,
+          "end": "state",
+          "durations": [120, 160, 200, 75, 140, 180],
+          "events": [
+            { "frame": 4, "type": "melee", "until": 5, "note": "Low sweep in front." }
+          ]
+        },
+        "attack3": {
+          "id": "dragon_gravefire_breath",
+          "label": "Gravefire breath",
+          "row": 8,
+          "end": "state",
+          "durations": [180, 200, 420, 90, 220, 220],
+          "events": [
+            {
+              "frame": 4,
+              "type": "emit",
+              "until": 5,
+              "note": "Spawn one breath effect on F4; sustained damage uses its own timer."
+            }
+          ]
+        },
+        "attack4": {
+          "id": "dragon_gravefire_dive",
+          "label": "Gravefire Dive",
+          "row": 9,
+          "end": "hold",
+          "durations": [180, 220, 600, 100, 250, 350],
+          "events": [
+            { "frame": 4, "type": "leap", "note": "Dive begins; still airborne." },
+            { "frame": 5, "type": "impact", "note": "Landing damage at the claws." }
+          ]
+        }
+      }
+    },
+    "undead_fenrir": {
+      "name": "Undead Fenrir",
+      "description": "Colossal ash-gray wolf with exposed ribs, large fangs, a high ragged mane and broken chains on its foreleg shackles.",
+      "rows": [10, 18],
+      "region": { "x": 0, "y": 2304, "w": 1536, "h": 2304 },
+      "idleBounds": { "x": 28, "y": 109, "w": 200, "h": 124 },
+      "animations": {
+        "idle": {
+          "id": "fenrir_idle",
+          "label": "Idle",
+          "row": 10,
+          "loop": true,
+          "durations": [150, 150, 150, 150, 150, 150]
+        },
+        "walk": {
+          "id": "fenrir_walk",
+          "label": "Walk",
+          "row": 11,
+          "loop": true,
+          "durations": [150, 150, 150, 150, 150, 150]
+        },
+        "fly": {
+          "id": "fenrir_fly",
+          "label": "Fly / spectral bound",
+          "row": 12,
+          "loop": true,
+          "durations": [110, 110, 110, 110, 110, 110]
+        },
+        "hit": {
+          "id": "fenrir_hit",
+          "label": "Hit reaction",
+          "row": 13,
+          "end": "state",
+          "durations": [60, 80, 100, 100, 100, 120]
+        },
+        "death": {
+          "id": "fenrir_death",
+          "label": "Death",
+          "row": 14,
+          "end": "hold",
+          "durations": [110, 140, 150, 150, 200, 200]
+        },
+        "attack1": {
+          "id": "fenrir_fang_snap",
+          "label": "Fang snap",
+          "row": 15,
+          "end": "state",
+          "durations": [90, 90, 60, 100, 100, 140],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "fenrir_raking_lunge",
+          "label": "Raking lunge",
+          "row": 16,
+          "end": "state",
+          "durations": [120, 160, 180, 75, 140, 180],
+          "events": [
+            { "frame": 4, "type": "melee", "until": 5, "note": "Attacking forepaw region." }
+          ]
+        },
+        "attack3": {
+          "id": "fenrir_crushing_pounce",
+          "label": "Crushing pounce",
+          "row": 17,
+          "end": "state",
+          "durations": [180, 200, 420, 90, 220, 220],
+          "events": [
+            { "frame": 4, "type": "melee", "note": "Airborne forepaw contact." },
+            { "frame": 5, "type": "impact", "note": "Landing." }
+          ]
+        },
+        "attack4": {
+          "id": "fenrir_grave_howl",
+          "label": "Grave Howl",
+          "row": 18,
+          "end": "hold",
+          "durations": [180, 220, 600, 120, 250, 350],
+          "events": [
+            { "frame": 4, "type": "emit", "until": 5, "note": "Howl release; any arena effect is spawned separately." }
+          ]
+        }
+      }
+    },
+    "death_monarch": {
+      "name": "Death Monarch",
+      "description": "Crowned skeleton in royal charcoal robes and a torn ivory ermine mantle, carrying a long dark coronation blade with a gold hilt.",
+      "rows": [19, 27],
+      "region": { "x": 0, "y": 4608, "w": 1536, "h": 2304 },
+      "idleBounds": { "x": 50, "y": 75, "w": 156, "h": 158 },
+      "animations": {
+        "idle": {
+          "id": "monarch_idle",
+          "label": "Idle",
+          "row": 19,
+          "loop": true,
+          "durations": [170, 170, 170, 170, 170, 170]
+        },
+        "walk": {
+          "id": "monarch_walk",
+          "label": "Walk",
+          "row": 20,
+          "loop": true,
+          "durations": [160, 160, 160, 160, 160, 160]
+        },
+        "fly": {
+          "id": "monarch_fly",
+          "label": "Fly / levitation",
+          "row": 21,
+          "loop": true,
+          "durations": [150, 150, 150, 150, 150, 150]
+        },
+        "hit": {
+          "id": "monarch_hit",
+          "label": "Hit reaction",
+          "row": 22,
+          "end": "state",
+          "durations": [60, 80, 100, 100, 100, 120]
+        },
+        "death": {
+          "id": "monarch_death",
+          "label": "Death",
+          "row": 23,
+          "end": "hold",
+          "durations": [110, 140, 150, 150, 200, 200]
+        },
+        "attack1": {
+          "id": "monarch_royal_thrust",
+          "label": "Royal thrust",
+          "row": 24,
+          "end": "state",
+          "durations": [90, 90, 60, 100, 100, 140],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4, "note": "Narrow forward weapon region." }
+          ]
+        },
+        "attack2": {
+          "id": "monarch_sweeping_decree",
+          "label": "Sweeping decree",
+          "row": 25,
+          "end": "state",
+          "durations": [120, 160, 200, 75, 140, 180],
+          "events": [
+            { "frame": 4, "type": "melee", "until": 5 }
+          ]
+        },
+        "attack3": {
+          "id": "monarch_execution_cleave",
+          "label": "Execution cleave",
+          "row": 26,
+          "end": "state",
+          "durations": [180, 200, 420, 90, 220, 220],
+          "events": [
+            { "frame": 4, "type": "melee", "until": 5, "note": "F2-F3 are a held raised charge." }
+          ]
+        },
+        "attack4": {
+          "id": "monarch_crown_of_the_grave",
+          "label": "Crown of the Grave",
+          "row": 27,
+          "end": "hold",
+          "durations": [180, 240, 650, 100, 250, 350],
+          "events": [
+            { "frame": 4, "type": "emit", "note": "Release." },
+            { "frame": 5, "type": "impact", "note": "Optional ground ring." }
+          ]
+        }
+      }
+    }
+  }
+}

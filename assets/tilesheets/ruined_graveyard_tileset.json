@@ -1,0 +1,319 @@
+{
+  "schema": "dungeon-scroller/tileset@1",
+  "image": "ruined_graveyard_tileset.png",
+  "guide": "ruined_graveyard_tileset.md",
+  "sha256": "e8fb94b0908da0a04cd6cf5cdfaac2e6fbb04c75db8d61f553eb545a6870f8dc",
+  "size": { "w": 768, "h": 480 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 8,
+  "rows": 5,
+  "surfaceY": 0,
+  "tiles": {
+    "grass_left_cliff": { "row": 1, "col": 1, "name": "Left cliff edge", "shape": "solid", "layer": "terrain" },
+    "grass_center_a": { "row": 1, "col": 2, "name": "Grassy center A", "shape": "solid", "layer": "terrain" },
+    "grass_right_cliff": { "row": 1, "col": 3, "name": "Right cliff edge", "shape": "solid", "layer": "terrain" },
+    "grass_standalone": { "row": 1, "col": 4, "name": "Standalone ground block", "shape": "solid", "layer": "terrain" },
+    "grass_center_b": { "row": 1, "col": 5, "name": "Grassy center B", "shape": "solid", "layer": "terrain" },
+    "bare_path_center": { "row": 1, "col": 6, "name": "Bare-path center", "shape": "solid", "layer": "terrain" },
+    "soil_fill_a": { "row": 1, "col": 7, "name": "Soil fill A", "shape": "solid", "layer": "terrain" },
+    "soil_fill_b": { "row": 1, "col": 8, "name": "Soil fill B", "shape": "solid", "layer": "terrain" },
+    "platform_left_cap": {
+      "row": 2,
+      "col": 1,
+      "name": "Platform left cap",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_center_a": {
+      "row": 2,
+      "col": 2,
+      "name": "Platform center A",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_right_cap": {
+      "row": 2,
+      "col": 3,
+      "name": "Platform right cap",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_standalone": {
+      "row": 2,
+      "col": 4,
+      "name": "Standalone platform",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_center_b": {
+      "row": 2,
+      "col": 5,
+      "name": "Platform center B",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_cracked_center": {
+      "row": 2,
+      "col": 6,
+      "name": "Cracked platform center",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 16 }
+    },
+    "platform_left_support": {
+      "row": 2,
+      "col": 7,
+      "name": "Left support bracket",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 56 }
+    },
+    "platform_right_support": {
+      "row": 2,
+      "col": 8,
+      "name": "Right support bracket",
+      "shape": "platform",
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 56 }
+    },
+    "slope_rising_right": { "row": 3, "col": 1, "name": "Slope rising right", "shape": "slope_right", "layer": "terrain" },
+    "slope_rising_left": { "row": 3, "col": 2, "name": "Slope rising left", "shape": "slope_left", "layer": "terrain" },
+    "grass_lower_landing": { "row": 3, "col": 3, "name": "Lower grassy landing", "shape": "solid", "layer": "terrain" },
+    "grass_upper_landing": { "row": 3, "col": 4, "name": "Upper grassy landing", "shape": "solid", "layer": "terrain" },
+    "stone_lower_landing": { "row": 3, "col": 5, "name": "Lower stone landing", "shape": "solid", "layer": "terrain" },
+    "stone_upper_landing": { "row": 3, "col": 6, "name": "Upper stone landing", "shape": "solid", "layer": "terrain" },
+    "retaining_wall_left": {
+      "row": 3,
+      "col": 7,
+      "name": "Left retaining-wall face",
+      "shape": "rect",
+      "rect": [0, 0, 24, 96],
+      "layer": "terrain",
+      "bounds": { "x": 0, "y": 0, "w": 24, "h": 96 }
+    },
+    "retaining_wall_right": {
+      "row": 3,
+      "col": 8,
+      "name": "Right retaining-wall face",
+      "shape": "rect",
+      "rect": [72, 0, 24, 96],
+      "layer": "terrain",
+      "bounds": { "x": 72, "y": 0, "w": 24, "h": 96 }
+    },
+    "entrance_arch_left": {
+      "row": 4,
+      "col": 1,
+      "name": "Left arch corner",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 0, "y": 5, "w": 96, "h": 91 }
+    },
+    "entrance_arch_keystone": {
+      "row": 4,
+      "col": 2,
+      "name": "Arch keystone",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 0, "y": 0, "w": 96, "h": 39 }
+    },
+    "entrance_arch_right": {
+      "row": 4,
+      "col": 3,
+      "name": "Right arch corner",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 0, "y": 5, "w": 96, "h": 91 }
+    },
+    "entrance_jamb_left": {
+      "row": 4,
+      "col": 4,
+      "name": "Left door jamb",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 0, "y": 0, "w": 32, "h": 96 }
+    },
+    "entrance_opening": { "row": 4, "col": 5, "name": "Center doorway opening", "shape": "none", "layer": "decor", "empty": true },
+    "entrance_jamb_right": {
+      "row": 4,
+      "col": 6,
+      "name": "Right door jamb",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 64, "y": 0, "w": 32, "h": 96 }
+    },
+    "ruin_wall": { "row": 4, "col": 7, "name": "Vertical stone wall", "shape": "none", "layer": "decor" },
+    "ruin_wall_broken_top": {
+      "row": 4,
+      "col": 8,
+      "name": "Broken wall top",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 0, "y": 14, "w": 96, "h": 82 }
+    },
+    "headstone_upright": {
+      "row": 5,
+      "col": 1,
+      "name": "Upright headstone",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 17, "y": 29, "w": 63, "h": 67 }
+    },
+    "headstone_leaning": {
+      "row": 5,
+      "col": 2,
+      "name": "Leaning headstone",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 13, "y": 33, "w": 62, "h": 63 }
+    },
+    "headstone_broken": {
+      "row": 5,
+      "col": 3,
+      "name": "Broken headstone",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 18, "y": 55, "w": 63, "h": 41 }
+    },
+    "dead_tree_trunk": {
+      "row": 5,
+      "col": 4,
+      "name": "Dead tree trunk",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 7, "y": 0, "w": 80, "h": 96 }
+    },
+    "dead_tree_branches": {
+      "row": 5,
+      "col": 5,
+      "name": "Dead branches",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 3, "y": 7, "w": 84, "h": 89 }
+    },
+    "broken_iron_fence": {
+      "row": 5,
+      "col": 6,
+      "name": "Broken iron fence",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 6, "y": 26, "w": 85, "h": 70 }
+    },
+    "bramble_tuft": {
+      "row": 5,
+      "col": 7,
+      "name": "Bramble tuft",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 14, "y": 61, "w": 73, "h": 35 }
+    },
+    "loose_rubble": {
+      "row": 5,
+      "col": 8,
+      "name": "Loose rubble",
+      "shape": "none",
+      "layer": "decor",
+      "bounds": { "x": 6, "y": 57, "w": 86, "h": 39 }
+    }
+  },
+  "shapes": {
+    "none": "no collision",
+    "solid": "full 96x96 block",
+    "platform": "one-way surface at y 0 with a 16 px deck; standable from above",
+    "rect": "solid sub-rectangle [x, y, w, h] in cell pixels",
+    "slope_right": "45 degree ramp, low left to high right: surfaceY = 96 - localX",
+    "slope_left": "45 degree ramp, high left to low right: surfaceY = localX",
+    "stairs_right": "six 16 px steps rising to the right: tread y = 80 - 16 * floor(x / 16)",
+    "stairs_left": "six 16 px steps rising to the left: tread y = 16 * floor(x / 16)"
+  },
+  "layers": {
+    "terrain": "collidable ground and structures",
+    "background": "opaque backdrop behind everything",
+    "decor": "overlay scenery; draw behind actors unless the level says otherwise"
+  },
+  "groups": {
+    "ground_center": [
+      "grass_center_a",
+      "grass_center_b",
+      "bare_path_center"
+    ],
+    "fill": [
+      "soil_fill_a",
+      "soil_fill_b"
+    ],
+    "platform_center": [
+      "platform_center_a",
+      "platform_center_b",
+      "platform_cracked_center"
+    ],
+    "headstone": [
+      "headstone_upright",
+      "headstone_leaning",
+      "headstone_broken"
+    ]
+  },
+  "runs": {
+    "ground": {
+      "left": "grass_left_cliff",
+      "center": "ground_center",
+      "right": "grass_right_cliff",
+      "single": "grass_standalone",
+      "below": "fill"
+    },
+    "platform": { "left": "platform_left_cap", "center": "platform_center", "right": "platform_right_cap", "single": "platform_standalone" }
+  },
+  "assemblies": {
+    "slope_rising_right": {
+      "note": "Climbs one tile; the lower landing is one map row below the ramp. Stone landings may replace the grass ones.",
+      "parts": [
+        { "tile": "grass_lower_landing", "dx": -1, "dy": 1 },
+        { "tile": "slope_rising_right", "dx": 0, "dy": 0 },
+        { "tile": "grass_upper_landing", "dx": 1, "dy": 0 }
+      ]
+    },
+    "slope_rising_left": {
+      "note": "Mirror of slope_rising_right.",
+      "parts": [
+        { "tile": "grass_upper_landing", "dx": -1, "dy": 0 },
+        { "tile": "slope_rising_left", "dx": 0, "dy": 0 },
+        { "tile": "grass_lower_landing", "dx": 1, "dy": 1 }
+      ]
+    },
+    "dungeon_entrance": {
+      "note": "Three columns by two rows (288 x 192). The lower passage is 224 px wide; the centre cell is empty so a door or dark recess can be drawn behind.",
+      "parts": [
+        { "tile": "entrance_arch_left", "dx": 0, "dy": 0 },
+        { "tile": "entrance_arch_keystone", "dx": 1, "dy": 0 },
+        { "tile": "entrance_arch_right", "dx": 2, "dy": 0 },
+        { "tile": "entrance_jamb_left", "dx": 0, "dy": 1 },
+        { "tile": "entrance_opening", "dx": 1, "dy": 1 },
+        { "tile": "entrance_jamb_right", "dx": 2, "dy": 1 }
+      ]
+    },
+    "ruined_wall": {
+      "note": "Repeat ruin_wall downward for height.",
+      "parts": [
+        { "tile": "ruin_wall_broken_top", "dx": 0, "dy": 0 },
+        { "tile": "ruin_wall", "dx": 0, "dy": 1 }
+      ]
+    },
+    "dead_tree": {
+      "note": "One column wide, two rows high.",
+      "parts": [
+        { "tile": "dead_tree_branches", "dx": 0, "dy": 0 },
+        { "tile": "dead_tree_trunk", "dx": 0, "dy": 1 }
+      ]
+    }
+  },
+  "notes": [
+    "Retaining-wall collision is optional in the guide; it is solid here by default.",
+    "Entrance and ruined-wall pieces have no default collision; the level decides.",
+    "Scenery props stand on the bottom edge of their cell (lowest pixel y 95): place the cell directly above the ground row.",
+    "Stone landings share edge pixels with the old stone dungeon floor, so the two tilesets join cleanly.",
+    "Platform supports include the deck; the brace below is decoration."
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "enemy",
+  "image": "undead_enemy_spritesheet.png",
+  "guide": "undead_enemy_spritesheet.md",
+  "sha256": "663416557085e92aff0300ddb3b9298a970a170fb683d3e12a1736eddcc8975d",
+  "size": { "w": 576, "h": 2016 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 21,
+  "facing": "left",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "Attacks are light, medium, heavy in slot order; all are physical, no projectiles.",
+    "F6 of every hit and attack row equals idle F1 for that enemy.",
+    "Death knight light attack (pommel strike) hits with the hilt, not the blade tip.",
+    "Treat a multi-frame melee window as one attack instance: one hit per target."
+  ],
+  "entities": {
+    "normal_skeleton": {
+      "name": "Normal Skeleton",
+      "description": "Wiry ivory bones, cracked jaw, exposed ribs, long forearms, faded red waist sash, empty hands.",
+      "rows": [1, 7],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 672 },
+      "idleBounds": { "x": 21, "y": 29, "w": 40, "h": 56 },
+      "animations": {
+        "idle": {
+          "id": "normal_skeleton_idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [170, 170, 170, 170, 170, 170]
+        },
+        "walk": {
+          "id": "normal_skeleton_walk",
+          "label": "Walk",
+          "row": 2,
+          "loop": true,
+          "durations": [85, 85, 85, 85, 85, 85]
+        },
+        "hit": {
+          "id": "normal_skeleton_hit",
+          "label": "Hit reaction",
+          "row": 3,
+          "end": "state",
+          "durations": [55, 70, 80, 85, 90, 80]
+        },
+        "death": {
+          "id": "normal_skeleton_death",
+          "label": "Death",
+          "row": 4,
+          "end": "hold",
+          "durations": [90, 110, 120, 150, 180, 180]
+        },
+        "attack1": {
+          "id": "normal_skeleton_light_attack",
+          "label": "Quick claw swipe",
+          "row": 5,
+          "end": "state",
+          "durations": [60, 60, 45, 75, 90, 100],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "normal_skeleton_medium_attack",
+          "label": "Lunging rake",
+          "row": 6,
+          "end": "state",
+          "durations": [90, 110, 100, 70, 120, 120],
+          "events": [
+            { "frame": 4, "type": "melee" }
+          ]
+        },
+        "attack3": {
+          "id": "normal_skeleton_heavy_attack",
+          "label": "Two-handed slam",
+          "row": 7,
+          "end": "state",
+          "durations": [110, 130, 240, 70, 160, 160],
+          "events": [
+            { "frame": 4, "type": "melee" }
+          ]
+        }
+      }
+    },
+    "skeleton_knight": {
+      "name": "Skeleton Knight",
+      "description": "Same skeletal anatomy and red sash with a broader guard and a chipped short sword.",
+      "rows": [8, 14],
+      "region": { "x": 0, "y": 672, "w": 576, "h": 672 },
+      "idleBounds": { "x": 16, "y": 28, "w": 50, "h": 57 },
+      "animations": {
+        "idle": {
+          "id": "skeleton_knight_idle",
+          "label": "Idle",
+          "row": 8,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "walk": {
+          "id": "skeleton_knight_walk",
+          "label": "Walk",
+          "row": 9,
+          "loop": true,
+          "durations": [120, 120, 120, 120, 120, 120]
+        },
+        "hit": {
+          "id": "skeleton_knight_hit",
+          "label": "Hit reaction",
+          "row": 10,
+          "end": "state",
+          "durations": [70, 90, 100, 100, 110, 100]
+        },
+        "death": {
+          "id": "skeleton_knight_death",
+          "label": "Death",
+          "row": 11,
+          "end": "hold",
+          "durations": [120, 140, 140, 160, 180, 180]
+        },
+        "attack1": {
+          "id": "skeleton_knight_light_attack",
+          "label": "Quick thrust",
+          "row": 12,
+          "end": "state",
+          "durations": [70, 80, 55, 80, 110, 110],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "skeleton_knight_medium_attack",
+          "label": "Overhead chop",
+          "row": 13,
+          "end": "state",
+          "durations": [120, 140, 220, 80, 150, 140],
+          "events": [
+            { "frame": 4, "type": "melee" }
+          ]
+        },
+        "attack3": {
+          "id": "skeleton_knight_heavy_attack",
+          "label": "Lunging sweep",
+          "row": 14,
+          "end": "state",
+          "durations": [120, 150, 220, 90, 180, 160],
+          "events": [
+            { "frame": 4, "type": "melee", "until": 5 }
+          ]
+        }
+      }
+    },
+    "death_knight": {
+      "name": "Death Knight",
+      "description": "Skeleton in tarnished black plate with a torn teal tabard and a heavy two-handed blade.",
+      "rows": [15, 21],
+      "region": { "x": 0, "y": 1344, "w": 576, "h": 672 },
+      "idleBounds": { "x": 4, "y": 30, "w": 64, "h": 55 },
+      "animations": {
+        "idle": {
+          "id": "death_knight_idle",
+          "label": "Idle",
+          "row": 15,
+          "loop": true,
+          "durations": [220, 220, 220, 220, 220, 220]
+        },
+        "walk": {
+          "id": "death_knight_walk",
+          "label": "Walk",
+          "row": 16,
+          "loop": true,
+          "durations": [170, 170, 170, 170, 170, 170]
+        },
+        "hit": {
+          "id": "death_knight_hit",
+          "label": "Hit reaction",
+          "row": 17,
+          "end": "state",
+          "durations": [90, 110, 120, 120, 130, 120]
+        },
+        "death": {
+          "id": "death_knight_death",
+          "label": "Death",
+          "row": 18,
+          "end": "hold",
+          "durations": [160, 180, 180, 220, 240, 240]
+        },
+        "attack1": {
+          "id": "death_knight_light_attack",
+          "label": "Pommel strike",
+          "row": 19,
+          "end": "state",
+          "durations": [100, 110, 70, 90, 140, 140],
+          "events": [
+            { "frame": 3, "type": "melee", "until": 4 }
+          ]
+        },
+        "attack2": {
+          "id": "death_knight_medium_attack",
+          "label": "Two-handed slash",
+          "row": 20,
+          "end": "state",
+          "durations": [140, 160, 210, 100, 180, 180],
+          "events": [
+            { "frame": 4, "type": "melee" }
+          ]
+        },
+        "attack3": {
+          "id": "death_knight_heavy_attack",
+          "label": "Overhead cleave",
+          "row": 21,
+          "end": "state",
+          "durations": [160, 180, 320, 110, 220, 220],
+          "events": [
+            { "frame": 4, "type": "melee" }
+          ]
+        }
+      }
+    }
+  }
+}

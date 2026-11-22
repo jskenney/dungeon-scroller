@@ -1,0 +1,571 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "object",
+  "image": "interactive_world_objects_spritesheet.png",
+  "guide": "interactive_world_objects_spritesheet.md",
+  "sha256": "c55377d1df35e27523530e53a4af9115fd42a7d9dc1f168c4264108b35757e47",
+  "size": { "w": 576, "h": 4608 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 48,
+  "facing": "right",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "registration: ground = base sits on the ground line; float = drawn centred near (48,64), about 21 px above the ground line, and lifts about 8 px when taken; wall = bracket bottom at y 74.",
+    "commit: accept = apply the reward when the interaction starts; complete = apply it when the interact row finishes.",
+    "persistent objects keep their interact F6 result and should not vanish automatically.",
+    "interact F1 equals idle F1; vanish F1 equals interact F6; vanish F6 is fully transparent.",
+    "Objects are not directional; 'facing' is nominal."
+  ],
+  "entities": {
+    "treasure_chest": {
+      "name": "Treasure chest",
+      "description": "A closed oak chest with dark iron bands and a small latch. The opening exposes warm gold light inside the same box; the lid stays open as the chest dissolves.",
+      "rows": [1, 3],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "idleBounds": { "x": 27, "y": 57, "w": 42, "h": 28 },
+      "animations": {
+        "idle": {
+          "id": "treasure_chest_idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [220, 180, 140, 160, 220, 240]
+        },
+        "interact": {
+          "id": "treasure_chest_interaction",
+          "label": "Opening",
+          "row": 2,
+          "end": "hold",
+          "durations": [80, 110, 140, 140, 120, 180]
+        },
+        "vanish": {
+          "id": "treasure_chest_disappearance",
+          "label": "Disappearance",
+          "row": 3,
+          "end": "remove",
+          "durations": [100, 140, 150, 150, 140, 80],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 27, "y": 40, "w": 43, "h": 45 }
+    },
+    "healing_potion": {
+      "name": "Healing potion",
+      "description": "A round glass flask with a small cork and warm gold liquid. Its short, broad bulb distinguishes it from the narrow violet space potion.",
+      "rows": [4, 6],
+      "region": { "x": 0, "y": 288, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 41, "y": 54, "w": 15, "h": 20 },
+      "animations": {
+        "idle": {
+          "id": "healing_potion_idle",
+          "label": "Idle",
+          "row": 4,
+          "loop": true,
+          "durations": [160, 140, 140, 140, 160, 180]
+        },
+        "interact": {
+          "id": "healing_potion_interaction",
+          "label": "Selecting",
+          "row": 5,
+          "end": "hold",
+          "durations": [70, 70, 90, 100, 100, 140]
+        },
+        "vanish": {
+          "id": "healing_potion_disappearance",
+          "label": "Disappearance",
+          "row": 6,
+          "end": "remove",
+          "durations": [80, 100, 100, 100, 100, 80],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 32, "y": 46, "w": 33, "h": 24 }
+    },
+    "space_potion": {
+      "name": "Space potion",
+      "description": "A tall, narrow flask filled with violet liquid and a cyan swirl. The interaction draws a compact violet/cyan ring around the raised bottle.",
+      "rows": [7, 9],
+      "region": { "x": 0, "y": 576, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 44, "y": 52, "w": 9, "h": 24 },
+      "animations": {
+        "idle": {
+          "id": "space_potion_idle",
+          "label": "Idle",
+          "row": 7,
+          "loop": true,
+          "durations": [140, 140, 140, 140, 140, 140]
+        },
+        "interact": {
+          "id": "space_potion_interaction",
+          "label": "Selecting",
+          "row": 8,
+          "end": "hold",
+          "durations": [70, 80, 90, 100, 110, 140]
+        },
+        "vanish": {
+          "id": "space_potion_disappearance",
+          "label": "Disappearance",
+          "row": 9,
+          "end": "remove",
+          "durations": [80, 100, 110, 100, 90, 80],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 33, "y": 44, "w": 31, "h": 27 }
+    },
+    "gold_coin": {
+      "name": "Gold coin",
+      "description": "A small stamped gold coin. Its native idle image is only 9 × 10 pixels, leaving most of the 96-pixel frame transparent.",
+      "rows": [10, 12],
+      "region": { "x": 0, "y": 864, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 44, "y": 59, "w": 9, "h": 10 },
+      "animations": {
+        "idle": {
+          "id": "gold_coin_idle",
+          "label": "Idle",
+          "row": 10,
+          "loop": true,
+          "durations": [90, 80, 70, 70, 80, 90]
+        },
+        "interact": {
+          "id": "gold_coin_interaction",
+          "label": "Selecting",
+          "row": 11,
+          "end": "hold",
+          "durations": [60, 60, 70, 70, 80, 100]
+        },
+        "vanish": {
+          "id": "gold_coin_disappearance",
+          "label": "Disappearance",
+          "row": 12,
+          "end": "remove",
+          "durations": [60, 70, 70, 70, 70, 60],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 44, "y": 50, "w": 12, "h": 11 }
+    },
+    "gem": {
+      "name": "Gem",
+      "description": "A faceted blue gem with pale edge highlights. It keeps a narrow diamond silhouette through its idle shimmer and raised selection.",
+      "rows": [13, 15],
+      "region": { "x": 0, "y": 1152, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 41, "y": 54, "w": 14, "h": 20 },
+      "animations": {
+        "idle": {
+          "id": "gem_idle",
+          "label": "Idle",
+          "row": 13,
+          "loop": true,
+          "durations": [180, 140, 130, 140, 180, 190]
+        },
+        "interact": {
+          "id": "gem_interaction",
+          "label": "Selecting",
+          "row": 14,
+          "end": "hold",
+          "durations": [70, 80, 90, 100, 100, 140]
+        },
+        "vanish": {
+          "id": "gem_disappearance",
+          "label": "Disappearance",
+          "row": 15,
+          "end": "remove",
+          "durations": [80, 90, 110, 110, 100, 80],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 41, "y": 45, "w": 14, "h": 22 }
+    },
+    "iron_key": {
+      "name": "Iron key",
+      "description": "A tarnished iron key with a round bow at the left and teeth toward the right. Its long, thin profile separates it from coins, gems and bottles.",
+      "rows": [16, 18],
+      "region": { "x": 0, "y": 1440, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 36, "y": 59, "w": 24, "h": 10 },
+      "animations": {
+        "idle": {
+          "id": "iron_key_idle",
+          "label": "Idle",
+          "row": 16,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "interact": {
+          "id": "iron_key_interaction",
+          "label": "Selecting",
+          "row": 17,
+          "end": "hold",
+          "durations": [80, 90, 100, 100, 110, 150]
+        },
+        "vanish": {
+          "id": "iron_key_disappearance",
+          "label": "Disappearance",
+          "row": 18,
+          "end": "remove",
+          "durations": [90, 110, 120, 120, 100, 80],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 36, "y": 49, "w": 24, "h": 12 }
+    },
+    "gravestone": {
+      "name": "Gravestone",
+      "description": "A cracked slate headstone with moss at its foot and pale grave light in the central crack. Activation separates it into two leaning pieces.",
+      "rows": [19, 21],
+      "region": { "x": 0, "y": 1728, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "idleBounds": { "x": 26, "y": 31, "w": 44, "h": 54 },
+      "animations": {
+        "idle": {
+          "id": "gravestone_idle",
+          "label": "Idle",
+          "row": 19,
+          "loop": true,
+          "durations": [240, 240, 240, 240, 240, 240]
+        },
+        "interact": {
+          "id": "gravestone_interaction",
+          "label": "Activating",
+          "row": 20,
+          "end": "hold",
+          "durations": [100, 140, 160, 170, 180, 240]
+        },
+        "vanish": {
+          "id": "gravestone_disappearance",
+          "label": "Disappearance",
+          "row": 21,
+          "end": "remove",
+          "durations": [100, 140, 150, 170, 170, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 19, "y": 44, "w": 58, "h": 41 }
+    },
+    "checkpoint_flag": {
+      "name": "Checkpoint flag",
+      "description": "A faded red pennant on a short iron pole with a small finial. The cloth initially hangs slack, then extends to the right as the finial lights.",
+      "rows": [22, 24],
+      "region": { "x": 0, "y": 2016, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 43, "y": 23, "w": 19, "h": 62 },
+      "animations": {
+        "idle": {
+          "id": "checkpoint_flag_idle",
+          "label": "Idle",
+          "row": 22,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "interact": {
+          "id": "checkpoint_flag_interaction",
+          "label": "Activating",
+          "row": 23,
+          "end": "hold",
+          "durations": [90, 110, 130, 140, 160, 220]
+        },
+        "vanish": {
+          "id": "checkpoint_flag_disappearance",
+          "label": "Disappearance",
+          "row": 24,
+          "end": "remove",
+          "durations": [100, 140, 160, 170, 180, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 42, "y": 23, "w": 45, "h": 62 }
+    },
+    "wooden_crate": {
+      "name": "Wooden crate",
+      "description": "A nailed wooden crate with diagonal bracing and a chipped corner. The heavy box holds still before its top boards buckle outward.",
+      "rows": [25, 27],
+      "region": { "x": 0, "y": 2304, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "idleBounds": { "x": 33, "y": 51, "w": 32, "h": 34 },
+      "animations": {
+        "idle": {
+          "id": "wooden_crate_idle",
+          "label": "Idle",
+          "row": 25,
+          "loop": true,
+          "durations": [250, 250, 250, 250, 250, 250]
+        },
+        "interact": {
+          "id": "wooden_crate_interaction",
+          "label": "Opening",
+          "row": 26,
+          "end": "hold",
+          "durations": [70, 90, 90, 100, 120, 180]
+        },
+        "vanish": {
+          "id": "wooden_crate_disappearance",
+          "label": "Disappearance",
+          "row": 27,
+          "end": "remove",
+          "durations": [90, 110, 120, 130, 140, 90],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 25, "y": 47, "w": 47, "h": 38 }
+    },
+    "barrel": {
+      "name": "Barrel",
+      "description": "A squat wooden barrel held by two dark iron hoops. Breaking separates the staves and leaves a sprung hoop beside the collapsed wood.",
+      "rows": [28, 30],
+      "region": { "x": 0, "y": 2592, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "idleBounds": { "x": 34, "y": 49, "w": 30, "h": 36 },
+      "animations": {
+        "idle": {
+          "id": "barrel_idle",
+          "label": "Idle",
+          "row": 28,
+          "loop": true,
+          "durations": [250, 250, 250, 250, 250, 250]
+        },
+        "interact": {
+          "id": "barrel_interaction",
+          "label": "Opening",
+          "row": 29,
+          "end": "hold",
+          "durations": [70, 100, 110, 130, 150, 190]
+        },
+        "vanish": {
+          "id": "barrel_disappearance",
+          "label": "Disappearance",
+          "row": 30,
+          "end": "remove",
+          "durations": [100, 120, 140, 140, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 28, "y": 66, "w": 41, "h": 19 }
+    },
+    "burial_urn": {
+      "name": "Burial urn",
+      "description": "A muted clay urn with a chipped rim and faded burial marking. Its interaction cracks the vessel into a few large curved shards.",
+      "rows": [31, 33],
+      "region": { "x": 0, "y": 2880, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "idleBounds": { "x": 36, "y": 51, "w": 25, "h": 34 },
+      "animations": {
+        "idle": {
+          "id": "burial_urn_idle",
+          "label": "Idle",
+          "row": 31,
+          "loop": true,
+          "durations": [240, 240, 240, 240, 240, 240]
+        },
+        "interact": {
+          "id": "burial_urn_interaction",
+          "label": "Opening",
+          "row": 32,
+          "end": "hold",
+          "durations": [80, 90, 110, 130, 140, 180]
+        },
+        "vanish": {
+          "id": "burial_urn_disappearance",
+          "label": "Disappearance",
+          "row": 33,
+          "end": "remove",
+          "durations": [100, 120, 140, 140, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 31, "y": 66, "w": 36, "h": 19 }
+    },
+    "wall_torch": {
+      "name": "Wall torch",
+      "description": "An amber flame above a dark iron wall bracket. The bracket is registered independently of the changing flame silhouette.",
+      "rows": [34, 36],
+      "region": { "x": 0, "y": 3168, "w": 576, "h": 288 },
+      "registration": "wall",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 40, "y": 38, "w": 18, "h": 37 },
+      "animations": {
+        "idle": {
+          "id": "wall_torch_idle",
+          "label": "Idle",
+          "row": 34,
+          "loop": true,
+          "durations": [90, 80, 100, 90, 80, 100]
+        },
+        "interact": {
+          "id": "wall_torch_interaction",
+          "label": "Activating",
+          "row": 35,
+          "end": "hold",
+          "durations": [80, 90, 100, 120, 130, 180]
+        },
+        "vanish": {
+          "id": "wall_torch_disappearance",
+          "label": "Disappearance",
+          "row": 36,
+          "end": "remove",
+          "durations": [90, 110, 130, 140, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 40, "y": 25, "w": 19, "h": 50 }
+    },
+    "lever": {
+      "name": "Lever",
+      "description": "A rusted floor lever on a small stone base. The handle pivots down toward the right and stops at a fully pulled angle.",
+      "rows": [37, 39],
+      "region": { "x": 0, "y": 3456, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 37, "y": 55, "w": 22, "h": 30 },
+      "animations": {
+        "idle": {
+          "id": "lever_idle",
+          "label": "Idle",
+          "row": 37,
+          "loop": true,
+          "durations": [240, 240, 240, 240, 240, 240]
+        },
+        "interact": {
+          "id": "lever_interaction",
+          "label": "Activating",
+          "row": 38,
+          "end": "hold",
+          "durations": [90, 110, 120, 140, 160, 220]
+        },
+        "vanish": {
+          "id": "lever_disappearance",
+          "label": "Disappearance",
+          "row": 39,
+          "end": "remove",
+          "durations": [100, 130, 140, 150, 160, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 37, "y": 73, "w": 32, "h": 12 }
+    },
+    "spell_scroll": {
+      "name": "Spell scroll",
+      "description": "Rolled parchment tied with a violet ribbon. The ribbon releases and the paper opens into a small sheet with abstract runes.",
+      "rows": [40, 42],
+      "region": { "x": 0, "y": 3744, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 37, "y": 58, "w": 22, "h": 15 },
+      "animations": {
+        "idle": {
+          "id": "spell_scroll_idle",
+          "label": "Idle",
+          "row": 40,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "interact": {
+          "id": "spell_scroll_interaction",
+          "label": "Opening",
+          "row": 41,
+          "end": "hold",
+          "durations": [80, 100, 130, 150, 170, 230]
+        },
+        "vanish": {
+          "id": "spell_scroll_disappearance",
+          "label": "Disappearance",
+          "row": 42,
+          "end": "remove",
+          "durations": [100, 120, 140, 140, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 34, "y": 51, "w": 34, "h": 26 }
+    },
+    "healing_shrine": {
+      "name": "Healing shrine",
+      "description": "A compact slate-gray pedestal with a carved sun and dim gold center. Activation brightens the sun and draws a warm ring around the base.",
+      "rows": [43, 45],
+      "region": { "x": 0, "y": 4032, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 28, "y": 43, "w": 40, "h": 42 },
+      "animations": {
+        "idle": {
+          "id": "healing_shrine_idle",
+          "label": "Idle",
+          "row": 43,
+          "loop": true,
+          "durations": [240, 240, 240, 240, 240, 240]
+        },
+        "interact": {
+          "id": "healing_shrine_interaction",
+          "label": "Activating",
+          "row": 44,
+          "end": "hold",
+          "durations": [100, 130, 160, 180, 200, 260]
+        },
+        "vanish": {
+          "id": "healing_shrine_disappearance",
+          "label": "Disappearance",
+          "row": 45,
+          "end": "remove",
+          "durations": [110, 150, 170, 180, 180, 110],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 20, "y": 43, "w": 55, "h": 43 }
+    },
+    "dungeon_relic": {
+      "name": "Dungeon relic",
+      "description": "A small ivory skull mounted in a tall tarnished iron frame. Pale blue-green light in the sockets distinguishes its undead magic from the gold healing objects.",
+      "rows": [46, 48],
+      "region": { "x": 0, "y": 4320, "w": 576, "h": 288 },
+      "registration": "float",
+      "commit": "accept",
+      "idleBounds": { "x": 40, "y": 51, "w": 16, "h": 26 },
+      "animations": {
+        "idle": {
+          "id": "dungeon_relic_idle",
+          "label": "Idle",
+          "row": 46,
+          "loop": true,
+          "durations": [180, 180, 180, 180, 180, 180]
+        },
+        "interact": {
+          "id": "dungeon_relic_interaction",
+          "label": "Selecting",
+          "row": 47,
+          "end": "hold",
+          "durations": [80, 90, 110, 120, 140, 180]
+        },
+        "vanish": {
+          "id": "dungeon_relic_disappearance",
+          "label": "Disappearance",
+          "row": 48,
+          "end": "remove",
+          "durations": [100, 120, 140, 140, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "resultBounds": { "x": 40, "y": 43, "w": 16, "h": 26 }
+    }
+  }
+}
