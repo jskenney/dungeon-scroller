@@ -1,0 +1,6 @@
+# Nuisance files
+.DS_Store
+__pycache__/
+
+# Interrupted or in-progress downloads
+*.part
