@@ -71,7 +71,6 @@ vendor/pixi.min.mjs        vendored PixiJS 8.23.0 (MIT; licence in vendor/pixi.L
 data/                      catalogs: which assets exist and their gameplay values (§4.2)
 levels/                    static level files (§10)
 tests.html                 in-browser simulation tests
-levels/                    static level files
 assets/
   cards/                   character and enemy cards
   music/                   background music
