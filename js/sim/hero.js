@@ -108,6 +108,16 @@ export class Hero extends Actor {
     const quickness = this.attackQuickness;
     this.action = { slot, t: 0, frame: -1, ability, struck: new Set(), rate: (ability.speed ?? 1) * quickness };
     if (ability.cooldown) this.cooldowns[slot] = ability.cooldown / quickness;
+    // In the air there is no time for the full wind-up: skip ahead so the release
+    // comes almost at once, and only the last few frames play during the jump.
+    const clip = this.entity.animations[slot];
+    const release = Math.min(...(clip.events ?? []).map(e => e.frame));
+    const keep = this.g.combat?.airWindupFrames ?? 1;
+    if (!this.body.grounded && Number.isFinite(release) && ability.airWindup !== true) {
+      const first = Math.max(0, release - 1 - keep);            // 0-based frame to start on
+      this.action.t = clip.durations.slice(0, first).reduce((sum, ms) => sum + ms, 0);
+      this.action.frame = first - 1;
+    }
     this.events.push({ type: 'ability', slot, kind: ability.type, x: this.body.x, y: this.body.y });
   }
 

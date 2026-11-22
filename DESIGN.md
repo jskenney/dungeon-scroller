@@ -471,6 +471,8 @@ Entering flight plays `fly_up` once, then holds its last frame while hovering or
 
 **Crouching** has two uses. In combat the lower `crouchBody` box lets projectiles and high swings pass overhead. In levels it opens **low passages**: a standing hero is about 52 px tall and fits any one-tile gap, so a passage that forces a crawl must leave less than that. Crouched heroes are 29–37 px tall, so a low-passage tile should leave a **40 px gap** (solid from the top of the cell down to 56 px). Such a tile needs no new collision shape — it is a `rect` of `[0, 0, 96, 56]` — but the current tilesets do not contain one yet. A hero cannot stand up while under a low ceiling.
 
+**Attacking in a jump.** A jump lasts about two-thirds of a second, and most abilities take a third of a second or more to wind up, so a full attack begun in the air would release as the hero lands. An ability used in the air therefore skips its wind-up: it starts `combat.airWindupFrames` frames (default 1) before its release frame and plays from there, so the shot or swing happens during the jump while the hero keeps moving along its arc. An ability with `"airWindup": true` plays in full.
+
 **Attacking while moving.** Every ability can be used while jumping or flying, keeping the hero's momentum, except the earth mage's ground spires, which rise from the floor. On the ground, ranged abilities can be used on the move; a melee swing or close-range effect plants the hero's feet until it finishes. The attack pose shows in place of the run or jump pose while it plays.
 
 **Scale reference** for level design and the generator: the hero is about half a tile tall; a jump clears 1.5 tiles vertically, and about 1.1 tiles horizontally at walking speed or 2 when running.

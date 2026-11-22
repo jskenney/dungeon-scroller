@@ -6,13 +6,15 @@
     "body and crouchBody are the collision boxes. An ability's box is active during the melee or area event window of its animation.",
     "Ability names come from the animation labels in the sheet JSON. 'air' says whether the ability can be used while jumping or flying. 'mobile' abilities can be used while walking or running; the others stop the hero until they finish. 'crouch' abilities can be used while crouching or crawling, without standing up.",
     "How fast a hero attacks: stats.attackSpeed multiplies the speed of all of a hero's abilities (1 is normal, 1.5 is half as fast again). An ability may also have its own 'speed' (same meaning, for that ability only) and a 'cooldown' in seconds before it can be used again. The site's difficulty.attackSpeed multiplies everything.",
+    "combat.airWindupFrames: an ability used in the air skips its wind-up and starts this many frames before its release frame, so the shot or swing happens during the jump. Give one ability \"airWindup\": true to make it play in full even in the air.",
     "Entries inherit every value in 'defaults' and may override any of them.",
     "color tints the hero's projectiles and effects, which are drawn as particles."
   ],
   "defaults": {
     "stats": { "mpRegen": 4, "invulnerableAfterHit": 0.8, "attackSpeed": 1 },
     "movement": { "walkSpeed": 160, "runSpeed": 280, "jumpHeight": 144, "crawlSpeed": 70, "airControl": 0.7 },
-    "teleport": { "mp": 20, "distance": 288 }
+    "teleport": { "mp": 20, "distance": 288 },
+    "combat": { "airWindupFrames": 1 }
   },
   "entries": {
     "light_space_mage": {

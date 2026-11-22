@@ -482,6 +482,27 @@ tests.push(
     runWorld(world, i => ({ attack2: i % 10 === 0 }), 60, count);
     assert(shots === 2, `expected a second shot after the cooldown, got ${shots}`);
   }],
+  ['an ability used in the air skips its wind-up so it happens during the jump', () => {
+    // The stand-in bolt leaves on frame 3: 200 ms after the start on the ground.
+    const ticksToFire = (airborne, change = () => {}) => {
+      const hero = fighter();
+      change(hero.gameplay);
+      const world = arena([], { hero, config: QUIET });
+      if (airborne) runWorld(world, i => ({ jumpPressed: i === 0, jumpHeld: true }), 8);
+      let fired = -1, firedInAir = false;
+      runWorld(world, i => ({ jumpHeld: true, attack2: i === 0 }), 40, (w, i) => {
+        if (fired < 0 && w.projectiles.length) { fired = i; firedInAir = !w.hero.body.grounded; }
+      });
+      return { fired, firedInAir };
+    };
+    const ground = ticksToFire(false), air = ticksToFire(true);
+    assert(ground.fired >= 11 && ground.fired <= 13, `on the ground the bolt should take about 12 ticks, took ${ground.fired}`);
+    assert(air.fired >= 5 && air.fired <= 7 && air.firedInAir, `in the air the bolt should take about 6 ticks, took ${air.fired}`);
+    const full = ticksToFire(true, g => { g.abilities.attack2.airWindup = true; });
+    assert(full.fired >= 11, `an ability marked to keep its wind-up fired after ${full.fired} ticks`);
+    const none = ticksToFire(true, g => { g.combat = { airWindupFrames: 0 }; });
+    assert(none.fired <= 1, `with no wind-up frames kept the bolt should leave at once, took ${none.fired}`);
+  }],
   ['a melee ability marked for the air can be used in a jump', () => {
     const hero = fighter();
     hero.gameplay.abilities.attack1.air = true;
@@ -1076,6 +1097,7 @@ tests.push(
     world.hero.upgrades = { vitality: 2, haste: 1 };
     world.hero.applyUpgrades(GOODS);
     assert(world.hero.maxHp === 140 && world.hero.hp === 140, 'carried health upgrades were not applied');
+    runWorld(world, {}, 5);                 // let the hero settle on the floor first
     let fired = -1;
     runWorld(world, i => ({ attack2: i === 0 }), 40, (w, i) => { if (fired < 0 && w.projectiles.length) fired = i; });
     assert(fired >= 5 && fired <= 7, `a carried haste upgrade fired after ${fired} ticks, expected about 6`);
