@@ -11,13 +11,16 @@
     "sheet": "../sprites/players/light_space_mage_spritesheet.json",
     "entity": "light_space_mage"
   },
-  "textArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textArea": { "x": 450, "y": 680, "w": 500, "h": 650 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
   "textBackground": "#010921",
   "textTone": "light",
   "notes": [
     "The game draws all lettering; the image contains none.",
     "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
     "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended over the measured area that is equally dark and empty, clear of the sleeve, border and corner star.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
     "The gold border and corner stars lie outside textArea and must stay visible."
   ]
 }
