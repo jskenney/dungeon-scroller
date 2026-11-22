@@ -336,7 +336,7 @@ All six hero sheets share one 14-row layout: idle, run, jump, three attacks (lis
 
 All five NPC sheets share one 12-row layout: idle, walk, death, take a hit, receive healing, buy, sell, wave, talking, hide, teleport out, teleport in. `buy` and `sell` are named from the NPC's point of view, and their `trade` events mark the frames where goods and payment visibly change hands; the game decides what is actually traded. The young villager's buy row runs in the opposite order to the others (he pays first). NPCs have art JSON only: there is no NPC gameplay catalog yet and the game does not place them.
 
-Not yet in the repository: cards for enemies and NPCs, music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
+Not yet in the repository: cards for enemies, music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
 
 **Cards.** Each card is a PNG with no lettering and a quiet reserved area that the game writes into, plus a guide and a JSON file (`dungeon-scroller/card@1`):
 
@@ -357,7 +357,7 @@ Not yet in the repository: cards for enemies and NPCs, music, sound effects, par
 - `textArea` is in card pixels and scales with the displayed card. Every card is 1000 × 1400, but **each card has its own text area**, so the layout adapts to the rectangle it is given (font size and line count are fitted to it) and never assumes a fixed position. Where the art allows, `textArea` is extended beyond the guide's rectangle over pixels measured to be just as dark and empty, keeping clear of the figure, border and corner ornaments; the guide's original is kept as `guideTextArea`. The game lays out name, statistics and abilities from the gameplay catalog inside it as an HTML overlay; `textTone` (`light` or `dark`) and `textBackground` (the measured average colour of the area) choose a readable text colour.
 - Cards are listed under `assets.cards` in `dungeon.json`. Cards are 5:7 and are drawn with smooth scaling when shown smaller than native size, nearest-neighbour when larger.
 
-All six heroes and all three bosses have a card with JSON. The boss artwork fills most of each card, so their text areas stay close to the guide's rectangle (about 510 × 378), roughly half the room of a hero card. Enemy cards are still to come.
+All six heroes, all three bosses and all five NPCs have a card with JSON. The boss artwork fills most of each card, so their text areas stay close to the guide's rectangle (about 510 × 378), roughly half the room of a hero card; the NPC cards fall in between (about 500–530 wide and 410–550 tall). Enemy cards are still to come. The game shows only the hero cards so far.
 
 **When a guide and this design disagree, this design wins.** The markdown guides are the source for facts about the art (grid, rows, measurements); rendering and gameplay choices — scaling filters, text areas, collision, timing — follow this document and the JSON files.
 

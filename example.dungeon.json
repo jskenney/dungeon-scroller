@@ -34,7 +34,12 @@
       "assets/cards/dark_swordsman_card.json",
       "assets/cards/undead_dragon_card.json",
       "assets/cards/undead_fenrir_card.json",
-      "assets/cards/death_monarch_card.json"
+      "assets/cards/death_monarch_card.json",
+      "assets/cards/shopkeeper_card.json",
+      "assets/cards/traveling_merchant_card.json",
+      "assets/cards/village_elder_card.json",
+      "assets/cards/village_priest_card.json",
+      "assets/cards/young_male_villager_card.json"
     ]
   },
 

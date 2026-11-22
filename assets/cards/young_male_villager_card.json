@@ -1,0 +1,26 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "young_male_villager_card.png",
+  "guide": "young_male_villager_card.md",
+  "sha256": "38fda3236b00467d176ffab4907503621112453a97f368b131641615e1ed42c1",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "npc",
+    "sheet": "../sprites/NPCs/young_male_villager_spritesheet.json",
+    "entity": "young_male_villager"
+  },
+  "textArea": { "x": 420, "y": 840, "w": 530, "h": 490 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#040b21",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended over the measured area that is equally dark and empty, clear of the figure, border and corner ornaments.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
+    "The gold border and corner ornaments lie outside textArea and must stay visible."
+  ]
+}
