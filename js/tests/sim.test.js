@@ -919,3 +919,61 @@ tests.push(
     assert(lines.update([{ type: 'levelStart' }, { type: 'heroDied' }], world, 2).length === 0, 'a line appeared from nowhere');
   }],
 );
+
+// ------------------------------------------------------------------- boosts
+
+tests.push(
+  ['boosts change attack speed, movement, mana and toughness for a while', () => {
+    const world = arena([], { config: QUIET });
+    const hero = world.hero;
+    hero.addBoost({ stat: 'attackSpeed', factor: 2, duration: 5 });
+    let fired = -1;
+    runWorld(world, i => ({ attack2: i === 0 }), 40, (w, i) => { if (fired < 0 && w.projectiles.length) fired = i; });
+    assert(fired >= 5 && fired <= 7, `a doubled attack speed fired after ${fired} ticks, expected about 6`);
+
+    const plain = arena([], { config: QUIET }), quick = arena([], { config: QUIET });
+    quick.hero.addBoost({ stat: 'moveSpeed', factor: 1.5, duration: 5 });
+    runWorld(plain, { dir: 1 }, 90); runWorld(quick, { dir: 1 }, 90);
+    const ratio = (quick.hero.body.x - 48) / (plain.hero.body.x - 48);
+    assert(ratio > 1.4 && ratio < 1.6, `expected to cover about 1.5 times the ground, got ${ratio.toFixed(2)}`);
+
+    const tough = arena([], { config: QUIET });
+    tough.hero.addBoost({ stat: 'toughness', factor: 2, duration: 5 });
+    tough.hurtHero(20, { x: 0 });
+    assert(tough.hero.hp === 90, `expected a halved hit to leave 90 HP, got ${tough.hero.hp}`);
+
+    const focus = arena([], { config: QUIET });
+    focus.hero.mp = 0; focus.hero.addBoost({ stat: 'mpRegen', factor: 5, duration: 5 });
+    runWorld(focus, {}, 60);
+    assert(near(focus.hero.mp, 20, 1), `expected about 20 MP after a second, got ${focus.hero.mp.toFixed(1)}`);
+  }],
+  ['a boost wears off, restarts when taken again, and is lost on dying', () => {
+    const world = arena([], { config: QUIET });
+    const hero = world.hero;
+    hero.addBoost({ stat: 'damage', factor: 2, duration: 2 });
+    runWorld(world, {}, 60);
+    hero.addBoost({ stat: 'damage', factor: 2, duration: 2 });
+    assert(hero.boosts.length === 1 && hero.boosts[0].time > 1.9, 'taking the boost again did not restart it');
+    runWorld(world, {}, 130);
+    assert(hero.boost('damage') === 1 && hero.boosts.length === 0, 'the boost did not wear off');
+    hero.addBoost({ stat: 'damage', factor: 2, duration: 60 });
+    world.hurtHero(999, { x: 0 });
+    runWorld(world, {}, 150);
+    assert(!hero.dead && hero.boosts.length === 0, 'the boost survived dying');
+  }],
+  ['a scroll can give one boost chosen from a list', () => {
+    const scroll = fakeObject({ use: 'touch', behaviour: 'pickup', gives: { boostOneOf: [
+      { stat: 'attackSpeed', factor: 1.6, duration: 15 }, { stat: 'moveSpeed', factor: 1.35, duration: 15 }] } });
+    const seen = new Set();
+    for (let i = 0; i < 12; i++) {
+      const level = mapLevel(['............', '............', 'S...........', '############']);
+      level.id = `scroll-${i}`;
+      level.doc.entities = [{ type: 'object', id: 'scroll', col: 1, row: 2 }];
+      const world = new World(level, fighter(), QUIET, { 'object/scroll': scroll });
+      runWorld(world, { dir: 1 }, 60);
+      assert(world.hero.boosts.length === 1, `expected one boost, got ${world.hero.boosts.length}`);
+      seen.add(world.hero.boosts[0].stat);
+    }
+    assert(seen.size === 2, `expected both boosts to turn up over 12 tries, saw ${[...seen].join(', ')}`);
+  }],
+);

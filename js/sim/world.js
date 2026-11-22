@@ -153,8 +153,12 @@ export class World {
     if (gives.mpFraction) hero.mp = Math.min(hero.g.stats.mp, Math.max(hero.mp, hero.g.stats.mp * gives.mpFraction));
     if (gives.score) hero.score += gives.score;
     if (gives.keys) hero.keys += gives.keys;
-    if (gives.buff) hero.buff = { damage: gives.buff.damage ?? 1, time: gives.buff.duration ?? 10 };
-    this.events.push({ type: 'gave', gives, x: at.x, y: at.rect().t });
+    // A boost: one fixed, or one chosen by chance from a list.
+    let boost = gives.boost ?? null;
+    if (gives.boostOneOf?.length) boost = gives.boostOneOf[Math.floor(this.random() * gives.boostOneOf.length)];
+    if (gives.buff) boost = { stat: 'damage', factor: gives.buff.damage ?? 1, duration: gives.buff.duration };   // older spelling
+    if (boost) hero.addBoost(boost);
+    this.events.push({ type: 'gave', gives, boost, x: at.x, y: at.rect().t });
   }
 
   /** Start using an object: pick it up, open it, pull it, light it. */

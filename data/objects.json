@@ -5,7 +5,8 @@
     "use: touch = taken by walking into it; interact = press the interact key inside its box; attack = hit it; none = scenery.",
     "box is the touch, interaction or hit area relative to the pivot. A solid object also blocks movement with this box.",
     "A chest opens with no key unless the level marks it locked. A lever toggles whatever the level links it to.",
-    "Loot entries drop with 'chance' (default 1) and 'count' (a number or [min, max])."
+    "Loot entries drop with 'chance' (default 1) and 'count' (a number or [min, max]).",
+    "gives may hold a temporary boost: 'boost' for one fixed boost, or 'boostOneOf' for one picked by chance. A boost is { stat, factor, duration }. Stats: damage, attackSpeed, moveSpeed, mpRegen, toughness (divides damage taken)."
   ],
   "entries": {
     "treasure_chest": {
@@ -135,7 +136,13 @@
       "use": "touch",
       "behaviour": "pickup",
       "gives": {
-        "buff": { "damage": 2, "duration": 15 }
+        "boostOneOf": [
+          { "stat": "damage", "factor": 2, "duration": 15 },
+          { "stat": "attackSpeed", "factor": 1.6, "duration": 15 },
+          { "stat": "moveSpeed", "factor": 1.35, "duration": 15 },
+          { "stat": "mpRegen", "factor": 5, "duration": 15 },
+          { "stat": "toughness", "factor": 2, "duration": 15 }
+        ]
       },
       "box": { "x": -19, "y": -35, "w": 38, "h": 31 }
     },

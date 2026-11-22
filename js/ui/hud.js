@@ -4,6 +4,9 @@
 import { h, keyName } from './dom.js';
 import { describeAbility } from './card.js';
 
+/** What each temporary boost is called on screen. */
+export const BOOST_NAMES = { damage: 'Power', attackSpeed: 'Haste', moveSpeed: 'Swiftness', mpRegen: 'Focus', toughness: 'Stone skin' };
+
 export class Hud {
   constructor(hero, settings) {
     this.hero = hero; this.settings = settings;
@@ -79,9 +82,10 @@ export class Hud {
     for (const slot of this.slots) slot.el.classList.toggle('cooling', (s.cooldowns?.[slot.action] ?? 0) > 0);
     if (s.lives !== this.last.lives) this.lives.textContent = s.lives >= 9000 ? '∞' : s.lives;   // the default of 9999 means unlimited
     if (s.score !== this.last.score) this.score.textContent = s.score;
-    const keys = s.keys ?? 0, boost = s.buff?.time > 0 ? Math.ceil(s.buff.time) : 0;
+    const keys = s.keys ?? 0;
+    const boost = (s.boosts ?? []).map(b => `${BOOST_NAMES[b.stat] ?? b.stat} ${Math.ceil(b.time)}s`).join(' · ');
     if (keys !== this.last.keys) this.keys.textContent = keys;
-    if (boost !== this.last.boost) this.boost.textContent = boost ? `x${s.buff.damage} damage ${boost}s` : '';
+    if (boost !== this.last.boost) this.boost.textContent = boost;
     this.last = { ...this.last, hp, mp, lives: s.lives, score: s.score, keys, boost };
   }
 }

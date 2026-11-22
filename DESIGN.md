@@ -493,7 +493,7 @@ Entering flight plays `fly_up` once, then holds its last frame while hovering or
 |---|---|
 | Gold coin, gem | Score pickup |
 | Healing potion / space potion | Restore HP / MP |
-| Spell scroll | Doubles damage for 15 seconds |
+| Spell scroll | One temporary boost, chosen by chance |
 | Iron key | Opens one locked chest or grate |
 | Treasure chest | Interact to open; releases loot |
 | Lever | Toggles a linked grate, platform, or door |
@@ -835,7 +835,7 @@ An enemy uses an attack when the hero is inside that attack's box (or range, for
 |---|---|---|
 | Gold coin, gem | Walk into it | Adds 1 or 10 to the score |
 | Healing potion, space potion | Walk into it | Restores 40 HP or 40 MP, up to the maximum |
-| Spell scroll | Walk into it | Doubles the hero's damage for 15 seconds; the HUD counts it down |
+| Spell scroll | Walk into it | Gives one temporary boost, chosen by chance from its list; the HUD names it and counts it down |
 | Iron key | Walk into it | Adds a key; the HUD shows how many are held |
 | Treasure chest | Interact key | Opens and drops its loot; stays open. A locked chest uses up a key |
 | Crate, barrel, burial urn | Hit it | Breaks and may drop loot. Crates and barrels are solid until broken and can be stood on |
@@ -848,6 +848,7 @@ An enemy uses an attack when the hero is inside that attack's box (or range, for
 - **Interact prompt.** When the hero stands at something the interact key would use, the key's name floats above it.
 - **Gates** are placed by a level as `{ "type": "gate", "id", "col", "row", "height" }` and block the way until opened: by the lever whose `link` names the gate, or — if the gate is `locked` — by a hero who is carrying a key. They are drawn with the tileset's grate tile when it has one, with a gold lock when locked, and slide up when opened.
 - **Movable solids.** Gates, crates and barrels are solid rectangles that the level adds and removes during play, so the same collision code handles them.
+- **Boosts.** A hero can hold temporary boosts, each a multiplier on one stat for a number of seconds: `damage` (Power), `attackSpeed` (Haste), `moveSpeed` (Swiftness, which also speeds flight), `mpRegen` (Focus) and `toughness` (Stone skin, which divides damage taken). Any object can grant one through `gives.boost` (`{ stat, factor, duration }`) or one of several through `gives.boostOneOf`. Different boosts stack; taking the same one again restarts its timer; dying clears them. The HUD lists the active boosts with the seconds left. The spell scroll gives one of the five for 15 seconds. The choice comes from the level's own random sequence, so a given level always hands out the same boosts in the same order.
 - **Loot.** Chests, breakables and defeated enemies drop the items in their `loot` or `drops` list, each with a `chance` and a `count`; `difficulty.loot` scales the chances. Dropped items can be collected after a third of a second.
 - **Completing a level.** The relic appears once no boss remains, and touching it ends the level with a results screen showing time, score and deaths.
 - **Level entries may override** an object's `loot`, mark it `locked`, or give it a `link`.

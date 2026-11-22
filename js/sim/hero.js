@@ -43,7 +43,8 @@ export class Hero extends Actor {
     this.coyote = 0; this.jumpBuffer = 0; this.landPose = 0; this.flyTime = 0;
     this.visualLift = 0;         // smooths stair steps on screen; decays to 0
     this.deadTime = 0;
-    this.buff = { damage: 1, time: 0 };
+    /** Temporary boosts picked up during play: [{stat, factor, time}] */
+    this.boosts = [];
     this.cooldowns = {};         // seconds until each ability can be used again
     this.events = [];
   }
@@ -62,6 +63,7 @@ export class Hero extends Actor {
     this.hp = this.maxHp;
     this.mp = this.g.stats.mp;
     this.stun = 0; this.slow.time = 0; this.weak.time = 0;
+    this.boosts = [];
     this.invulnerable = 1.5;
     this.placeAt(x, y);
   }
@@ -71,7 +73,7 @@ export class Hero extends Actor {
    * @returns {number} damage actually dealt (0 while invulnerable)
    */
   takeHit(amount, direction, effect = {}, knockback = 220) {
-    const dealt = this.loseHealth(amount);
+    const dealt = this.loseHealth(amount / this.boost('toughness'));
     if (!dealt) return 0;
     this.applyEffect(effect);
     const b = this.body;
@@ -103,16 +105,32 @@ export class Hero extends Actor {
     this.events.push({ type: 'ability', slot, kind: ability.type, x: this.body.x, y: this.body.y });
   }
 
+  /** The current multiplier for a stat from active boosts (1 when there is none). */
+  boost(stat) {
+    let factor = 1;
+    for (const b of this.boosts) if (b.stat === stat) factor *= b.factor;
+    return factor;
+  }
+
+  /**
+   * Start a temporary boost. Stats: damage, attackSpeed, moveSpeed, mpRegen,
+   * toughness (divides damage taken). Taking the same boost again restarts it.
+   */
+  addBoost({ stat, factor, duration }) {
+    this.boosts = this.boosts.filter(b => b.stat !== stat);
+    this.boosts.push({ stat, factor, time: duration ?? 10, duration: duration ?? 10 });
+  }
+
   /** Multiplier on how fast this hero attacks: from the hero's stats and the site's difficulty settings. */
   get attackQuickness() {
-    return (this.g.stats.attackSpeed ?? 1) * (this.config.difficulty?.attackSpeed ?? 1);
+    return (this.g.stats.attackSpeed ?? 1) * (this.config.difficulty?.attackSpeed ?? 1) * this.boost('attackSpeed');
   }
 
   /** Things that happen on entering a frame of an ability's animation. */
   onFrame(world, clip, frame) {
     const ability = this.action.ability, b = this.body;
     if (!ability) return;
-    const power = (this.config.difficulty?.playerDamage ?? 1) * (this.buff.time > 0 ? this.buff.damage : 1);
+    const power = (this.config.difficulty?.playerDamage ?? 1) * this.boost('damage');
     for (const e of clip.events ?? []) {
       if (e.frame !== frame + 1) continue;
       if (e.type === 'spawn' && ability.projectile) {
@@ -150,7 +168,8 @@ export class Hero extends Actor {
     const b = this.body, g = this.g, move = g.movement, level = world.level;
     this.prev = { x: b.x, y: b.y, lift: this.visualLift };
     this.tickStatus(dt);
-    this.buff.time = Math.max(0, this.buff.time - dt);
+    for (const b of this.boosts) b.time -= dt;
+    this.boosts = this.boosts.filter(b => b.time > 0);
     for (const slot of Object.keys(this.cooldowns)) this.cooldowns[slot] = Math.max(0, this.cooldowns[slot] - dt);
     if (this.dead) { this.deadTime += dt; intents = NOTHING; }
     else if (this.stun > 0) intents = NOTHING;
@@ -165,7 +184,7 @@ export class Hero extends Actor {
       // Melee and close-range effects hurt each enemy once while their frames show.
       if (a.ability?.box && eventsOnFrame(clip, now).some(e => HIT_EVENTS.has(e.type))) {
         const area = this.boxRect(a.ability.box);
-        const power = (this.config.difficulty?.playerDamage ?? 1) * (this.buff.time > 0 ? this.buff.damage : 1);
+        const power = (this.config.difficulty?.playerDamage ?? 1) * this.boost('damage');
         for (const enemy of world.enemies) {
           if (enemy.dead || a.struck.has(enemy) || !overlap(area, enemy.bodyRect())) continue;
           a.struck.add(enemy);
@@ -220,7 +239,7 @@ export class Hero extends Actor {
       if (this.mp <= 0) { this.mp = 0; this.flying = false; }
     }
     if (!this.flying) {
-      const regen = (g.stats.mpRegen ?? 0) * (this.config.difficulty?.mpRegen ?? 1);
+      const regen = (g.stats.mpRegen ?? 0) * (this.config.difficulty?.mpRegen ?? 1) * this.boost('mpRegen');
       this.mp = Math.min(g.stats.mp, this.mp + regen * dt);
     }
 
@@ -233,8 +252,9 @@ export class Hero extends Actor {
       b.vx = 0; b.vy = 0;
     } else if (this.flying) {
       this.flyTime += dt * 1000;
-      b.vx = rooted ? 0 : intents.dir * flight.speed;
-      b.vy = rooted ? 0 : intents.vertical * flight.speed;
+      const flySpeed = flight.speed * this.boost('moveSpeed');
+      b.vx = rooted ? 0 : intents.dir * flySpeed;
+      b.vy = rooted ? 0 : intents.vertical * flySpeed;
     } else {
       // Crouch while down is held on the ground; stay crouched under a low ceiling.
       // An ability used from a crouch keeps the hero down, so the low profile is not lost.
@@ -242,7 +262,7 @@ export class Hero extends Actor {
       if (wantCrouch && !this.crouching) { this.crouching = true; b.h = this.crouchH; }
       else if (!wantCrouch && this.crouching) this.standUp(level);
 
-      const speed = (this.crouching ? move.crawlSpeed : this.running ? move.runSpeed : move.walkSpeed) * this.speedFactor;
+      const speed = (this.crouching ? move.crawlSpeed : this.running ? move.runSpeed : move.walkSpeed) * this.speedFactor * this.boost('moveSpeed');
       const target = rooted ? 0 : intents.dir * speed;
       // Reeling from a hit: the knock-back carries for a moment before control returns.
       const reeling = this.action?.slot === 'hit' && this.action.t < 180;

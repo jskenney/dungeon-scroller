@@ -5,6 +5,7 @@
 import { Container, Graphics, Sprite, Text } from '../../vendor/pixi.min.mjs';
 import { TILE } from '../level/level.js';
 import { clipLength } from '../assets/animation.js';
+import { BOOST_NAMES } from '../ui/hud.js';
 
 const tint = hex => parseInt(String(hex ?? '#ffffff').slice(1), 16);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -178,7 +179,7 @@ export class WorldView {
       else if (e.type === 'checkpoint') this.float(e.x, e.y - 12, 'checkpoint', 0x7be495);
       else if (e.type === 'gateOpened') this.float(e.x, e.y + 60, 'opened', 0xffffff);
       else if (e.type === 'gave') {
-        const g = e.gives, label = g.keys ? 'key' : g.buff ? `x${g.buff.damage} damage` : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
+        const g = e.gives, label = g.keys ? 'key' : e.boost ? (BOOST_NAMES[e.boost.stat] ?? e.boost.stat) : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
           : g.score ? `+${g.score}` : g.hpFraction && g.mpFraction ? 'restored' : null;
         if (label) this.float(e.x, e.y, label, g.hp || g.hpFraction ? 0x7be495 : g.mp ? 0x8fb8f2 : 0xffe08a);
       }
