@@ -43,7 +43,8 @@
     "players": "data/players.json",
     "enemies": "data/enemies.json",
     "bosses": "data/bosses.json",
-    "objects": "data/objects.json"
+    "objects": "data/objects.json",
+    "audio": "data/audio.json"
   },
 
   "levels": "data/levels.json",
@@ -104,10 +105,12 @@
     "master": 1.0,
     "music": 0.6,
     "sfx": 0.8,
-    "voice": 1.0
+    "voice": 1.0,
+    "standIn": true
   },
 
   "speech": {
+    "$comment": "bubble: speech bubbles only. webspeech: bubbles, and lines are also read aloud by the browser's voice unless the player turns that off.",
     "provider": "bubble"
   },
 

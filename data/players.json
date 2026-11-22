@@ -17,6 +17,14 @@
     "light_space_mage": {
       "sheet": "../assets/sprites/players/light_space_mage_spritesheet.json",
       "entity": "light_space_mage",
+      "lines": {
+        "start": ["Light guide me.", "Stay close. I'll keep us standing."],
+        "kill": ["Rest now.", "Be at peace."],
+        "lowHp": ["I need a moment…", "The light is fading."],
+        "death": ["Not… yet…"],
+        "bossFight": ["Whatever you were, I'll set you free."],
+        "complete": ["The relic is safe."]
+      },
       "color": "#c9a2ff",
       "card": "../assets/cards/light_space_mage_card.json",
       "role": "Support",
@@ -46,6 +54,14 @@
     "fire_mage": {
       "sheet": "../assets/sprites/players/fire_mage_spritesheet.json",
       "entity": "fire_mage",
+      "lines": {
+        "start": ["Let's light this place up.", "Something down here needs burning."],
+        "kill": ["Ash.", "Too slow."],
+        "lowHp": ["Running hot…", "That one stung."],
+        "death": ["Burned out…"],
+        "bossFight": ["Big. Good. Big things burn longer."],
+        "complete": ["Still warm. Next."]
+      },
       "color": "#ff8a3c",
       "card": "../assets/cards/fire_mage_card.json",
       "role": "High damage, fragile",
@@ -81,6 +97,14 @@
     "water_mage": {
       "sheet": "../assets/sprites/players/water_mage_spritesheet.json",
       "entity": "water_mage",
+      "lines": {
+        "start": ["Steady as the tide.", "Deep breath. In we go."],
+        "kill": ["Washed away.", "Back to the deep."],
+        "lowHp": ["I'm going under…", "Hold the line."],
+        "death": ["The tide… goes out…"],
+        "bossFight": ["Even stone gives way to water."],
+        "complete": ["Calm waters again."]
+      },
       "color": "#4cc3ff",
       "card": "../assets/cards/water_mage_card.json",
       "role": "Control",
@@ -118,6 +142,14 @@
     "wind_mage": {
       "sheet": "../assets/sprites/players/wind_mage_spritesheet.json",
       "entity": "wind_mage",
+      "lines": {
+        "start": ["Catch me if you can.", "Feel that draught? Something's ahead."],
+        "kill": ["Gone with the wind.", "Didn't see that coming, did you?"],
+        "lowHp": ["Winded…", "Too close."],
+        "death": ["Out of breath…"],
+        "bossFight": ["You're big. I'm fast. Let's find out."],
+        "complete": ["Light as air."]
+      },
       "color": "#b8f5d0",
       "card": "../assets/cards/wind_mage_card.json",
       "role": "Mobility, ranged",
@@ -154,6 +186,14 @@
     "earth_mage": {
       "sheet": "../assets/sprites/players/earth_mage_spritesheet.json",
       "entity": "earth_mage",
+      "lines": {
+        "start": ["One step at a time.", "This stone remembers. So do I."],
+        "kill": ["Back to the earth.", "Stay down."],
+        "lowHp": ["Cracking…", "I can take more. Not much more."],
+        "death": ["Dust… to dust…"],
+        "bossFight": ["I don't move. You'll learn that."],
+        "complete": ["Solid work."]
+      },
       "color": "#b89b6a",
       "card": "../assets/cards/earth_mage_card.json",
       "role": "Tank",
@@ -191,6 +231,14 @@
     "dark_swordsman": {
       "sheet": "../assets/sprites/players/dark_swordsman_spritesheet.json",
       "entity": "dark_swordsman",
+      "lines": {
+        "start": ["Quiet. They're listening.", "Steel first. Questions never."],
+        "kill": ["Your thoughts were loud.", "Silence."],
+        "lowHp": ["Focus…", "Pain is only a thought."],
+        "death": ["So this is the quiet…"],
+        "bossFight": ["Let's see what's left of your mind."],
+        "complete": ["Done. Tell no one."]
+      },
       "color": "#b06cff",
       "card": "../assets/cards/dark_swordsman_card.json",
       "role": "Melee",

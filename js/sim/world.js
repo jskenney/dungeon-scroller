@@ -86,7 +86,7 @@ export class World {
       arena.wall = { l: arena.left - 24, t: -2000, r: arena.left, b: this.level.height + 400, kind: 'solid' };
       this.level.dynamic.push(arena.wall);
       boss.awake = true;
-      this.events.push({ type: 'bossFight', id: boss.entity.id });
+      this.events.push({ type: 'bossFight', actor: boss, id: boss.entity.id });
     } else if (arena.locked && !boss) {
       this.openArena();
       this.events.push({ type: 'bossDefeated' });
@@ -165,6 +165,7 @@ export class World {
       hero.keys--; object.locked = false;
     }
     object.begin();
+    this.events.push({ type: 'used', behaviour: kind, id: object.entity.id, x: object.x, y: object.y });
     if (kind === 'pickup') this.give(object.g.gives, object);
     else if (kind === 'checkpoint') {
       this.checkpoint = { x: object.x, y: object.y };
@@ -296,10 +297,10 @@ export class World {
     const direction = enemy.body.x >= from ? 1 : -1;
     const dealt = enemy.takeHit(amount, direction, effect ?? {});
     if (!dealt) return;
-    this.events.push({ type: 'damage', team: 'enemy', x: enemy.body.x, y: enemy.body.y - enemy.body.h, amount: dealt });
+    this.events.push({ type: 'damage', team: 'enemy', actor: enemy, x: enemy.body.x, y: enemy.body.y - enemy.body.h, amount: dealt });
     if (enemy.dead) {
       this.hero.score += enemy.g.stats.score ?? 0;
-      this.events.push({ type: 'kill', id: enemy.entity.id, x: enemy.body.x, y: enemy.body.y });
+      this.events.push({ type: 'kill', actor: enemy, id: enemy.entity.id, x: enemy.body.x, y: enemy.body.y });
       this.dropLoot(enemy.g.drops, enemy.body.x, enemy.body.y);
     }
   }

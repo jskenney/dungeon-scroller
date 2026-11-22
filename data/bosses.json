@@ -12,6 +12,12 @@
     "undead_dragon": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "undead_dragon",
+      "lines": {
+        "fight": ["WHO WAKES ME?"],
+        "phase2": ["BURN."],
+        "phase3": ["I WILL BURY YOU IN FLAME."],
+        "death": ["…the fire… goes out…"]
+      },
       "color": "#6fe0c4",
       "card": "../assets/cards/undead_dragon_card.json",
       "stats": { "hp": 600, "speed": 90, "flySpeed": 220, "touchDamage": 10, "score": 500 },
@@ -66,6 +72,12 @@
     "undead_fenrir": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "undead_fenrir",
+      "lines": {
+        "fight": ["*a howl that shakes the stones*"],
+        "phase2": ["*chains rattle as it snarls*"],
+        "phase3": ["*a howl of rage*"],
+        "death": ["*a long, fading whimper*"]
+      },
       "color": "#9fe8d8",
       "card": "../assets/cards/undead_fenrir_card.json",
       "stats": { "hp": 700, "speed": 150, "flySpeed": 300, "touchDamage": 10, "score": 500 },
@@ -119,6 +131,12 @@
     "death_monarch": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "death_monarch",
+      "lines": {
+        "fight": ["You stand before your king. Kneel."],
+        "phase2": ["Insolence."],
+        "phase3": ["Then be judged by the grave itself!"],
+        "death": ["My crown… my kingdom…"]
+      },
       "color": "#b8f0e2",
       "card": "../assets/cards/death_monarch_card.json",
       "stats": { "hp": 800, "speed": 80, "flySpeed": 180, "touchDamage": 10, "score": 500 },

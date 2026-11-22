@@ -811,3 +811,59 @@ tests.push(
     assert(world.arena.locked && boss.awake, 'walking back in did not restart the fight');
   }],
 );
+
+// ----------------------------------------------------------------- dialogue
+
+import { LineDirector } from '../speech/lines.js';
+
+const speaker = (lines, extra = {}) => ({ g: { lines }, hp: 100, maxHp: 100, dead: false, ...extra });
+
+tests.push(
+  ['an enemy that spots the hero raises an alert once', () => {
+    const world = arena([4], { config: QUIET });
+    let alerts = 0;
+    runWorld(world, {}, 200, w => { alerts += w.events.filter(e => e.type === 'alert').length; w.events.length = 0; });
+    assert(alerts === 1, `expected one alert, got ${alerts}`);
+  }],
+  ['the hero speaks at the start of a level, after a short pause', () => {
+    const lines = new LineDirector(() => 0);
+    const world = { hero: speaker({ start: ['Here we go.'] }) };
+    assert(lines.update([{ type: 'levelStart' }], world, 0.1).length === 0, 'the line came at once');
+    const said = lines.update([], world, 1);
+    assert(said.length === 1 && said[0].text === 'Here we go.' && said[0].actor === world.hero, 'the opening line was not spoken');
+  }],
+  ['enemies do not all talk at once', () => {
+    const lines = new LineDirector(() => 0);
+    const world = { hero: speaker({}) };
+    const a = speaker({ alert: ['Halt.'] }), b = speaker({ alert: ['Halt.'] });
+    const first = lines.update([{ type: 'alert', actor: a }, { type: 'alert', actor: b }], world, 0.1);
+    assert(first.length === 1, `expected one enemy to speak, ${first.length} did`);
+    assert(lines.update([{ type: 'alert', actor: b }], world, 4).length === 1, 'an enemy stayed silent after the pause');
+  }],
+  ['a low-health line is said once per life', () => {
+    const lines = new LineDirector(() => 0);
+    const hero = speaker({ lowHp: ['Ouch.'] }, { hp: 20 });
+    const world = { hero };
+    assert(lines.update([{ type: 'damage', team: 'hero' }], world, 0.1).length === 1, 'no line at low health');
+    assert(lines.update([{ type: 'damage', team: 'hero' }], world, 0.1).length === 0, 'the line was repeated');
+    lines.update([{ type: 'respawn' }], world, 0.1);
+    assert(lines.update([{ type: 'damage', team: 'hero' }], world, 0.1).length === 1, 'no line after coming back');
+  }],
+  ['a boss announces the fight and each phase, and the hero answers', () => {
+    const lines = new LineDirector(() => 0);
+    const boss = speaker({ fight: ['Kneel.'], phase2: ['Insolence.'], phase3: ['Enough!'], death: ['My crown…'] }, { boss: true });
+    const world = { hero: speaker({ bossFight: ['No.'] }) };
+    lines.update([{ type: 'bossFight', actor: boss }], world, 0.1);
+    const opening = lines.update([], world, 0.5).map(l => l.text);
+    assert(opening.join() === 'Kneel.', `expected the boss to speak first, got "${opening}"`);
+    assert(lines.update([], world, 2.5).map(l => l.text).join() === 'No.', 'the hero did not answer');
+    assert(lines.update([{ type: 'bossPhase', actor: boss, phase: 2 }], world, 0.1)[0].text === 'Insolence.', 'no phase 2 line');
+    assert(lines.update([{ type: 'bossPhase', actor: boss, phase: 3 }], world, 0.1)[0].text === 'Enough!', 'no phase 3 line');
+    assert(lines.update([{ type: 'kill', actor: boss }], world, 0.1)[0].text === 'My crown…', 'no last words');
+  }],
+  ['a character with no lines stays silent', () => {
+    const lines = new LineDirector(() => 0);
+    const world = { hero: speaker(undefined) };
+    assert(lines.update([{ type: 'levelStart' }, { type: 'heroDied' }], world, 2).length === 0, 'a line appeared from nowhere');
+  }],
+);

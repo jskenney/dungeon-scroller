@@ -163,7 +163,7 @@ export class Boss extends Enemy {
     }
     if (this.changedPhase) {
       this.changedPhase = false;
-      world.events.push({ type: 'bossPhase', phase: this.phase + 1, x: b.x, y: b.y - b.h });
+      world.events.push({ type: 'bossPhase', actor: this, phase: this.phase + 1, x: b.x, y: b.y - b.h });
     }
   }
 

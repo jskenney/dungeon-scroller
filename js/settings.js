@@ -62,6 +62,19 @@ export class Settings {
   get pixelPerfect() { return this.stored.pixelPerfect ?? this.display.pixelPerfect ?? true; }
   set pixelPerfect(v) { this.stored.pixelPerfect = Boolean(v); this.save(); }
 
+  /** A volume from 0 to 1: 'master', 'music', 'sfx' or 'voice'. */
+  volume(name) { return this.stored.volumes?.[name] ?? this.config.audio?.[name] ?? 1; }
+  setVolume(name, value) {
+    this.stored.volumes = { ...this.stored.volumes, [name]: Math.max(0, Math.min(1, value)) };
+    this.save();
+  }
+  get muted() { return Boolean(this.stored.muted); }
+  set muted(v) { this.stored.muted = Boolean(v); this.save(); }
+
+  /** Whether lines are also spoken aloud by the browser's built-in voice. */
+  get speakAloud() { return this.stored.speakAloud ?? (this.config.speech?.provider === 'webspeech'); }
+  set speakAloud(v) { this.stored.speakAloud = Boolean(v); this.save(); }
+
   get lastHero() { return this.stored.lastHero ?? null; }
   set lastHero(id) { this.stored.lastHero = id; this.save(); }
 }

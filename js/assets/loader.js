@@ -212,7 +212,7 @@ const isBox = b => b && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(b[k])) &
  * `entity.gameplay`. Catalogs hold stats, abilities, behaviour and boxes.
  */
 async function loadCatalogs(config, configUrl, result, problems) {
-  const paths = Object.entries(config.catalogs ?? {}).filter(([key]) => !key.startsWith('$'));
+  const paths = Object.entries(config.catalogs ?? {}).filter(([key]) => !key.startsWith('$') && key !== 'audio');
   result.catalogs = {};
   await Promise.all(paths.map(async ([name, path]) => {
     const url = resolve(path, configUrl), file = shortName(url);

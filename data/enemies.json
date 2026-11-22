@@ -11,6 +11,10 @@
     "normal_skeleton": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
       "entity": "normal_skeleton",
+      "lines": {
+        "alert": ["…clack…", "…warm blood…"],
+        "death": ["…rattle…"]
+      },
       "stats": { "hp": 30, "speed": 110, "touchDamage": 4, "score": 10 },
       "ai": { "archetype": "walker", "sight": 480, "leavesPlatform": false, "dropsOffLedges": false },
       "body": { "x": -7, "y": -56, "w": 20, "h": 56 },
@@ -45,6 +49,10 @@
     "skeleton_knight": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
       "entity": "skeleton_knight",
+      "lines": {
+        "alert": ["Halt.", "None shall pass."],
+        "death": ["My watch… ends…"]
+      },
       "stats": { "hp": 60, "speed": 80, "touchDamage": 5, "score": 25 },
       "ai": {
         "archetype": "guard",
@@ -85,6 +93,10 @@
     "death_knight": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
       "entity": "death_knight",
+      "lines": {
+        "alert": ["Kneel.", "Another for the pit."],
+        "death": ["At last…"]
+      },
       "stats": { "hp": 120, "speed": 60, "touchDamage": 6, "score": 60 },
       "ai": {
         "archetype": "guard",
@@ -125,6 +137,10 @@
     "undead_wolf": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "undead_wolf",
+      "lines": {
+        "alert": ["Grrrr…", "*snarl*"],
+        "death": ["*whine*"]
+      },
       "stats": { "hp": 45, "speed": 240, "touchDamage": 4, "score": 20 },
       "ai": {
         "archetype": "pouncer",
@@ -166,6 +182,10 @@
     "wight": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "wight",
+      "lines": {
+        "alert": ["So cold… come closer.", "Give me your warmth."],
+        "death": ["Cold… again…"]
+      },
       "stats": { "hp": 80, "speed": 90, "touchDamage": 6, "score": 40 },
       "ai": {
         "archetype": "guard",
@@ -206,6 +226,10 @@
     "lich": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "lich",
+      "lines": {
+        "alert": ["A living mind. How rare.", "You will make a fine servant."],
+        "death": ["This is not… the end…"]
+      },
       "color": "#7fe3c8",
       "stats": { "hp": 70, "speed": 100, "touchDamage": 5, "score": 50 },
       "ai": {

@@ -141,3 +141,20 @@ table.results td { text-align: right; font-variant-numeric: tabular-nums; }
 .boss-name { font: 700 17px/1.2 Georgia, "Times New Roman", serif; color: #f1d58a; letter-spacing: .04em; margin-bottom: 4px; }
 .bar.boss-hp { height: 14px; margin: 0; border-color: #f1d58a80; }
 .bar.boss-hp .fill { background: linear-gradient(#c05ad0, #7a2f93); }
+
+#bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.bubble {
+  position: absolute; left: 0; top: 0; max-width: min(260px, 60vw); padding: 5px 10px;
+  background: #f4efe2; color: #1b1810; border-radius: 9px; font-size: 14px; line-height: 1.3;
+  box-shadow: 0 2px 8px #0009; white-space: pre-wrap; will-change: transform;
+}
+.bubble::after {
+  content: ""; position: absolute; top: 100%; left: calc(50% + var(--tail, 0px)); margin-left: -6px;
+  border: 6px solid transparent; border-top-color: #f4efe2; border-bottom-width: 0;
+}
+.bubble.enemy-line { background: #2a2f3c; color: #e3e7f0; }
+.bubble.enemy-line::after { border-top-color: #2a2f3c; }
+.bubble.boss-line { background: #2b1233; color: #f1d58a; font-weight: 600; font-size: 15px; border: 1px solid #f1d58a66; }
+.bubble.boss-line::after { border-top-color: #2b1233; }
+.field-name { width: 5.5em; color: var(--muted); }
+.field input[type="range"] { flex: 0 1 240px; }

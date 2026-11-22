@@ -120,7 +120,7 @@ The site configuration, fetched from the directory the game was loaded from. **`
 | `rules` | Lives (default 9999), respawn behaviour, and whether touching an enemy hurts. |
 | `difficulty` | Multipliers applied on top of the catalog values (enemy health, enemy damage, touch damage, player damage, MP regeneration, loot). All are 1 for now; changing them here retunes the whole game without editing the catalogs. |
 | `physics` | World constants: tick rate, gravity, terminal speed, run multiplier. |
-| `audio`, `speech` | Default volumes; speech provider. |
+| `audio`, `speech` | Default volumes and whether synthesized stand-in effects are used; whether lines are read aloud by default. |
 | `generator` | Defaults for random levels. |
 | `api` | `null` in version 1; §15 describes what it will hold. |
 
@@ -620,22 +620,44 @@ Settings, key bindings, last hero, and best results are saved in `localStorage`.
 
 ## 12. Audio
 
-- **Buses.** Music, effects, and voice, each with its own gain, feeding a master gain. Volumes come from `dungeon.json` and user settings.
-- **Music.** One looping track per level with cross-fades between menu, level, and boss tracks. Streamed through a media element so long tracks do not need to be fully decoded in memory.
-- **Effects.** Decoded once into buffers at load. Triggered by simulation events and by animation `events` of type `sound`. Slight random pitch variation prevents repetition fatigue; positional panning follows the source's place on screen.
-- **Quality and formats.** Source material at 48 kHz stereo. Music as high-bitrate Ogg Opus with an AAC (`.m4a`) alternative listed for browsers that need it; short effects as lossless FLAC or WAV. `data/audio.json` lists alternatives per sound and the loader picks the first the browser can play.
-- **Autoplay.** Browsers block audio until the user interacts; the title screen's first key press starts the audio context.
+Built in `js/audio/`. **No music or sound files exist yet**, so today every effect is a synthesized stand-in and there is no music.
+
+- **Buses.** Music, effects and voice, each with its own volume, under an overall volume. Defaults come from `dungeon.json` → `audio`; the player changes them in Settings (stored in the browser), and the mute key silences everything.
+- **Cues.** The game plays sounds by cue name: `jump`, `land`, `swing`, `shoot`, `cast`, `heal`, `hit`, `hurt`, `defeat`, `coin`, `pickup`, `key`, `chest`, `break`, `lever`, `gate`, `locked`, `checkpoint`, `shrine`, `teleport`, `fall`, `respawn`, `alert`, `growl`, `boss`, `phase`, `shockwave`, `breath`, `complete`, `gameover`, `ui`. Each simulation event maps to one cue (a melee ability to `swing`, a coin to `coin`, a boss changing phase to `phase`, and so on).
+- **Files.** `data/audio.json` gives a sound file for any cue, as a list of alternative formats; the first one the browser can play is used:
+
+  ```json
+  "sounds": { "coin": { "files": ["../assets/sfx/coin.ogg", "../assets/sfx/coin.m4a"], "volume": 0.8 } },
+  "music":  { "title": { "files": ["../assets/music/title.ogg"] },
+              "level:old_stone_dungeon": { "files": ["../assets/music/crypt.ogg"], "volume": 0.7 },
+              "boss": { "files": ["../assets/music/boss.ogg"] } }
+  ```
+
+- **Stand-ins.** A cue with no file plays a short synthesized sound made of tones and filtered noise (`js/audio/synth.js`), so the game is not silent before real effects exist. Adding a file for a cue replaces its stand-in; `audio.standIn: false` turns them all off.
+- **Variation and position.** File-based effects play at a slightly random pitch so repeats do not grate, and every effect is panned left or right by where it happens on screen. The same cue is never started twice within a few hundredths of a second.
+- **Music.** Tracks are named by moment: `title` on the menus, `level` (or `level:<tileset id>` for one theme) during play, `boss` during a boss fight, `complete` on the results screen. Tracks stream, loop and cross-fade. A moment with no track is silent.
+- **Quality and formats.** Source material at 48 kHz stereo. Music as high-bitrate Ogg Opus with an AAC (`.m4a`) alternative; short effects as FLAC or WAV, or Ogg.
+- **Autoplay.** Browsers block sound until the user presses or clicks something; the audio system starts on the first such moment.
 
 ---
 
 ## 13. Dialogue and speech
 
-- **Lines are data.** Catalog entries and level entities carry `lines` keyed by trigger: `spawn`, `alert`, `attack`, `hurt`, `lowHp`, `death`, `interact`, `idle`. NPC entries can hold short scripted exchanges.
-- **Speech bubbles.** An HTML element anchored to the speaker's head position each frame, with a tail pointing at them. Text is typed out, held for a time proportional to its length, then faded. Bubbles stay sharp at every zoom, avoid overlapping each other, and are clamped inside the window. Speakers off screen do not show bubbles.
-- **Speech provider interface.** `speak(actor, text, options)` and `stop(actor)`. Version 1 ships the `bubble` provider only. Later providers, used alongside the bubble:
-  - `webspeech` — the browser's built-in speech synthesis; no download, quality varies by system.
-  - `neural` — a high-quality voice model running in the browser (WebGPU or WebAssembly), with a voice assigned per character and generated audio cached in IndexedDB.
-- The same event path will carry lines produced by a server or AI (§15).
+Built in `js/speech/` and `js/ui/bubbles.js`.
+
+- **Lines are data.** Each hero, enemy and boss entry in the catalogs may carry `lines`, keyed by moment, each a list to choose from:
+
+  | Who | Moments |
+  |---|---|
+  | Hero | `start`, `kill`, `lowHp`, `death`, `bossFight`, `complete` |
+  | Enemy | `alert` (on first seeing the hero), `death` |
+  | Boss | `fight`, `phase2`, `phase3`, `death` |
+
+  A first set of short lines is in place for every character; they are placeholders to be rewritten freely. A character with no lines stays silent.
+- **Pacing.** `js/speech/lines.js` decides who speaks. The hero always speaks at the start of a level, on dying and on finishing; says a low-health line once per life; and comments on some kills. Enemies share one voice: at most one alert line every three seconds, and only some of the time. A boss always announces the fight, each phase and its defeat, and the hero answers the challenge a moment later. A line is not repeated twice running.
+- **Speech bubbles.** An HTML element that follows the speaker's head, with a tail pointing at them. Text is typed out, held for a time that grows with its length, then faded. Heroes, enemies and bosses have different bubble colours. Bubbles stay sharp at every zoom, are kept inside the window, and hide when their speaker is off screen. Each speaker has one bubble at a time.
+- **Reading aloud.** `js/speech/speech.js` sends every line to the bubbles and, if the player turns on *Read speech bubbles aloud* in Settings, to the browser's built-in voice, with a lower pitch for enemies and a slow, deep one for bosses. Stage directions such as `*snarl*` are shown but not read. `speech.provider: "webspeech"` in `dungeon.json` makes reading aloud the default.
+- **Later:** a high-quality voice model running in the browser, with a voice per character, as another provider behind the same call; and lines supplied by a server or AI (§15) through the same path. NPC conversations wait on NPCs being placed in levels.
 
 ---
 
@@ -702,7 +724,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | **5. Objects and rules** | **Done:** pickups, chests, keys, breakables, checkpoint flags, shrines, levers and gates, loot drops, the relic as the level goal, and the results screen (§16.5). |
 | **6. Bosses** | **Done:** phases, five attack types, the locking arena with its camera, the boss health bar, defeat and restart rules, and an arena level per boss (§16.6). |
 | **7. Front end** | Title, character cards, level selection, pause and settings including key rebinding, saved preferences. |
-| **8. Audio and dialogue** | Music, effects, speech bubbles, character lines. |
+| **8. Audio and dialogue** | **Engine done:** sound buses and volume settings, cue-based effects with synthesized stand-ins, streaming music with cross-fades, speech bubbles, character lines with pacing, and optional reading aloud (§12, §13). **Waiting on assets:** music and sound-effect files, to be listed in `data/audio.json`. |
 | **9. Polish** | Parallax backgrounds, lighting from torches, particles, performance pass, accessibility options. |
 | **Later** | NPC behaviour, gamepad and touch, text-to-speech, offline support, Tiled import, backend and multiplayer (§15). |
 

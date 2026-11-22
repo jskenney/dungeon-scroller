@@ -1,0 +1,13 @@
+{
+  "schema": "dungeon-scroller/audio@1",
+  "notes": [
+    "Sound effects and music. Paths are relative to this file. No sound files exist yet, so both lists are empty.",
+    "sounds: one entry per cue. Each lists alternative files of the same sound; the first format the browser can play is used. A cue with no entry plays a synthesized stand-in (set audio.standIn to false in dungeon.json to turn those off).",
+    "Cues: jump, land, swing, shoot, cast, heal, hit, hurt, defeat, coin, pickup, key, chest, break, lever, gate, locked, checkpoint, shrine, teleport, fall, respawn, alert, growl, boss, phase, shockwave, breath, complete, gameover, ui.",
+    "music: tracks by moment. 'title' plays on the menus; 'level' in any level, or 'level:<tileset id>' for one theme; 'boss' during a boss fight; 'complete' on the results screen.",
+    "Example sound entry:  \"coin\": { \"files\": [\"../assets/sfx/coin.ogg\", \"../assets/sfx/coin.m4a\"], \"volume\": 0.8 }",
+    "Example music entry:  \"level:old_stone_dungeon\": { \"files\": [\"../assets/music/crypt.ogg\", \"../assets/music/crypt.m4a\"], \"volume\": 0.7 }"
+  ],
+  "sounds": {},
+  "music": {}
+}

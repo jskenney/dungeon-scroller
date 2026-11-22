@@ -16,12 +16,18 @@ import { keyboardIntents } from './sim/controllers/keyboard.js';
 import { h, keyName } from './ui/dom.js';
 import { cardElement, spritePreview } from './ui/card.js';
 import { Hud } from './ui/hud.js';
+import { Bubbles } from './ui/bubbles.js';
+import { AudioEngine } from './audio/audio.js';
+import { Speech } from './speech/speech.js';
+import { LineDirector } from './speech/lines.js';
+import { fetchJson, resolve } from './config.js';
 
 const ui = document.getElementById('ui');
 const game = {
   config: null, assets: null, settings: null, input: null, stage: null,
   hero: null, world: null, view: null, hud: null, debugText: null,
   lookAhead: 0,
+  audio: null, speech: null, bubbles: null, lines: null,
   entry: null,                    // the level being played: {name, doc, tileset, seed?}
   paused: false, back: null,       // back: what Escape does on the current screen
 };
@@ -44,6 +50,7 @@ function panel(title, ...children) {
 
 function titleScreen() {
   stopPlay();
+  game.audio.music(game.audio.musicFor('title'));
   const problems = game.assets.problems.filter(p => p.level === 'error').length;
   show(h('div', { class: 'screen title' },
     h('div', { class: 'title-block' },
@@ -185,6 +192,16 @@ function settingsScreen(returnTo) {
       h('label', { class: 'field' },
         h('input', { type: 'checkbox', checked: s.pixelPerfect, onchange: e => { s.pixelPerfect = e.target.checked; zoomOut.textContent = zoomText(); } }),
         ' Pixel-perfect scaling (every art pixel the same size)'),
+      h('h2', {}, 'Sound'),
+      [['master', 'Overall'], ['music', 'Music'], ['sfx', 'Effects'], ['voice', 'Voice']].map(([name, label]) =>
+        h('label', { class: 'field' }, h('span', { class: 'field-name' }, label),
+          h('input', { type: 'range', min: 0, max: 100, step: 5, value: Math.round(s.volume(name) * 100),
+            oninput: e => { s.setVolume(name, e.target.value / 100); if (name !== 'music') game.audio.play('coin'); } }))),
+      h('label', { class: 'field' },
+        h('input', { type: 'checkbox', checked: s.muted, onchange: e => { s.muted = e.target.checked; } }), ' Mute all sound'),
+      game.speech.canSpeakAloud ? h('label', { class: 'field' },
+        h('input', { type: 'checkbox', checked: s.speakAloud, onchange: e => { s.speakAloud = e.target.checked; } }),
+        ' Read speech bubbles aloud with the browser\'s voice') : null,
       h('h2', {}, 'Keys'),
       h('table', { class: 'keys' }, h('tbody', {}, rows)),
       h('div', { class: 'row' },
@@ -208,6 +225,10 @@ function startPlay(entry) {
   game.world = new World(level, game.hero, game.config, game.assets.entities);
   game.view = new WorldView(game.stage, game.world);
   game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
+  game.speech.stop();
+  game.lines = new LineDirector();
+  game.world.events.push({ type: 'levelStart' });
+  game.audio.music(game.audio.musicFor('level', entry.tileset.id));
   game.hud = new Hud(game.hero, game.settings);
   const b = game.world.hero.body;
   game.lookAhead = 0;
@@ -216,6 +237,7 @@ function startPlay(entry) {
 }
 
 function stopPlay() {
+  game.speech?.stop();
   if (game.world) showBackdrop();
   game.world = null; game.view = null; game.hud = null; game.paused = false;
   game.input.setEnabled(false);
@@ -298,6 +320,44 @@ function saveLevelFile(entry) {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
+/** Which sound each simulation event makes. */
+const ABILITY_CUE = { melee: 'swing', area: 'cast', projectile: 'shoot', target: 'cast', heal: 'heal', eruption: 'cast', breath: 'breath' };
+const USE_CUE = { container: 'chest', breakable: 'break', switch: 'lever', shrine: 'shrine' };
+
+function playCues(world) {
+  const audio = game.audio, stage = game.stage;
+  const half = stage.app.screen.width / 2 / stage.scale;
+  for (const e of world.events) {
+    let cue = null;
+    switch (e.type) {
+      case 'jump': cue = 'jump'; break;
+      case 'land': cue = 'land'; break;
+      case 'ability': cue = ABILITY_CUE[e.kind]; break;
+      case 'teleport': cue = 'teleport'; break;
+      case 'damage': cue = e.team === 'hero' ? 'hurt' : 'hit'; break;
+      case 'kill': cue = 'defeat'; break;
+      case 'gave': cue = e.gives.keys ? 'key' : e.gives.score ? 'coin' : 'pickup'; break;
+      case 'used': cue = USE_CUE[e.behaviour]; break;
+      case 'checkpoint': cue = 'checkpoint'; break;
+      case 'gateOpened': cue = 'gate'; break;
+      case 'locked': cue = 'locked'; break;
+      case 'heroDied': cue = 'fall'; break;
+      case 'respawn': cue = 'respawn'; break;
+      case 'alert': cue = e.actor.boss ? null : 'alert'; break;
+      case 'enemyAttack': cue = e.actor.boss && e.kind === 'melee' ? 'growl' : ABILITY_CUE[e.kind]; break;
+      case 'shockwave': cue = 'shockwave'; break;
+      case 'bossPhase': cue = 'phase'; break;
+      case 'bossFight': cue = 'boss'; audio.music(audio.musicFor('boss') ?? audio.wanted); break;
+      case 'bossDefeated': audio.music(audio.musicFor('level', world.level.tileset.id)); break;
+      case 'levelComplete': cue = 'complete'; audio.music(audio.musicFor('complete')); break;
+      case 'gameOver': cue = 'gameover'; break;
+      default:
+    }
+    // Sounds come from the left or right according to where they happen on screen.
+    if (cue) audio.play(cue, { pan: e.x == null ? 0 : (e.x - stage.camera.x) / half * 0.8 });
+  }
+}
+
 function tick(dt) {
   const { input, world, stage } = game;
   if (!world || game.paused) { input.endFrame(); return; }
@@ -312,6 +372,10 @@ function tick(dt) {
   // Draw between the last two simulation states so motion is smooth at any refresh rate.
   const hero = world.hero, b = hero.body;
   const { x, y } = game.view.update(dt);
+  if (input.pressed('mute')) game.settings.muted = !game.settings.muted;
+  playCues(world);
+  for (const line of game.lines.update(world.events, world, dt)) game.speech.say(line.actor, line.text);
+  game.bubbles.update(dt);
   const gameOver = world.events.some(e => e.type === 'gameOver');
   const complete = world.events.some(e => e.type === 'levelComplete');
   world.events.length = 0;                    // sounds will read these later
@@ -353,6 +417,14 @@ async function main() {
     game.assets = await loadAssets(config, url, (done, total) => {
       status.textContent = `Loading ${done} of ${total}`;
     });
+    let audioCatalog = null;
+    const audioUrl = config.catalogs?.audio ? resolve(config.catalogs.audio, url) : null;
+    if (audioUrl) { try { audioCatalog = await fetchJson(audioUrl); } catch (error) { console.warn(error.message); } }
+    game.audio = new AudioEngine(config, game.settings, audioCatalog, audioUrl ?? url);
+    game.bubbles = new Bubbles(document.getElementById('bubbles'), game.stage);
+    game.speech = new Speech(game.bubbles, game.settings);
+    // A small click for every button and link in the menus.
+    ui.addEventListener('click', e => { if (e.target.closest('button, a.button')) game.audio.play('ui'); });
     if (!heroes().length) throw new Error('No playable heroes were loaded. Open viewer.html to see what is wrong.');
 
     showBackdrop();

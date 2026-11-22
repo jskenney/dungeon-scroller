@@ -189,6 +189,7 @@ export class Enemy extends Actor {
     } else {
       // ---- decide what to do
       const sees = !hero.dead && this.canSee(level, hero);
+      if (sees && this.alert <= 0) world.events.push({ type: 'alert', actor: this, x: b.x, y: b.y });
       if (sees) this.alert = 3;
       const aware = !hero.dead && this.alert > 0;
       const dx = hero.body.x - b.x, toward = dx >= 0 ? 1 : -1, reach = Math.abs(dx);
@@ -198,6 +199,7 @@ export class Enemy extends Actor {
         let roll = world.random() * usable.reduce((s, u) => s + u[0], 0), chosen = usable[0][1];
         for (const [weight, name] of usable) { roll -= weight; if (roll < 0) { chosen = name; break; } }
         this.startAttack(chosen, hero);
+        world.events.push({ type: 'enemyAttack', actor: this, slot: chosen, kind: this.g.attacks[chosen].type, x: b.x, y: b.y });
         slot = chosen; frame = 0;
       } else if (this.retreat > 0 && aware) {
         wantX = -toward * speed; this.facing = toward;

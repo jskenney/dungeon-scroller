@@ -94,7 +94,7 @@ export class Hero extends Actor {
     if (this.mp < ability.mp) return;
     this.mp -= ability.mp;
     this.action = { slot, t: 0, frame: -1, ability, struck: new Set() };
-    this.events.push({ type: 'ability', slot });
+    this.events.push({ type: 'ability', slot, kind: ability.type, x: this.body.x, y: this.body.y });
   }
 
   /** Things that happen on entering a frame of an ability's animation. */
@@ -190,6 +190,7 @@ export class Hero extends Actor {
         this.mp -= g.teleport.mp;
         this.teleporting = 'out';
         this.action = { slot: 'teleport_out', t: 0, frame: -1 };
+        this.events.push({ type: 'teleport', x: b.x, y: b.y });
       }
     }
 
