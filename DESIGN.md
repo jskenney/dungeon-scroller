@@ -592,7 +592,7 @@ Built in `js/level/generate.js`, with the seeded random source in `js/level/rand
 - **Any tileset.** The generator writes a character map and `js/level/build.js` picks the art, so a new tileset with the same `runs` and shapes works without code changes.
 - **Output is an ordinary level document.** *Save level file* in the pause menu downloads it as JSON, ready to add to `levels/`. The document also carries the generator's recipe.
 
-**Visible in play:** the enemies, objects, gates and relic the generator places all appear and work. Only the boss is still ignored, until phase 6. Low crawl passages will be added as a section when the low-passage tile exists.
+**Visible in play:** everything the generator places appears and works: enemies, objects, gates, the boss in its arena, and the relic once the boss is beaten. Low crawl passages will be added as a section when the low-passage tile exists.
 
 **How it was checked.** Tests generate 300 levels across all difficulties and lengths and confirm each is valid, completable by the check, repeatable from its seed, and has every placed thing standing on something. Separately, a simple bot that only walks right and jumps at gaps and walls completed 120 of 120 generated levels on both tilesets using the real physics.
 
@@ -693,7 +693,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | **3. Procedural levels** | **Done:** seeded generator with section templates and a completion check, the Random dungeon options on the level screen, replay and sharing by seed, and saving a generated level as a file (§10.2). |
 | **4. Combat and enemies** | **Done:** abilities with damage and effects, particle projectiles, four enemy behaviours, touch damage, hit reaction, death, respawn and game over, health bars and damage numbers (§16.4). |
 | **5. Objects and rules** | **Done:** pickups, chests, keys, breakables, checkpoint flags, shrines, levers and gates, loot drops, the relic as the level goal, and the results screen (§16.5). |
-| **6. Bosses** | Phase machine, arenas, boss health bar, relic and results screen. |
+| **6. Bosses** | **Done:** phases, five attack types, the locking arena with its camera, the boss health bar, defeat and restart rules, and an arena level per boss (§16.6). |
 | **7. Front end** | Title, character cards, level selection, pause and settings including key rebinding, saved preferences. |
 | **8. Audio and dialogue** | Music, effects, speech bubbles, character lines. |
 | **9. Polish** | Parallax backgrounds, lighting from torches, particles, performance pass, accessibility options. |
@@ -818,14 +818,44 @@ An enemy uses an attack when the hero is inside that attack's box (or range, for
 - **Gates** are placed by a level as `{ "type": "gate", "id", "col", "row", "height" }` and block the way until opened: by the lever whose `link` names the gate, or — if the gate is `locked` — by a hero who is carrying a key. They are drawn with the tileset's grate tile when it has one, with a gold lock when locked, and slide up when opened.
 - **Movable solids.** Gates, crates and barrels are solid rectangles that the level adds and removes during play, so the same collision code handles them.
 - **Loot.** Chests, breakables and defeated enemies drop the items in their `loot` or `drops` list, each with a `chance` and a `count`; `difficulty.loot` scales the chances. Dropped items can be collected after a third of a second.
-- **Completing a level.** The relic appears once no boss remains — immediately, until bosses exist — and touching it ends the level with a results screen showing time, score and deaths.
+- **Completing a level.** The relic appears once no boss remains, and touching it ends the level with a results screen showing time, score and deaths.
 - **Level entries may override** an object's `loot`, mark it `locked`, or give it a `link`.
 
 The generator now also builds **gate sections**: a lever followed by a gated doorway, or a key on a platform followed by a locked one (at most two per level). Before a layout is accepted, each gate's lever or key must be reachable while that gate is still shut.
 
 **Tests** cover each object above, locked chests and gates, crates as obstacles and as targets for melee and projectiles, loot from enemies, checkpoints as respawn points, the shrine's rest, and level completion. The walking bot, now pulling levers, still completes 120 of 120 generated levels.
 
-Not in the simulation yet: bosses (phase 6). The boss a level lists is still ignored, so the relic is available from the start.
+### 16.6 Bosses
+
+`js/sim/boss.js` extends the enemy with phases and the larger attacks. Values come from `data/bosses.json`.
+
+- **The arena.** A level marks it with a `boss_arena` region. The boss stands idle until the hero walks in; then the way back shuts, the camera stays within the arena, and the boss's name and health bar appear across the top. The arena opens again when the boss falls.
+- **Phases.** A boss has three. It moves to the next when its health falls to the phase's `untilHp` fraction (66% and 33%), pausing for a moment; each phase adds an attack and raises the `tempo`, which speeds its movement and shortens its cooldowns. The fourth attack belongs to the last phase.
+- **Not staggered.** Hits do not interrupt a boss or push it back, and stuns last a quarter as long. Slows and the hex work normally.
+- **Attack types.**
+
+  | Type | Behaviour |
+  |---|---|
+  | `melee` | A swing with a hit box on its marked frames; with `leap`, the boss jumps at the hero first |
+  | `breath` | Covers the attack's box extended forward by `range`; hurts once while its frames show. Drawn as a stream of particles |
+  | `dive` | The boss launches at where the hero stands and damages everything within `radius` of where it lands |
+  | `shockwave` | A wave along the ground out to `radius`; a hero who is in the air is not touched |
+  | `projectile` | A fan of `count` shots aimed at the hero |
+
+- **Flight.** If the hero stays out of reach overhead for a couple of seconds, a boss takes to the air for a few seconds to follow, then lands.
+- **Touch.** Touching a boss deals its `touchDamage`, doubled while it is leaping or diving.
+- **Defeat.** The boss's body stays where it fell, its `score` is awarded, the arena opens, and the relic appears; taking the relic completes the level.
+- **Trying again.** If the hero dies, the arena opens and the boss returns to its starting spot at full health and first phase. Walking back in starts the fight over.
+
+| Boss | Attacks by phase |
+|---|---|
+| Undead dragon | Bite and tail sweep; then gravefire breath; then the dive |
+| Undead Fenrir | Fang snap and raking lunge; then the pounce; then the howl (a ground wave that stuns) |
+| Death monarch | Thrust and sweep; then the cleave; then three spectral blades |
+
+Three small levels, `levels/arena-dragon.json`, `arena-fenrir.json` and `arena-monarch.json`, each hold a checkpoint, a shrine and one boss, for fighting a chosen boss directly. Generated levels end with a boss picked from the seed.
+
+**Tests** cover waking and locking, the way back being shut, no stagger, the phase thresholds, each attack type, the ground wave missing an airborne hero, defeat (arena, relic, score, completion), and the fight restarting after the hero dies.
 
 ## 17. Open items
 

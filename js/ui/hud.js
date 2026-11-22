@@ -28,7 +28,10 @@ export class Hud {
     abilities.push(slot('teleport', 'Teleport', g.teleport.mp, `Blink ${g.teleport.distance} px forward`));
     const mode = g.flight?.mode ?? 'none';
     if (mode !== 'none') abilities.push(slot('fly', 'Fly', null, mode === 'free' ? 'Flies freely' : `Uses ${g.flight.mpPerSecond} MP per second`));
-    this.el = h('div', { class: 'hud' },
+    this.bossName = h('div', { class: 'boss-name' });
+    this.bossFill = h('div', { class: 'fill' });
+    this.bossBar = h('div', { class: 'boss', hidden: true }, this.bossName, h('div', { class: 'bar boss-hp', role: 'meter', 'aria-label': 'Boss health' }, this.bossFill));
+    this.el = h('div', { class: 'hud' }, this.bossBar,
       h('div', { class: 'hud-status' },
         h('div', { class: 'hud-name' }, hero.name),
         this.hp.el, this.mp.el,
@@ -42,6 +45,20 @@ export class Hud {
 
   refreshKeys() {
     for (const s of this.slots) s.key.textContent = this.settings.keys(s.action).map(keyName)[0] ?? '—';
+  }
+
+  /** Show a boss's name and health across the top, or hide it when there is no fight. */
+  updateBoss(boss) {
+    const id = boss?.id ?? null;
+    if (id !== this.last.bossId) {
+      this.bossBar.hidden = !boss;
+      if (boss) this.bossName.textContent = boss.entity.name ?? boss.entity.id;
+      this.last.bossId = id; this.last.bossHp = null;
+    }
+    if (boss && boss.hp !== this.last.bossHp) {
+      this.bossFill.style.width = `${(boss.hp / boss.maxHp) * 100}%`;
+      this.last.bossHp = boss.hp;
+    }
   }
 
   /** @param {{hp:number, mp:number, lives:number, score:number}} s */
@@ -59,11 +76,11 @@ export class Hud {
       this.mp.el.setAttribute('aria-valuenow', mp);
       for (const slot of this.slots) slot.el.classList.toggle('unaffordable', mp < slot.cost);
     }
-    if (s.lives !== this.last.lives) this.lives.textContent = s.lives >= 9999 ? '∞' : s.lives;
+    if (s.lives !== this.last.lives) this.lives.textContent = s.lives >= 9000 ? '∞' : s.lives;   // the default of 9999 means unlimited
     if (s.score !== this.last.score) this.score.textContent = s.score;
     const keys = s.keys ?? 0, boost = s.buff?.time > 0 ? Math.ceil(s.buff.time) : 0;
     if (keys !== this.last.keys) this.keys.textContent = keys;
     if (boost !== this.last.boost) this.boost.textContent = boost ? `x${s.buff.damage} damage ${boost}s` : '';
-    this.last = { hp, mp, lives: s.lives, score: s.score, keys, boost };
+    this.last = { ...this.last, hp, mp, lives: s.lives, score: s.score, keys, boost };
   }
 }

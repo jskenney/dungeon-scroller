@@ -692,3 +692,122 @@ tests.push(
     assert(world.time > 1 && world.deaths === 0, 'the time or death count is wrong');
   }],
 );
+
+// ------------------------------------------------------------------- bosses
+
+/** A stand-in boss: 200 HP, three phases, a swing, a ground wave, a breath and a volley. */
+function fakeBoss(extra = {}) {
+  const animations = Object.fromEntries(['idle', 'walk', 'fly', 'hit', 'death'].map(s => [s, clip(s, ['idle', 'walk', 'fly'].includes(s))]));
+  animations.attack1 = clip('attack1', false, [{ frame: 3, until: 4, type: 'melee' }]);
+  animations.attack2 = clip('attack2', false, [{ frame: 4, type: 'emit' }]);
+  animations.attack3 = clip('attack3', false, [{ frame: 4, until: 5, type: 'emit' }]);
+  animations.attack4 = clip('attack4', false, [{ frame: 4, type: 'emit' }]);
+  return { id: 'tyrant', kind: 'boss', name: 'Tyrant', animations, gameplay: {
+    stats: { hp: 200, speed: 80, touchDamage: 10, score: 500 },
+    body: { x: -30, y: -80, w: 60, h: 80 },
+    phases: [{ untilHp: 0.66, attacks: ['attack1'], tempo: 1 }, { untilHp: 0.33, attacks: ['attack1', 'attack2'], tempo: 1.2 },
+      { untilHp: 0, attacks: ['attack1', 'attack2', 'attack3', 'attack4'], tempo: 1.4 }],
+    attacks: {
+      attack1: { type: 'melee', damage: 20, cooldown: 1, box: { x: 20, y: -70, w: 50, h: 60 } },
+      attack2: { type: 'shockwave', damage: 15, cooldown: 2, radius: 400 },
+      attack3: { type: 'breath', damage: 25, cooldown: 3, range: 250, box: { x: 30, y: -60, w: 20, h: 40 } },
+      attack4: { type: 'projectile', damage: 12, cooldown: 3, projectile: { speed: 400, range: 800, count: 3, spread: 20 } },
+    }, ...extra } };
+}
+
+/** A long flat room with a boss arena on its right half, a relic at the far end and a flag at the start. */
+function bossRoom({ boss = fakeBoss(), config = QUIET, attacks } = {}) {
+  if (attacks) boss.gameplay.phases = [{ untilHp: 0, attacks, tempo: 1 }];
+  const level = mapLevel(['....................', '....................', '....................', 'S...................', '####################']);
+  level.doc.entities = [{ type: 'boss', id: 'tyrant', col: 14, row: 3 }, { type: 'object', id: 'relic', col: 18, row: 3, appears: 'boss_defeated' }];
+  level.doc.regions = [{ type: 'boss_arena', col: 6, row: 0, cols: 14, rows: 5 }];
+  const world = new World(level, fighter(), config, { ...OBJECTS, 'boss/tyrant': boss });
+  runWorld(world, {}, 5);
+  return world;
+}
+const enterArena = world => { world.hero.body.x = 7.5 * TILE; runWorld(world, {}, 2); };
+
+tests.push(
+  ['a boss waits until the hero enters the arena, then the way back shuts', () => {
+    const world = bossRoom();
+    const boss = world.enemies[0], x = boss.body.x;
+    runWorld(world, {}, 200);
+    assert(!boss.awake && boss.body.x === x && world.hero.hp === 100, 'the boss acted before the hero arrived');
+    assert(world.objects[0].hidden, 'the relic was available before the boss was beaten');
+    enterArena(world);
+    assert(boss.awake && world.arena.locked, 'the arena did not lock');
+    for (let i = 0; i < 200; i++) runWorld(world, { dir: -1 }, 1);
+    assert(world.hero.body.x > 6 * TILE, `the hero walked back out of the arena (x=${world.hero.body.x.toFixed(0)})`);
+  }],
+  ['a boss is not staggered or pushed by hits, and moves through its phases', () => {
+    const world = bossRoom();
+    const boss = world.enemies[0];
+    enterArena(world);
+    const x = boss.body.x;
+    world.hurtEnemy(boss, 10, world.hero, { knockback: 500 });
+    assert(boss.action?.slot !== 'hit' && Math.abs(boss.body.vx) < 100, 'the boss was staggered or knocked back');
+    assert(boss.phase === 0 && boss.tempo === 1, 'the boss started in the wrong phase');
+    world.hurtEnemy(boss, 70, world.hero);
+    assert(boss.phase === 1 && boss.attackList().length === 2, `expected phase 2 at ${boss.hp} HP, got phase ${boss.phase + 1}`);
+    world.hurtEnemy(boss, 70, world.hero);
+    assert(boss.phase === 2 && boss.tempo === 1.4 && boss.attackList().length === 4, 'the last phase did not unlock every attack');
+    assert(Math.abs(boss.body.x - x) < 40, 'the boss was moved by the blows');
+  }],
+  ['a boss walks up and strikes', () => {
+    const world = bossRoom({ attacks: ['attack1'] });
+    enterArena(world);
+    runWorld(world, {}, 600);
+    assert(world.hero.hp < 100, 'the boss never hurt the hero');
+  }],
+  ['a ground wave misses a hero who is in the air', () => {
+    const grounded = bossRoom({ attacks: ['attack2'] });
+    enterArena(grounded);
+    grounded.hero.body.x = grounded.enemies[0].body.x - 250;
+    runWorld(grounded, {}, 90);
+    assert(grounded.hero.hp === 85, `expected the wave to deal 15, hero at ${grounded.hero.hp}`);
+    const flying = bossRoom({ attacks: ['attack2'] });
+    enterArena(flying);
+    flying.hero.body.x = flying.enemies[0].body.x - 250;
+    runWorld(flying, i => ({ fly: i === 0, vertical: i < 20 ? -1 : 0 }), 90);
+    assert(flying.hero.hp === 100, 'the wave hit a hero who was off the ground');
+  }],
+  ['breath reaches well beyond the boss, and a volley fires three shots', () => {
+    const breath = bossRoom({ attacks: ['attack3'] });
+    enterArena(breath);
+    breath.hero.body.x = breath.enemies[0].body.x - 200;
+    runWorld(breath, {}, 90);
+    assert(breath.hero.hp === 75, `expected the breath to deal 25, hero at ${breath.hero.hp}`);
+    const volley = bossRoom({ attacks: ['attack4'] });
+    enterArena(volley);
+    let most = 0;
+    runWorld(volley, {}, 80, w => { most = Math.max(most, w.projectiles.length); });
+    assert(most === 3, `expected 3 shots in the air, saw ${most}`);
+  }],
+  ['defeating the boss opens the arena, reveals the relic and scores', () => {
+    const world = bossRoom();
+    enterArena(world);
+    world.hurtEnemy(world.enemies[0], 999, world.hero);
+    runWorld(world, {}, 5);
+    assert(!world.arena.locked && world.boss === null, 'the arena stayed shut');
+    assert(world.hero.score === 500 && !world.objects[0].hidden, 'no score, or the relic stayed hidden');
+    runWorld(world, {}, 400);
+    assert(world.enemies.length === 1, 'the fallen boss disappeared');
+    world.hero.body.x = 18.5 * TILE;
+    runWorld(world, {}, 3);
+    assert(world.complete, 'touching the relic did not complete the level');
+  }],
+  ['if the hero dies, the boss fight starts over', () => {
+    const world = bossRoom();
+    const boss = world.enemies[0];
+    enterArena(world);
+    world.hurtEnemy(boss, 150, world.hero);
+    runWorld(world, {}, 60);
+    world.hurtHero(999, boss);
+    runWorld(world, {}, 150);
+    assert(!world.hero.dead && world.hero.body.x < 2 * TILE, 'the hero did not return to the start');
+    assert(boss.hp === 200 && boss.phase === 0 && !boss.awake && Math.abs(boss.body.x - 14.5 * TILE) < 2, 'the boss was not restored');
+    assert(!world.arena.locked, 'the arena stayed shut after the hero died');
+    for (let i = 0; i < 300 && world.hero.body.x < 7.2 * TILE; i++) runWorld(world, { dir: 1 }, 1);
+    assert(world.arena.locked && boss.awake, 'walking back in did not restart the fight');
+  }],
+);

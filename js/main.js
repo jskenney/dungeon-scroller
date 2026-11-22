@@ -326,6 +326,12 @@ function tick(dt) {
       + `enemies ${world.enemies.length}  tick ${world.tick}`;
   }
   game.hud.update(hero);
+  // During a boss fight the bar shows across the top and the view stays inside the arena.
+  const arena = world.arena?.locked ? world.arena : null;
+  game.hud.updateBoss(arena ? world.boss : null);
+  const ease = Math.min(1, dt * 4), bounds = stage.bounds;
+  bounds.left += ((arena ? arena.left : 0) - bounds.left) * ease;
+  bounds.right += ((arena ? arena.right : world.level.width) - bounds.right) * ease;
   if (steps > 0) input.endFrame();
   if (gameOver) gameOverScreen();
   else if (complete) completeScreen();

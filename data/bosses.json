@@ -5,12 +5,14 @@
     "Boxes use the same convention as players.json.",
     "A boss moves to the next phase when its health falls to the phase's untilHp fraction. tempo speeds up its movement and shortens its cooldowns.",
     "For breath and dive attacks the box is the damage area in front of the boss; the drawn effect beyond the sprite is a particle effect.",
-    "touchDamage applies on body contact, and is doubled while the boss is charging, leaping or diving."
+    "touchDamage applies on body contact, and is doubled while the boss is leaping or diving.",
+    "A shockwave runs along the ground and misses a hero who is in the air. color tints the boss's breath, waves and shots."
   ],
   "entries": {
     "undead_dragon": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "undead_dragon",
+      "color": "#6fe0c4",
       "card": "../assets/cards/undead_dragon_card.json",
       "stats": { "hp": 600, "speed": 90, "flySpeed": 220, "touchDamage": 10, "score": 500 },
       "body": { "x": -72, "y": -124, "w": 138, "h": 124 },
@@ -64,6 +66,7 @@
     "undead_fenrir": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "undead_fenrir",
+      "color": "#9fe8d8",
       "card": "../assets/cards/undead_fenrir_card.json",
       "stats": { "hp": 700, "speed": 150, "flySpeed": 300, "touchDamage": 10, "score": 500 },
       "body": { "x": -73, "y": -124, "w": 146, "h": 124 },
@@ -116,6 +119,7 @@
     "death_monarch": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
       "entity": "death_monarch",
+      "color": "#b8f0e2",
       "card": "../assets/cards/death_monarch_card.json",
       "stats": { "hp": 800, "speed": 80, "flySpeed": 180, "touchDamage": 10, "score": 500 },
       "body": { "x": -68, "y": -158, "w": 65, "h": 158 },

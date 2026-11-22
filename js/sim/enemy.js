@@ -15,7 +15,7 @@ export class Enemy extends Actor {
     super(entity, config);
     this.id = nextId++;
     this.team = 'enemy';
-    this.ai = this.g.ai;
+    this.ai = this.g.ai ?? { archetype: 'boss', sight: 1200, dropsOffLedges: false };
     this.hover = Boolean(this.ai.hover);
     this.maxHp = Math.max(1, Math.round(this.g.stats.hp * (config.difficulty?.enemyHealth ?? 1)));
     this.hp = this.maxHp;
@@ -36,6 +36,15 @@ export class Enemy extends Actor {
     this.deadTime = 0;
     this.gone = false;
   }
+
+  /** Speed-up applied to movement and cooldowns (bosses quicken as they weaken). */
+  get tempo() { return 1; }
+  /** Multiplier on touch damage right now. */
+  get touchScale() { return 1; }
+  /** The attacks this enemy may use at the moment: [slot, attack] pairs. */
+  attackList() { return Object.entries(this.g.attacks); }
+  /** How far away an attack that is not a melee swing can be used from. */
+  reachOf(attack) { return attack.range ?? attack.projectile?.range ?? 0; }
 
   // ------------------------------------------------------------------ senses
 
@@ -81,7 +90,7 @@ export class Enemy extends Actor {
   usableAttacks(world, sees) {
     const hero = world.hero, b = this.body, dx = hero.body.x - b.x, reach = Math.abs(dx);
     const usable = [];
-    for (const [slot, attack] of Object.entries(this.g.attacks)) {
+    for (const [slot, attack] of this.attackList()) {
       if ((this.cooldown[slot] ?? 0) > 0) continue;
       if (attack.leap) {
         if (b.grounded && sees && reach > 70 && reach < attack.leap.distance + 30) usable.push([attack.weight ?? 1, slot]);
@@ -90,7 +99,7 @@ export class Enemy extends Actor {
         this.facing = dx >= 0 ? 1 : -1;
         if (overlap(this.boxRect(attack.box, 4), hero.bodyRect())) usable.push([attack.weight ?? 1, slot]);
         this.facing = facing;
-      } else if (sees && reach < (attack.range ?? attack.projectile?.range ?? 0)) {
+      } else if (sees && reach < this.reachOf(attack)) {
         usable.push([attack.weight ?? 1, slot]);
       }
     }
@@ -170,7 +179,7 @@ export class Enemy extends Actor {
       if (a.leaping && b.grounded && b.vy >= 0 && a.t > 120) a.leaping = false;
       if (a.t >= clipLength(clip)) {
         if (a.attack) {
-          this.cooldown[a.slot] = a.attack.cooldown ?? 1.5;
+          this.cooldown[a.slot] = (a.attack.cooldown ?? 1.5) / this.tempo;
           this.rest = 0.35;
           if (this.ai.retreatAfterAttack) this.retreat = this.ai.retreatAfterAttack;
         }
@@ -183,7 +192,7 @@ export class Enemy extends Actor {
       if (sees) this.alert = 3;
       const aware = !hero.dead && this.alert > 0;
       const dx = hero.body.x - b.x, toward = dx >= 0 ? 1 : -1, reach = Math.abs(dx);
-      const speed = this.g.stats.speed * this.speedFactor;
+      const speed = this.g.stats.speed * this.speedFactor * this.tempo;
       const usable = aware && this.rest <= 0 ? this.usableAttacks(world, sees) : [];
       if (usable.length) {
         let roll = world.random() * usable.reduce((s, u) => s + u[0], 0), chosen = usable[0][1];

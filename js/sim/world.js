@@ -3,6 +3,7 @@
 
 import { Hero } from './hero.js';
 import { Enemy } from './enemy.js';
+import { Boss } from './boss.js';
 import { WorldObject } from './object.js';
 import { overlap } from './actor.js';
 import { makeRng } from '../level/random.js';
@@ -53,6 +54,9 @@ export class World {
       if (placed.type === 'enemy') {
         const entity = entities[`enemy/${placed.id}`];
         if (entity?.gameplay) this.enemies.push(new Enemy(entity, config, x, y));
+      } else if (placed.type === 'boss') {
+        const entity = entities[`boss/${placed.id}`];
+        if (entity?.gameplay) this.enemies.push(new Boss(entity, config, x, y));
       } else if (placed.type === 'object') {
         this.addObject(placed.id, x, y, placed);
       } else if (placed.type === 'gate') {
@@ -62,6 +66,39 @@ export class World {
         level.dynamic.push(rect);
       }
     }
+  }
+
+  /** The living boss, if the level has one. */
+  get boss() { return this.enemies.find(e => e.boss && !e.dead) ?? null; }
+
+  /**
+   * The boss arena: entering it wakes the boss and shuts the way back;
+   * it opens again when the boss falls or the hero has to start over.
+   */
+  updateArena() {
+    const region = (this.level.doc.regions ?? []).find(r => r.type === 'boss_arena');
+    const boss = this.boss;
+    if (!region) { if (boss) boss.awake = true; return; }
+    this.arena ??= { left: region.col * TILE, right: (region.col + region.cols) * TILE, locked: false, wall: null };
+    const arena = this.arena, hero = this.hero;
+    if (!arena.locked && boss && !hero.dead && hero.body.x > arena.left + 72 && hero.body.x < arena.right) {
+      arena.locked = true;
+      arena.wall = { l: arena.left - 24, t: -2000, r: arena.left, b: this.level.height + 400, kind: 'solid' };
+      this.level.dynamic.push(arena.wall);
+      boss.awake = true;
+      this.events.push({ type: 'bossFight', id: boss.entity.id });
+    } else if (arena.locked && !boss) {
+      this.openArena();
+      this.events.push({ type: 'bossDefeated' });
+    }
+  }
+
+  openArena() {
+    const arena = this.arena;
+    if (!arena?.locked) return;
+    arena.locked = false;
+    this.unblock(arena.wall);
+    arena.wall = null;
   }
 
   /** Seconds played. */
@@ -188,8 +225,9 @@ export class World {
     hero.update(intents, this, dt);
     this.events.push(...hero.events.splice(0));
 
+    this.updateArena();
     for (const enemy of this.enemies) {
-      if (Math.abs(enemy.body.x - hero.body.x) > WAKE_DISTANCE && !enemy.dead) continue;
+      if (Math.abs(enemy.body.x - hero.body.x) > WAKE_DISTANCE && !enemy.dead && !enemy.boss) continue;
       enemy.update(this, dt);
     }
     for (const p of this.projectiles) p.update(this, dt);
@@ -220,7 +258,8 @@ export class World {
       const body = hero.bodyRect();
       for (const enemy of this.enemies) {
         if (enemy.dead || !overlap(body, enemy.bodyRect())) continue;
-        const amount = (enemy.g.stats.touchDamage ?? 0) * (this.config.difficulty?.touchDamage ?? 1);
+        if (enemy.boss && !enemy.awake) continue;
+        const amount = (enemy.g.stats.touchDamage ?? 0) * enemy.touchScale * (this.config.difficulty?.touchDamage ?? 1);
         if (amount > 0) { this.hurtHero(amount, enemy, {}, this.config.rules?.touchKnockback ?? 220); break; }
       }
     }
@@ -286,6 +325,9 @@ export class World {
       return;
     }
     hero.revive(this.checkpoint.x, this.checkpoint.y);
+    // The boss fight starts again from the beginning.
+    this.openArena();
+    for (const enemy of this.enemies) if (enemy.boss && !enemy.dead) enemy.reset();
     this.projectiles = this.projectiles.filter(p => p.team === 'hero');
     this.events.push({ type: 'respawn' });
   }

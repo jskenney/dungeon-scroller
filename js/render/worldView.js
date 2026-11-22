@@ -28,7 +28,10 @@ export class WorldView {
       style: { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 9, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x000000, width: 2 } } });
     this.prompt.anchor.set(0.5, 1);
     this.prompt.visible = false;
-    this.effects.addChild(this.bars, this.prompt);
+    this.breath = new Graphics();
+    this.rings = new Graphics();
+    this.waves = [];
+    this.effects.addChild(this.bars, this.breath, this.rings, this.prompt);
     this.heroView = stage.addActor(world.hero.entity);
     this.enemyViews = new Map();
     this.shots = new Map();
@@ -89,10 +92,10 @@ export class WorldView {
       const b = enemy.body;
       const x = lerp(enemy.prev.x, b.x, a), y = lerp(enemy.prev.y, b.y, a);
       view.show(enemy.pose.slot, enemy.pose.frame, x + enemy.artShift * enemy.facing, y + enemy.bodyLift, enemy.facing);
-      const fade = enemy.dead ? Math.max(0, enemy.deadTime - clipLength(enemy.entity.animations.death) / 1000) / 1.2 : 0;
+      const fade = enemy.dead && !enemy.boss ? Math.max(0, enemy.deadTime - clipLength(enemy.entity.animations.death) / 1000) / 1.2 : 0;
       view.sprite.alpha = 1 - Math.min(1, fade);
       view.sprite.tint = enemy.flash > 0 ? 0xff7070 : enemy.stun > 0 ? 0xfff0a0 : enemy.weak.time > 0 ? 0xd9a8ff : enemy.slow.time > 0 ? 0x9fc4ff : 0xffffff;
-      if (!enemy.dead && enemy.hp < enemy.maxHp) {
+      if (!enemy.dead && !enemy.boss && enemy.hp < enemy.maxHp) {
         const w = 30, top = y - b.h - 9;
         bars.rect(x - w / 2 - 1, top - 1, w + 2, 5).fill({ color: 0x000000, alpha: 0.7 });
         bars.rect(x - w / 2, top, w * (enemy.hp / enemy.maxHp), 3).fill({ color: 0xd0453f });
@@ -103,6 +106,31 @@ export class WorldView {
       view.sprite.destroy();
       this.enemyViews.delete(enemy);
     }
+
+    // ---- boss breath: a stream of flickering particles over the area it covers
+    const breath = this.breath.clear();
+    for (const enemy of world.enemies) {
+      const area = enemy.boss ? enemy.activeBreath() : null;
+      if (!area) continue;
+      const color = tint(enemy.g.color), width = area.r - area.l, height = area.b - area.t;
+      for (let i = 0; i < 46; i++) {
+        const along = ((i * 0.137 + this.time * 2.6) % 1);                    // 0 at the mouth, 1 at the far end
+        const x = enemy.facing === 1 ? area.l + along * width : area.r - along * width;
+        const spread = height * (0.25 + 0.75 * along);
+        const y = area.t + height / 2 + (((i * 0.618) % 1) - 0.5) * spread;
+        const size = 3 + Math.round(along * 5);
+        breath.rect(Math.round(x), Math.round(y), size, size).fill({ color: i % 4 ? color : 0xffffff, alpha: 0.85 - along * 0.55 });
+      }
+    }
+    // ---- ground waves spreading from a boss
+    const rings = this.rings.clear();
+    this.waves = this.waves.filter(w => {
+      w.age += dt;
+      const t = w.age / 0.45, reach = w.radius * Math.min(1, t);
+      for (const side of [-1, 1]) rings.rect(w.x + side * reach - 5, w.y - 22 * (1 - t * 0.6), 10, 22 * (1 - t * 0.6)).fill({ color: w.color, alpha: 0.9 * (1 - t) });
+      rings.rect(w.x - reach, w.y - 3, reach * 2, 3).fill({ color: w.color, alpha: 0.35 * (1 - t) });
+      return t < 1;
+    });
 
     // ---- projectiles and bursts, drawn as particles
     for (const p of world.projectiles) {
@@ -145,6 +173,8 @@ export class WorldView {
       else if (e.type === 'hex') this.float(e.x, e.y, 'hexed', 0xd9a8ff);
       else if (e.type === 'kill') this.float(e.x, e.y - 40, 'defeated', 0xffffff);
       else if (e.type === 'locked') this.float(e.x, e.y, 'locked', 0xc9ced9);
+      else if (e.type === 'shockwave') this.waves.push({ x: e.x, y: e.y, radius: e.radius, color: tint(e.color), age: 0 });
+      else if (e.type === 'bossPhase') this.float(e.x, e.y, 'enraged', 0xff8a8a);
       else if (e.type === 'checkpoint') this.float(e.x, e.y - 12, 'checkpoint', 0x7be495);
       else if (e.type === 'gateOpened') this.float(e.x, e.y + 60, 'opened', 0xffffff);
       else if (e.type === 'gave') {
@@ -179,6 +209,8 @@ export class WorldView {
       for (const enemy of world.enemies) {
         if (enemy.dead) continue;
         stage.drawBody(enemy.body.x, enemy.body.y, enemy.body.w, enemy.body.h, 0xf59e42);
+        const reach = enemy.boss ? enemy.activeBreath() : null;
+        if (reach) g.rect(reach.l, reach.t, reach.r - reach.l, reach.b - reach.t).fill({ color: 0xff5d5d, alpha: 0.2 }).stroke({ width: 1, color: 0xff5d5d });
         const box = enemy.activeBox();
         if (box) {
           g.rect(box.rect.l, box.rect.t, box.rect.r - box.rect.l, box.rect.b - box.rect.t)

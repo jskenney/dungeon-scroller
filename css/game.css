@@ -136,3 +136,8 @@ select, input[type="text"] {
 table.results { margin: 4px auto 18px; border-collapse: collapse; font-size: 18px; }
 table.results th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 28px 3px 0; }
 table.results td { text-align: right; font-variant-numeric: tabular-nums; }
+
+.boss { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: min(520px, 46vw); text-align: center; }
+.boss-name { font: 700 17px/1.2 Georgia, "Times New Roman", serif; color: #f1d58a; letter-spacing: .04em; margin-bottom: 4px; }
+.bar.boss-hp { height: 14px; margin: 0; border-color: #f1d58a80; }
+.bar.boss-hp .fill { background: linear-gradient(#c05ad0, #7a2f93); }

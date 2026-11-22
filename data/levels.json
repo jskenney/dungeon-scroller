@@ -2,7 +2,7 @@
   "schema": "dungeon-scroller/levels@1",
   "notes": [
     "Static levels offered on the level selection screen. Paths are relative to this file.",
-    "Both current levels are test courses: each has one of every kind of enemy, most kinds of object, a gate, and the relic at the far end."
+    "Two test courses with every kind of enemy and most kinds of object, and one arena for each boss."
   ],
   "entries": [
     {
@@ -14,6 +14,21 @@
       "id": "graveyard-test",
       "file": "../levels/graveyard-test.json",
       "description": "Slopes and hills, platforms, a pit, a key and locked gate, and enemies."
+    },
+    {
+      "id": "arena-dragon",
+      "file": "../levels/arena-dragon.json",
+      "description": "A boss fight with the Undead Dragon: bite, tail sweep, gravefire breath and a dive."
+    },
+    {
+      "id": "arena-fenrir",
+      "file": "../levels/arena-fenrir.json",
+      "description": "A boss fight with the Undead Fenrir: fang snap, raking lunge, pounce and a howl that runs along the ground."
+    },
+    {
+      "id": "arena-monarch",
+      "file": "../levels/arena-monarch.json",
+      "description": "A boss fight with the Death Monarch: thrust, sweep, cleave and a volley of spectral blades."
     }
   ]
 }
