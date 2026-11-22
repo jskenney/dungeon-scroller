@@ -1,0 +1,160 @@
+{
+  "schema": "dungeon-scroller/catalog@1",
+  "kind": "object",
+  "notes": [
+    "use: touch = taken by walking into it; interact = press the interact key inside its box; attack = hit it; none = scenery.",
+    "box is the touch, interaction or hit area relative to the pivot. A solid object also blocks movement with this box.",
+    "A chest opens with no key unless the level marks it locked. A lever toggles whatever the level links it to.",
+    "Loot entries drop with 'chance' (default 1) and 'count' (a number or [min, max])."
+  ],
+  "entries": {
+    "treasure_chest": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "treasure_chest",
+      "use": "interact",
+      "behaviour": "container",
+      "loot": [
+        {
+          "object": "gold_coin",
+          "count": [3, 6]
+        },
+        { "object": "gem", "chance": 0.35 }
+      ],
+      "box": { "x": -29, "y": -36, "w": 58, "h": 44 }
+    },
+    "healing_potion": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "healing_potion",
+      "use": "touch",
+      "behaviour": "pickup",
+      "gives": { "hp": 40 },
+      "box": { "x": -15, "y": -39, "w": 31, "h": 36 }
+    },
+    "space_potion": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "space_potion",
+      "use": "touch",
+      "behaviour": "pickup",
+      "gives": { "mp": 40 },
+      "box": { "x": -14, "y": -41, "w": 29, "h": 40 }
+    },
+    "gold_coin": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "gold_coin",
+      "use": "touch",
+      "behaviour": "pickup",
+      "gives": { "score": 1 },
+      "box": { "x": -14, "y": -35, "w": 29, "h": 28 }
+    },
+    "gem": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "gem",
+      "use": "touch",
+      "behaviour": "pickup",
+      "gives": { "score": 10 },
+      "box": { "x": -15, "y": -39, "w": 30, "h": 36 }
+    },
+    "iron_key": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "iron_key",
+      "use": "touch",
+      "behaviour": "pickup",
+      "gives": { "keys": 1 },
+      "box": { "x": -20, "y": -35, "w": 40, "h": 28 }
+    },
+    "gravestone": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "gravestone",
+      "use": "none",
+      "behaviour": "decor",
+      "box": { "x": -22, "y": -54, "w": 44, "h": 54 }
+    },
+    "checkpoint_flag": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "checkpoint_flag",
+      "use": "touch",
+      "behaviour": "checkpoint",
+      "gives": { "hpFraction": 1 },
+      "box": { "x": -13, "y": -70, "w": 35, "h": 78 }
+    },
+    "wooden_crate": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "wooden_crate",
+      "use": "attack",
+      "behaviour": "breakable",
+      "hp": 1,
+      "solid": true,
+      "loot": [
+        { "object": "gold_coin", "chance": 0.2 },
+        { "object": "healing_potion", "chance": 0.1 }
+      ],
+      "box": { "x": -15, "y": -34, "w": 32, "h": 34 }
+    },
+    "barrel": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "barrel",
+      "use": "attack",
+      "behaviour": "breakable",
+      "hp": 1,
+      "solid": true,
+      "loot": [
+        { "object": "gold_coin", "chance": 0.2 },
+        { "object": "space_potion", "chance": 0.1 }
+      ],
+      "box": { "x": -14, "y": -36, "w": 30, "h": 36 }
+    },
+    "burial_urn": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "burial_urn",
+      "use": "attack",
+      "behaviour": "breakable",
+      "hp": 1,
+      "loot": [
+        { "object": "gold_coin", "chance": 0.3 }
+      ],
+      "box": { "x": -12, "y": -34, "w": 25, "h": 34 }
+    },
+    "wall_torch": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "wall_torch",
+      "use": "none",
+      "behaviour": "light",
+      "light": { "radius": 220, "color": "#ffb060" },
+      "box": { "x": -8, "y": -47, "w": 18, "h": 37 }
+    },
+    "lever": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "lever",
+      "use": "interact",
+      "behaviour": "switch",
+      "box": { "x": -19, "y": -38, "w": 38, "h": 46 }
+    },
+    "spell_scroll": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "spell_scroll",
+      "use": "touch",
+      "behaviour": "pickup",
+      "gives": {
+        "buff": { "damage": 2, "duration": 15 }
+      },
+      "box": { "x": -19, "y": -35, "w": 38, "h": 31 }
+    },
+    "healing_shrine": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "healing_shrine",
+      "use": "interact",
+      "behaviour": "shrine",
+      "gives": { "hpFraction": 1, "mpFraction": 1 },
+      "cooldown": 30,
+      "box": { "x": -28, "y": -50, "w": 56, "h": 58 }
+    },
+    "dungeon_relic": {
+      "sheet": "../assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "entity": "dungeon_relic",
+      "use": "touch",
+      "behaviour": "goal",
+      "gives": { "score": 100 },
+      "box": { "x": -16, "y": -42, "w": 32, "h": 42 }
+    }
+  }
+}

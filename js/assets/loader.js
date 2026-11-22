@@ -163,6 +163,79 @@ async function loadCard(jsonUrl, problems) {
     subjectSheetUrl: json.subject?.sheet ? resolve(json.subject.sheet, jsonUrl) : null };
 }
 
+/** Deep-merge catalog defaults under an entry (the entry wins). */
+function withDefaults(defaults, entry) {
+  if (!defaults || typeof defaults !== 'object' || Array.isArray(defaults)) return entry ?? defaults;
+  if (entry == null) return structuredClone(defaults);
+  if (typeof entry !== 'object' || Array.isArray(entry)) return entry;
+  const out = { ...entry };
+  for (const [key, value] of Object.entries(defaults)) out[key] = withDefaults(value, entry[key]);
+  return out;
+}
+
+const isBox = b => b && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(b[k])) && b.w > 0 && b.h > 0;
+
+/**
+ * Load the gameplay catalogs and attach each entry to its sheet entity as
+ * `entity.gameplay`. Catalogs hold stats, abilities, behaviour and boxes.
+ */
+async function loadCatalogs(config, configUrl, result, problems) {
+  const paths = Object.entries(config.catalogs ?? {}).filter(([key]) => !key.startsWith('$'));
+  result.catalogs = {};
+  await Promise.all(paths.map(async ([name, path]) => {
+    const url = resolve(path, configUrl), file = shortName(url);
+    let catalog;
+    try {
+      catalog = await fetchJson(url);
+    } catch (error) {
+      problems.push({ level: 'error', file, message: `Could not load: ${error.message}` });
+      return;
+    }
+    result.catalogs[name] = catalog;
+    for (const [id, raw] of Object.entries(catalog.entries ?? {})) {
+      const entry = withDefaults(catalog.defaults, raw);
+      const sheet = result.sheets.find(s => s.url === resolve(entry.sheet ?? '', url));
+      const entity = sheet?.entities[entry.entity];
+      if (!entity) {
+        problems.push({ level: 'error', file, message: `${id}: sheet or entity not found among the loaded sheets.` });
+        continue;
+      }
+      if (entity.kind !== catalog.kind) problems.push({ level: 'error', file, message: `${id}: is a ${entity.kind} in its sheet but listed in a ${catalog.kind} catalog.` });
+      if (entity.gameplay) problems.push({ level: 'error', file, message: `${id}: also defined in ${entity.catalogFile}.` });
+      for (const key of ['body', 'crouchBody', 'box']) {
+        if (entry[key] && !isBox(entry[key])) problems.push({ level: 'error', file, message: `${id}.${key}: not a valid box.` });
+      }
+      if (catalog.kind !== 'object' && !isBox(entry.body)) problems.push({ level: 'error', file, message: `${id}: has no body box.` });
+      for (const [slot, action] of Object.entries(entry.abilities ?? entry.attacks ?? {})) {
+        const clip = entity.animations[slot];
+        if (!clip) { problems.push({ level: 'error', file, message: `${id}.${slot}: the sheet has no such animation.` }); continue; }
+        if (action.box && !isBox(action.box)) problems.push({ level: 'error', file, message: `${id}.${slot}: box is not valid.` });
+        if (['melee', 'area'].includes(action.type)) {
+          if (!action.box) problems.push({ level: 'error', file, message: `${id}.${slot}: a ${action.type} attack needs a box.` });
+          if (!(clip.events ?? []).some(e => ['melee', 'area', 'impact'].includes(e.type))) {
+            problems.push({ level: 'warning', file, message: `${id}.${slot}: the animation has no frame that triggers the hit.` });
+          }
+        }
+      }
+      for (const phase of entry.phases ?? []) {
+        for (const slot of phase.attacks) {
+          if (!entry.attacks?.[slot]) problems.push({ level: 'error', file, message: `${id}: a phase uses "${slot}", which is not defined.` });
+        }
+      }
+      if (entry.card && !result.cards.some(c => c.url === resolve(entry.card, url))) {
+        problems.push({ level: 'warning', file, message: `${id}: its card is not in the configuration's card list.` });
+      }
+      entity.gameplay = entry;
+      entity.catalogFile = file;
+    }
+  }));
+  if (paths.length) {
+    for (const [key, entity] of Object.entries(result.entities)) {
+      if (!entity.gameplay) problems.push({ level: 'warning', file: shortName(entity.sheet.url), message: `${key} has no gameplay values in any catalog.` });
+    }
+  }
+}
+
 /**
  * Load everything listed under `assets` in the site configuration.
  * @param {object} config        parsed dungeon.json
@@ -206,6 +279,8 @@ export async function loadAssets(config, configUrl, onProgress = () => {}) {
       }
     }
   }
+  await loadCatalogs(config, configUrl, result, problems);
+
   // Cards must point at an entity that was loaded.
   for (const card of result.cards) {
     const sheet = result.sheets.find(s => s.url === card.subjectSheetUrl);

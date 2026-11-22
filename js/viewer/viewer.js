@@ -28,9 +28,11 @@ function h(tag, attrs = {}, ...children) {
 const COLORS = {
   background: 0x0d0f14, ground: 0x4b556b, cell: 0x3b4458, pivot: 0xe0b354, bounds: 0x63c98a,
   selected: 0xe0b354, label: 0x8b94a8, checkerA: 0x161b26, checkerB: 0x1d2331, grid: 0x39425a,
+  body: 0x63c98a, hit: 0xff5d5d, use: 0x5ac8fa,
   solid: 0xef6b6b, platform: 0x5ac8fa, rect: 0xf59e42, slope: 0xc084fc, stairs: 0xc084fc, hover: 0xffffff,
 };
 const KIND_TITLES = { player: 'Players', enemy: 'Enemies', boss: 'Bosses', npc: 'NPCs', object: 'Objects' };
+const HIT_EVENTS = new Set(['melee', 'area', 'impact', 'emit']);
 const HOLD_MS = 600; // pause on the last frame before a one-shot animation repeats
 
 const state = {
@@ -43,9 +45,12 @@ const state = {
   pan: { x: 0, y: 0 },
   playing: true, speed: 1, flip: false, elapsed: 0,
   hoverTile: null, pinnedTile: null,
+  target: 'frame',          // what the nudge controls move: 'frame' or a box key
+  boxEdits: {},             // unsaved boxes: "catalog.json|entity|key" -> {x, y, w, h}
   edits: {},                // unsaved frame offsets: "sheet.json|entity|slot" -> [[dx, dy], …]
 };
 const EDITS_KEY = 'dungeon-scroller.viewer.offsetEdits';
+const BOX_EDITS_KEY = 'dungeon-scroller.viewer.boxEdits';
 
 let app;
 /** Things the per-frame update needs from the scene that was last built. */
@@ -74,49 +79,130 @@ function offsetsFor(entity, clip) {
 }
 
 function saveEdits() {
-  try { localStorage.setItem(EDITS_KEY, JSON.stringify(state.edits)); } catch { /* storage unavailable */ }
+  try {
+    localStorage.setItem(EDITS_KEY, JSON.stringify(state.edits));
+    localStorage.setItem(BOX_EDITS_KEY, JSON.stringify(state.boxEdits));
+  } catch { /* storage unavailable */ }
+}
+
+// ---- collision and hit boxes (gameplay catalog values, relative to the pivot, actor facing right)
+
+/** The boxes an entity has: [{key, label}], e.g. body, crouchBody, attack1, box. */
+function boxKeys(entity) {
+  const g = entity.gameplay;
+  if (!g) return [];
+  const keys = [];
+  if (g.body) keys.push({ key: 'body', label: 'Body box' });
+  if (g.crouchBody) keys.push({ key: 'crouchBody', label: 'Crouch box' });
+  if (g.box) keys.push({ key: 'box', label: 'Use box' });
+  for (const [slot, a] of Object.entries(g.abilities ?? g.attacks ?? {})) {
+    if (a.box) keys.push({ key: slot, label: `${entity.animations[slot]?.label ?? slot} hit box` });
+  }
+  return keys;
+}
+
+function savedBox(entity, key) {
+  const g = entity.gameplay;
+  return g?.[key]?.w != null ? g[key] : (g?.abilities ?? g?.attacks)?.[key]?.box ?? null;
+}
+
+const boxEditKey = (entity, key) => `${entity.catalogFile}|${entity.id}|${key}`;
+
+function boxFor(entity, key) {
+  return state.boxEdits[boxEditKey(entity, key)] ?? savedBox(entity, key);
+}
+
+/** The boxes worth drawing while a given animation plays. */
+function boxesShown(entity, clip) {
+  const low = clip.slot === 'crouch' || clip.slot === 'crawl';
+  const shown = [];
+  for (const { key } of boxKeys(entity)) {
+    if (key === 'body' && low && boxFor(entity, 'crouchBody')) continue;
+    if (key === 'crouchBody' && !low) continue;
+    if (key !== 'body' && key !== 'crouchBody' && key !== 'box' && key !== clip.slot) continue;
+    shown.push(key);
+  }
+  return shown;
 }
 
 function loadEdits() {
   try { state.edits = JSON.parse(localStorage.getItem(EDITS_KEY)) ?? {}; } catch { state.edits = {}; }
+  try { state.boxEdits = JSON.parse(localStorage.getItem(BOX_EDITS_KEY)) ?? {}; } catch { state.boxEdits = {}; }
   // Drop adjustments that the JSON files now contain, or that no longer match anything.
-  const saved = {};
+  const saved = {}, savedBoxes = {};
   for (const entity of Object.values(state.assets.entities)) {
     for (const clip of Object.values(entity.animations)) {
       saved[editKey(entity, clip)] = JSON.stringify(clip.offsets ?? clip.durations.map(() => [0, 0]));
     }
+    for (const { key } of boxKeys(entity)) savedBoxes[boxEditKey(entity, key)] = sameBox(savedBox(entity, key));
   }
   for (const [key, offsets] of Object.entries(state.edits)) {
     if (!(key in saved) || saved[key] === JSON.stringify(offsets)) delete state.edits[key];
   }
+  for (const [key, box] of Object.entries(state.boxEdits)) {
+    if (!(key in savedBoxes) || savedBoxes[key] === sameBox(box)) delete state.boxEdits[key];
+  }
   saveEdits();
 }
 
-/** Move the frame on screen by (dx, dy) art pixels and remember it as an unsaved edit. */
-function nudge(dx, dy) {
+const sameBox = b => b && `${b.x},${b.y},${b.w},${b.h}`;
+
+/** True when the actor on screen is facing right (drawn facing, possibly mirrored). */
+function shownFacingRight(entity) {
+  return (entity.sheet.facing === 'right') !== state.flip;
+}
+
+/**
+ * Move whatever the nudge controls point at by (dx, dy) screen pixels of art,
+ * or resize it by (dw, dh). `null` resets it. Everything is kept as an unsaved edit.
+ */
+function nudge(dx, dy, dw = 0, dh = 0) {
   const entity = state.selection?.type === 'entity' ? state.selection.item : null;
   const clip = currentClip();
   if (!entity || state.entityView !== 'single') return;
-  const offsets = offsetsFor(entity, clip).map(o => [...o]);
   const frame = displayFrame(clip, state.elapsed);
-  offsets[frame] = dx === null ? [0, 0] : [offsets[frame][0] + dx, offsets[frame][1] + dy];
-  const original = clip.offsets ?? clip.durations.map(() => [0, 0]);
-  if (JSON.stringify(offsets) === JSON.stringify(original)) delete state.edits[editKey(entity, clip)];
-  else state.edits[editKey(entity, clip)] = offsets;
+  if (state.target === 'frame') {
+    if (dw || dh) return;
+    const offsets = offsetsFor(entity, clip).map(o => [...o]);
+    // Offsets are in the sheet's drawn orientation, so undo the mirroring.
+    offsets[frame] = dx === null ? [0, 0] : [offsets[frame][0] + dx * (state.flip ? -1 : 1), offsets[frame][1] + dy];
+    const original = clip.offsets ?? clip.durations.map(() => [0, 0]);
+    if (JSON.stringify(offsets) === JSON.stringify(original)) delete state.edits[editKey(entity, clip)];
+    else state.edits[editKey(entity, clip)] = offsets;
+  } else {
+    const key = state.target, original = savedBox(entity, key);
+    if (!original) return;
+    let box = { ...boxFor(entity, key) };
+    if (dx === null) box = { ...original };
+    else {
+      box.x += dx * (shownFacingRight(entity) ? 1 : -1);
+      box.y += dy - dh;                       // height grows upward: the bottom edge stays put
+      box.w = Math.max(1, box.w + dw);
+      box.h = Math.max(1, box.h + dh);
+    }
+    if (sameBox(box) === sameBox(original)) delete state.boxEdits[boxEditKey(entity, key)];
+    else state.boxEdits[boxEditKey(entity, key)] = { x: box.x, y: box.y, w: box.w, h: box.h };
+  }
   saveEdits();
   state.playing = false;
   state.elapsed = frameStart(clip, frame);
   refresh();
 }
 
-/** Unsaved edits as JSON grouped by sheet file, entity and animation slot. */
+/** Unsaved edits as JSON: frame offsets by sheet file, boxes by catalog file. */
 function editsAsJson() {
   const out = {};
   for (const [key, offsets] of Object.entries(state.edits)) {
     const [file, entity, slot] = key.split('|');
-    ((out[file] ??= {})[entity] ??= {})[slot] = offsets;
+    ((((out.offsets ??= {})[file] ??= {})[entity]) ??= {})[slot] = offsets;
   }
-  return JSON.stringify(out, null, 1).replace(/\[\s+(-?\d+),\s+(-?\d+)\s+\]/g, '[$1, $2]').replace(/\],\s+\[/g, '], [').replace(/\[\s+\[/g, '[[').replace(/\]\s+\]/g, ']]');
+  for (const [key, box] of Object.entries(state.boxEdits)) {
+    const [file, entity, name] = key.split('|');
+    ((((out.boxes ??= {})[file] ??= {})[entity]) ??= {})[name] = box;
+  }
+  return JSON.stringify(out, null, 1)
+    .replace(/\[\s+(-?\d+),\s+(-?\d+)\s+\]/g, '[$1, $2]').replace(/\],\s+\[/g, '], [').replace(/\[\s+\[/g, '[[').replace(/\]\s+\]/g, ']]')
+    .replace(/\{\s+"x": (-?\d+),\s+"y": (-?\d+),\s+"w": (\d+),\s+"h": (\d+)\s+\}/g, '{ "x": $1, "y": $2, "w": $3, "h": $4 }');
 }
 
 function currentClip() {
@@ -283,6 +369,25 @@ function buildEntitySingle(entity) {
   if (ghost) app.stage.addChild(ghost);
   app.stage.addChild(sprite, overlay);
   scene.sprites = [{ sprite, clip, entity, x: ox, y: oy, S, mirror }];
+  // Collision and hit boxes from the gameplay catalog. A hit box is drawn
+  // faintly, and filled while a frame of its event window is showing.
+  scene.hitActive = null;
+  if ($('show-boxes').checked) {
+    const right = shownFacingRight(entity);
+    const boxes = new Graphics(), active = new Graphics();
+    for (const key of boxesShown(entity, clip)) {
+      const b = boxFor(entity, key);
+      const left = right ? ox + b.x * S : ox - (b.x + b.w) * S;
+      const color = key === 'body' || key === 'crouchBody' ? COLORS.body : key === 'box' ? COLORS.use : COLORS.hit;
+      const width = key === state.target ? 2 : 1;
+      boxes.rect(left, oy + b.y * S, b.w * S, b.h * S).stroke({ width, color });
+      if (color === COLORS.hit) {
+        active.rect(left, oy + b.y * S, b.w * S, b.h * S).fill({ color, alpha: 0.3 });
+        scene.hitActive = active;
+      }
+    }
+    app.stage.addChild(active, boxes);
+  }
   return zoom;
 }
 
@@ -574,19 +679,42 @@ function entityDetails(entity) {
   const events = (clip.events ?? []).map(e => h('li', {},
     h('span', { class: 'tag' }, e.type), ` frame ${e.frame}${e.until ? '–' + e.until : ''}`, e.note ? ` — ${e.note}` : ''));
 
+  // Gameplay values from the catalog.
+  const g = entity.gameplay;
+  const plain = v => (v !== null && typeof v === 'object')
+    ? Object.entries(v).filter(([k]) => k !== 'box').map(([k, x]) => `${k} ${plain(x)}`).join(', ')
+    : String(v);
+  const gdl = h('dl');
+  if (g) {
+    for (const key of ['role', 'stats', 'movement', 'flight', 'teleport', 'ai', 'use', 'behaviour', 'gives', 'hp', 'solid', 'cooldown', 'light']) {
+      if (g[key] != null) row(gdl, key, plain(g[key]));
+    }
+    for (const [slot, a] of Object.entries(g.abilities ?? g.attacks ?? {})) {
+      row(gdl, entity.animations[slot]?.label ?? slot, plain(a));
+    }
+    if (g.phases) row(gdl, 'phases', g.phases.map((ph, i) => `${i + 1}: to ${Math.round(ph.untilHp * 100)}% health, ${ph.attacks.length} attacks, tempo ${ph.tempo}`).join('; '));
+    if (g.loot ?? g.drops) row(gdl, 'drops', (g.loot ?? g.drops).map(plain).join('; '));
+    for (const { key, label } of boxKeys(entity)) {
+      const b = boxFor(entity, key);
+      row(gdl, label, `${b.w} × ${b.h} at (${b.x}, ${b.y})${state.boxEdits[boxEditKey(entity, key)] ? ' — edited' : ''}`);
+    }
+  }
+  const gameplayPanel = g ? [h('h3', {}, `Gameplay (${entity.catalogFile})`), gdl]
+    : [h('h3', {}, 'Gameplay'), h('p', { class: 'muted' }, 'No gameplay values are defined for this entity yet.')];
+
   const offsets = offsetsFor(entity, clip);
   row(cdl, 'Frame offsets', offsets.some(o => o[0] || o[1]) ? JSON.stringify(offsets) : 'none');
-  const editCount = Object.keys(state.edits).length;
+  const editCount = Object.keys(state.edits).length + Object.keys(state.boxEdits).length;
   const editsPanel = editCount ? [
     h('h3', {}, `Unsaved adjustments (${editCount})`),
     h('p', { class: 'muted' }, 'These exist only in this browser. Copy them and send them to be written into the JSON files.'),
-    h('textarea', { readonly: true, rows: 8, 'aria-label': 'Unsaved frame offsets as JSON' }, editsAsJson()),
+    h('textarea', { readonly: true, rows: 8, 'aria-label': 'Unsaved adjustments as JSON' }, editsAsJson()),
     h('div', { class: 'row' },
       h('button', { type: 'button', onclick: async e => {
         try { await navigator.clipboard.writeText(editsAsJson()); e.target.textContent = 'Copied'; }
         catch { e.target.textContent = 'Select the text and copy it'; }
       } }, 'Copy'),
-      h('button', { type: 'button', onclick: () => { if (confirm('Discard all unsaved frame adjustments?')) { state.edits = {}; saveEdits(); refresh(); } } }, 'Discard all')),
+      h('button', { type: 'button', onclick: () => { if (confirm('Discard all unsaved adjustments?')) { state.edits = {}; state.boxEdits = {}; saveEdits(); refresh(); } } }, 'Discard all')),
   ] : [];
 
   setDetails(
@@ -596,6 +724,7 @@ function entityDetails(entity) {
     h('h3', {}, clip.label), cdl,
     events.length ? h('h3', {}, 'Events') : null, events.length ? h('ul', {}, events) : null,
     ...editsPanel,
+    ...gameplayPanel,
     sheet.notes?.length ? h('h3', {}, 'Sheet notes') : null,
     sheet.notes?.length ? h('ul', {}, sheet.notes.map(n => h('li', {}, n))) : null);
 }
@@ -681,7 +810,16 @@ function syncToolbar() {
   $('flip').setAttribute('aria-pressed', String(state.flip));
   $('play').textContent = state.playing ? 'Pause' : 'Play';
   for (const id of ['zoom-in', 'zoom-out', 'zoom-label']) $(id).hidden = type === 'card';
-  $('nudge-group').hidden = type !== 'entity' || state.entityView !== 'single';
+  const single = type === 'entity' && state.entityView === 'single';
+  $('nudge-group').hidden = !single;
+  if (single) {
+    const entity = state.selection.item, clip = currentClip();
+    const shown = new Set(boxesShown(entity, clip));
+    const options = [{ key: 'frame', label: 'This frame' }, ...boxKeys(entity).filter(k => shown.has(k.key))];
+    if (!options.some(o => o.key === state.target)) state.target = 'frame';
+    $('nudge-target').replaceChildren(...options.map(o => h('option', { value: o.key, selected: o.key === state.target }, o.label)));
+    for (const id of ['size-w-minus', 'size-w-plus', 'size-h-minus', 'size-h-plus']) $(id).hidden = state.target === 'frame';
+  }
 }
 
 /** Rebuild everything for the current selection. */
@@ -726,6 +864,7 @@ function updateFrames(force = false) {
   if (state.selection?.type !== 'entity' || state.entityView !== 'single') return;
   const clip = currentClip();
   const frame = displayFrame(clip, state.elapsed);
+  if (scene.hitActive) scene.hitActive.visible = eventsOnFrame(clip, frame).some(e => HIT_EVENTS.has(e.type));
   if (!force && frame === scene.frameShown) return;
   scene.frameShown = frame;
   [...$('timeline').children].forEach((b, i) => b.classList.toggle('current', i === frame));
@@ -768,12 +907,21 @@ function wire() {
   $('step-forward').addEventListener('click', () => stepFrame(1));
   $('speed').addEventListener('change', e => { state.speed = Number(e.target.value); });
   $('flip').addEventListener('click', () => { state.flip = !state.flip; refresh(); });
-  $('nudge-left').addEventListener('click', () => nudge(state.flip ? 1 : -1, 0));
-  $('nudge-right').addEventListener('click', () => nudge(state.flip ? -1 : 1, 0));
+  $('nudge-left').addEventListener('click', () => nudge(-1, 0));
+  $('nudge-right').addEventListener('click', () => nudge(1, 0));
+  $('nudge-target').addEventListener('change', e => {
+    state.target = e.target.value;
+    if (state.target !== 'frame') $('show-boxes').checked = true;
+    refresh();
+  });
+  $('size-w-minus').addEventListener('click', () => nudge(0, 0, -1, 0));
+  $('size-w-plus').addEventListener('click', () => nudge(0, 0, 1, 0));
+  $('size-h-minus').addEventListener('click', () => nudge(0, 0, 0, -1));
+  $('size-h-plus').addEventListener('click', () => nudge(0, 0, 0, 1));
   $('nudge-up').addEventListener('click', () => nudge(0, -1));
   $('nudge-down').addEventListener('click', () => nudge(0, 1));
   $('nudge-reset').addEventListener('click', () => nudge(null));
-  for (const id of ['show-ghost', 'show-cell', 'show-pivot', 'show-bounds', 'show-shapes', 'show-grid', 'show-areas', 'show-sample']) {
+  for (const id of ['show-boxes', 'show-ghost', 'show-cell', 'show-pivot', 'show-bounds', 'show-shapes', 'show-grid', 'show-areas', 'show-sample']) {
     $(id).addEventListener('change', refresh);
   }
 
@@ -816,12 +964,13 @@ function wire() {
   }, { passive: false });
 
   window.addEventListener('keydown', e => {
-    if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.ctrlKey || e.metaKey) return;
+    if (e.target instanceof HTMLSelectElement && !e.shiftKey) return;
     const entity = state.selection?.type === 'entity';
-    // Shift + arrows nudge the frame on screen; mirrored view nudges in screen direction too.
+    // Shift + arrows move the nudge target on screen; Shift + Alt + arrows resize a box.
     const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.code];
-    if (e.shiftKey && dir && entity) nudge(dir[0] * (state.flip ? -1 : 1), dir[1]);
-    else if (e.shiftKey) return;
+    if (e.shiftKey && dir && entity) { if (e.altKey) nudge(0, 0, dir[0], -dir[1]); else nudge(dir[0], dir[1]); }
+    else if (e.shiftKey || e.altKey) return;
     else if (e.code === 'Space' && entity) { state.playing = !state.playing; syncToolbar(); }
     else if (e.code === 'ArrowRight' && entity) stepFrame(1);
     else if (e.code === 'ArrowLeft' && entity) stepFrame(-1);

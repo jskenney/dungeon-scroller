@@ -1,0 +1,222 @@
+{
+  "schema": "dungeon-scroller/catalog@1",
+  "kind": "player",
+  "notes": [
+    "Boxes are in pixels relative to the actor's pivot (feet, on the ground line) for an actor facing right: x is the left edge, y is the top edge (negative is up). They mirror with the sprite.",
+    "body and crouchBody are the collision boxes. An ability's box is active during the melee or area event window of its animation.",
+    "Ability names come from the animation labels in the sheet JSON. 'air' says whether the ability can be used while jumping or flying.",
+    "Entries inherit every value in 'defaults' and may override any of them."
+  ],
+  "defaults": {
+    "stats": { "mpRegen": 4, "invulnerableAfterHit": 0.8 },
+    "movement": { "walkSpeed": 160, "runSpeed": 280, "jumpHeight": 144, "crawlSpeed": 70, "airControl": 0.7 },
+    "teleport": { "mp": 20, "distance": 288 }
+  },
+  "entries": {
+    "light_space_mage": {
+      "sheet": "../assets/sprites/players/light_space_mage_spritesheet.json",
+      "entity": "light_space_mage",
+      "card": "../assets/cards/light_space_mage_card.json",
+      "role": "Support",
+      "blurb": "Heals allies and bends space.",
+      "stats": { "hp": 90, "mp": 140 },
+      "flight": { "mode": "mp", "mpPerSecond": 10, "speed": 240 },
+      "body": { "x": -20, "y": -53, "w": 23, "h": 53 },
+      "crouchBody": { "x": -20, "y": -37, "w": 23, "h": 37 },
+      "abilities": {
+        "attack1": { "type": "heal", "mp": 25, "amount": 30, "radius": 96, "air": true },
+        "attack2": {
+          "type": "projectile",
+          "mp": 12,
+          "damage": 16,
+          "projectile": { "speed": 520, "range": 600 },
+          "air": true
+        },
+        "attack3": {
+          "type": "melee",
+          "mp": 0,
+          "damage": 10,
+          "air": false,
+          "box": { "x": 3, "y": -57, "w": 27, "h": 56 }
+        }
+      }
+    },
+    "fire_mage": {
+      "sheet": "../assets/sprites/players/fire_mage_spritesheet.json",
+      "entity": "fire_mage",
+      "card": "../assets/cards/fire_mage_card.json",
+      "role": "High damage, fragile",
+      "blurb": "Burns everything in front of him.",
+      "stats": { "hp": 80, "mp": 120 },
+      "flight": { "mode": "mp", "mpPerSecond": 10, "speed": 240 },
+      "body": { "x": -14, "y": -52, "w": 19, "h": 52 },
+      "crouchBody": { "x": -14, "y": -31, "w": 19, "h": 31 },
+      "abilities": {
+        "attack1": {
+          "type": "area",
+          "mp": 15,
+          "damage": 22,
+          "air": false,
+          "box": { "x": 5, "y": -48, "w": 46, "h": 34 }
+        },
+        "attack2": {
+          "type": "projectile",
+          "mp": 10,
+          "damage": 18,
+          "projectile": { "speed": 560, "range": 600 },
+          "air": true
+        },
+        "attack3": {
+          "type": "melee",
+          "mp": 0,
+          "damage": 8,
+          "air": false,
+          "box": { "x": 5, "y": -44, "w": 19, "h": 21 }
+        }
+      }
+    },
+    "water_mage": {
+      "sheet": "../assets/sprites/players/water_mage_spritesheet.json",
+      "entity": "water_mage",
+      "card": "../assets/cards/water_mage_card.json",
+      "role": "Control",
+      "blurb": "Pushes enemies back and slows them down.",
+      "stats": { "hp": 100, "mp": 110 },
+      "flight": { "mode": "mp", "mpPerSecond": 10, "speed": 240 },
+      "body": { "x": -14, "y": -52, "w": 19, "h": 52 },
+      "crouchBody": { "x": -14, "y": -31, "w": 19, "h": 31 },
+      "abilities": {
+        "attack1": {
+          "type": "area",
+          "mp": 14,
+          "damage": 14,
+          "effect": { "knockback": 260 },
+          "air": false,
+          "box": { "x": 5, "y": -48, "w": 42, "h": 49 }
+        },
+        "attack2": {
+          "type": "projectile",
+          "mp": 10,
+          "damage": 14,
+          "projectile": { "speed": 500, "range": 600 },
+          "effect": { "slow": 0.5, "duration": 2.5 },
+          "air": true
+        },
+        "attack3": {
+          "type": "melee",
+          "mp": 0,
+          "damage": 12,
+          "air": false,
+          "box": { "x": 5, "y": -49, "w": 38, "h": 49 }
+        }
+      }
+    },
+    "wind_mage": {
+      "sheet": "../assets/sprites/players/wind_mage_spritesheet.json",
+      "entity": "wind_mage",
+      "card": "../assets/cards/wind_mage_card.json",
+      "role": "Mobility, ranged",
+      "blurb": "Never touches the ground for long.",
+      "stats": { "hp": 85, "mp": 110 },
+      "flight": { "mode": "free", "speed": 260 },
+      "body": { "x": -16, "y": -53, "w": 22, "h": 53 },
+      "crouchBody": { "x": -16, "y": -29, "w": 22, "h": 29 },
+      "abilities": {
+        "attack1": {
+          "type": "area",
+          "mp": 12,
+          "damage": 10,
+          "effect": { "knockback": 420 },
+          "air": false,
+          "box": { "x": 6, "y": -51, "w": 41, "h": 50 }
+        },
+        "attack2": {
+          "type": "projectile",
+          "mp": 12,
+          "damage": 14,
+          "projectile": { "speed": 600, "range": 650, "pierce": true },
+          "air": true
+        },
+        "attack3": {
+          "type": "projectile",
+          "mp": 0,
+          "damage": 9,
+          "projectile": { "speed": 720, "range": 700, "gravity": 300 },
+          "air": true
+        }
+      }
+    },
+    "earth_mage": {
+      "sheet": "../assets/sprites/players/earth_mage_spritesheet.json",
+      "entity": "earth_mage",
+      "card": "../assets/cards/earth_mage_card.json",
+      "role": "Tank",
+      "blurb": "Slow, sturdy and hard to move.",
+      "stats": { "hp": 140, "mp": 80 },
+      "flight": { "mode": "mp", "mpPerSecond": 20, "speed": 200 },
+      "body": { "x": -16, "y": -51, "w": 21, "h": 51 },
+      "crouchBody": { "x": -16, "y": -32, "w": 21, "h": 32 },
+      "abilities": {
+        "attack1": {
+          "type": "area",
+          "mp": 16,
+          "damage": 20,
+          "groundOnly": true,
+          "air": false,
+          "box": { "x": 5, "y": -40, "w": 27, "h": 41 }
+        },
+        "attack2": {
+          "type": "projectile",
+          "mp": 10,
+          "damage": 16,
+          "projectile": { "speed": 480, "range": 520, "gravity": 900 },
+          "air": true
+        },
+        "attack3": {
+          "type": "melee",
+          "mp": 0,
+          "damage": 12,
+          "effect": { "stun": 0.8 },
+          "air": false,
+          "box": { "x": 5, "y": -43, "w": 14, "h": 27 }
+        }
+      }
+    },
+    "dark_swordsman": {
+      "sheet": "../assets/sprites/players/dark_swordsman_spritesheet.json",
+      "entity": "dark_swordsman",
+      "card": "../assets/cards/dark_swordsman_card.json",
+      "role": "Melee",
+      "blurb": "A blade for the body, a hex for the mind.",
+      "stats": { "hp": 130, "mp": 70 },
+      "flight": { "mode": "none" },
+      "body": { "x": -13, "y": -51, "w": 17, "h": 51 },
+      "crouchBody": { "x": -13, "y": -29, "w": 17, "h": 29 },
+      "abilities": {
+        "attack1": {
+          "type": "area",
+          "mp": 12,
+          "damage": 6,
+          "effect": { "stun": 1.0 },
+          "air": false,
+          "box": { "x": 4, "y": -55, "w": 39, "h": 54 }
+        },
+        "attack2": {
+          "type": "target",
+          "mp": 18,
+          "damage": 0,
+          "range": 500,
+          "effect": { "damageTaken": 1.5, "duration": 6 },
+          "air": true
+        },
+        "attack3": {
+          "type": "melee",
+          "mp": 0,
+          "damage": 18,
+          "air": false,
+          "box": { "x": 4, "y": -48, "w": 43, "h": 48 }
+        }
+      }
+    }
+  }
+}

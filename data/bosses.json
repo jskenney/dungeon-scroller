@@ -1,0 +1,165 @@
+{
+  "schema": "dungeon-scroller/catalog@1",
+  "kind": "boss",
+  "notes": [
+    "Boxes use the same convention as players.json.",
+    "A boss moves to the next phase when its health falls to the phase's untilHp fraction. tempo speeds up its movement and shortens its cooldowns.",
+    "For breath and dive attacks the box is the damage area in front of the boss; the drawn effect beyond the sprite is a particle effect.",
+    "touchDamage applies on body contact, and is doubled while the boss is charging, leaping or diving."
+  ],
+  "entries": {
+    "undead_dragon": {
+      "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
+      "entity": "undead_dragon",
+      "stats": { "hp": 600, "speed": 90, "flySpeed": 220, "touchDamage": 10, "score": 500 },
+      "body": { "x": -72, "y": -124, "w": 138, "h": 124 },
+      "phases": [
+        {
+          "untilHp": 0.66,
+          "attacks": ["attack1", "attack2"],
+          "tempo": 1.0
+        },
+        {
+          "untilHp": 0.33,
+          "attacks": ["attack1", "attack2", "attack3"],
+          "tempo": 1.15
+        },
+        {
+          "untilHp": 0.0,
+          "attacks": ["attack1", "attack2", "attack3", "attack4"],
+          "tempo": 1.3
+        }
+      ],
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 20,
+          "cooldown": 1.2,
+          "box": { "x": 54, "y": -117, "w": 44, "h": 116 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 26,
+          "effect": { "knockback": 320 },
+          "cooldown": 2.0,
+          "box": { "x": 54, "y": -135, "w": 56, "h": 135 }
+        },
+        "attack3": {
+          "type": "breath",
+          "damage": 30,
+          "range": 320,
+          "cooldown": 3.5,
+          "box": { "x": 54, "y": -106, "w": 47, "h": 106 }
+        },
+        "attack4": {
+          "type": "dive",
+          "damage": 40,
+          "radius": 110,
+          "cooldown": 8.0,
+          "box": { "x": 54, "y": -115, "w": 66, "h": 121 }
+        }
+      }
+    },
+    "undead_fenrir": {
+      "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
+      "entity": "undead_fenrir",
+      "stats": { "hp": 700, "speed": 150, "flySpeed": 300, "touchDamage": 10, "score": 500 },
+      "body": { "x": -73, "y": -124, "w": 146, "h": 124 },
+      "phases": [
+        {
+          "untilHp": 0.66,
+          "attacks": ["attack1", "attack2"],
+          "tempo": 1.0
+        },
+        {
+          "untilHp": 0.33,
+          "attacks": ["attack1", "attack2", "attack3"],
+          "tempo": 1.15
+        },
+        {
+          "untilHp": 0.0,
+          "attacks": ["attack1", "attack2", "attack3", "attack4"],
+          "tempo": 1.3
+        }
+      ],
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 20,
+          "cooldown": 1.2,
+          "box": { "x": 73, "y": -109, "w": 36, "h": 44 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 26,
+          "cooldown": 2.0,
+          "box": { "x": 73, "y": -114, "w": 36, "h": 114 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 34,
+          "leap": { "distance": 300, "height": 90 },
+          "cooldown": 3.5,
+          "box": { "x": 73, "y": -139, "w": 42, "h": 86 }
+        },
+        "attack4": {
+          "type": "shockwave",
+          "damage": 24,
+          "radius": 480,
+          "effect": { "stun": 0.8 },
+          "cooldown": 8.0
+        }
+      }
+    },
+    "death_monarch": {
+      "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",
+      "entity": "death_monarch",
+      "stats": { "hp": 800, "speed": 80, "flySpeed": 180, "touchDamage": 10, "score": 500 },
+      "body": { "x": -68, "y": -158, "w": 65, "h": 158 },
+      "phases": [
+        {
+          "untilHp": 0.66,
+          "attacks": ["attack1", "attack2"],
+          "tempo": 1.0
+        },
+        {
+          "untilHp": 0.33,
+          "attacks": ["attack1", "attack2", "attack3"],
+          "tempo": 1.15
+        },
+        {
+          "untilHp": 0.0,
+          "attacks": ["attack1", "attack2", "attack3", "attack4"],
+          "tempo": 1.3
+        }
+      ],
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 22,
+          "cooldown": 1.2,
+          "box": { "x": -7, "y": -137, "w": 109, "h": 136 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 28,
+          "effect": { "knockback": 300 },
+          "cooldown": 2.0,
+          "box": { "x": -7, "y": -141, "w": 91, "h": 141 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 38,
+          "cooldown": 3.5,
+          "box": { "x": -7, "y": -148, "w": 81, "h": 148 }
+        },
+        "attack4": {
+          "type": "projectile",
+          "damage": 30,
+          "projectile": { "speed": 420, "range": 800, "count": 3, "spread": 24 },
+          "cooldown": 8.0
+        }
+      }
+    }
+  }
+}

@@ -116,7 +116,8 @@ The site configuration, fetched from the directory the game was loaded from. **`
 | `catalogs` | Paths to the gameplay catalogs (§4.2). |
 | `display` | Default, minimum and maximum view width in tiles; pixel-perfect scaling on or off. |
 | `controls` | Default key bindings: action → list of `KeyboardEvent.code` values. |
-| `rules` | Lives (default 9999) and respawn behaviour. |
+| `rules` | Lives (default 9999), respawn behaviour, and whether touching an enemy hurts. |
+| `difficulty` | Multipliers applied on top of the catalog values (enemy health, enemy damage, touch damage, player damage, MP regeneration, loot). All are 1 for now; changing them here retunes the whole game without editing the catalogs. |
 | `physics` | World constants: tick rate, gravity, terminal speed, run multiplier. |
 | `audio`, `speech` | Default volumes; speech provider. |
 | `generator` | Defaults for random levels. |
@@ -126,32 +127,77 @@ The site configuration, fetched from the directory the game was loaded from. **`
 
 ### 4.2 Catalogs (`data/*.json`) — gameplay values
 
-A catalog lists the things of one kind that exist in this installation and gives their **gameplay** values. It refers to art by sheet file and entity ID. Example entry in `data/players.json`:
+A catalog holds the **gameplay** values for every thing of one kind: `data/players.json`, `data/enemies.json`, `data/bosses.json`, `data/objects.json`. Each entry names the sheet entity it belongs to, so art and gameplay can be changed independently. All numbers are starting values for play-testing.
 
 ```json
 {
-  "id": "light_space_mage",
-  "name": "Light and Space Mage",
-  "sheet": "../assets/sprites/players/light_space_mage_spritesheet.json",
-  "entity": "light_space_mage",
-  "card": "../assets/cards/light_space_mage_card.png",
-  "blurb": "Heals allies and bends space.",
-  "body": { "w": 20, "h": 40, "crouchH": 22 },
-  "stats": { "hp": 100, "mp": 120, "mpRegen": 4, "walkSpeed": 180, "runSpeed": 320, "jumpHeight": 150 },
-  "flight": { "mode": "mp", "mpPerSecond": 12, "speed": 260 },
-  "abilities": {
-    "attack1": { "type": "heal", "mp": 20, "amount": 30, "radius": 96 },
-    "attack2": { "type": "projectile", "mp": 10, "damage": 18, "speed": 520, "range": 600 },
-    "attack3": { "type": "melee", "mp": 0, "damage": 12, "box": { "x": 6, "y": -44, "w": 40, "h": 36 } }
+  "schema": "dungeon-scroller/catalog@1",
+  "kind": "player",
+  "defaults": {
+    "stats": { "mpRegen": 4, "invulnerableAfterHit": 0.8 },
+    "movement": { "walkSpeed": 160, "runSpeed": 280, "jumpHeight": 144, "crawlSpeed": 70, "airControl": 0.7 },
+    "teleport": { "mp": 20, "distance": 288 }
   },
-  "teleport": { "mp": 25, "distance": 288 },
-  "lines": { "spawn": ["Light guide me."], "lowHp": ["I need a moment…"] }
+  "entries": {
+    "fire_mage": {
+      "sheet": "../assets/sprites/players/fire_mage_spritesheet.json",
+      "entity": "fire_mage",
+      "card": "../assets/cards/fire_mage_card.json",
+      "role": "High damage, fragile",
+      "blurb": "Burns everything in front of him.",
+      "stats": { "hp": 80, "mp": 120 },
+      "flight": { "mode": "mp", "mpPerSecond": 10, "speed": 240 },
+      "body": { "x": -14, "y": -52, "w": 19, "h": 52 },
+      "crouchBody": { "x": -14, "y": -31, "w": 19, "h": 31 },
+      "abilities": {
+        "attack1": { "type": "area", "mp": 15, "damage": 22, "air": false, "box": { "x": 5, "y": -48, "w": 46, "h": 34 } },
+        "attack2": { "type": "projectile", "mp": 10, "damage": 18, "air": true, "projectile": { "speed": 560, "range": 600 } },
+        "attack3": { "type": "melee", "mp": 0, "damage": 8, "air": false, "box": { "x": 5, "y": -44, "w": 19, "h": 21 } }
+      }
+    }
+  }
 }
 ```
 
-`body` is the collision box, centred on the pivot and standing on the ground line. A melee `box` is relative to the pivot for a right-facing actor and is mirrored with the sprite; it is active during the `melee` event window of that slot's animation.
+- **Defaults.** Every entry inherits the catalog's `defaults` and may override any value, so a single hero can be made faster or given a longer teleport without repeating the rest.
+- **Boxes.** All boxes are in pixels relative to the actor's pivot (feet, on the ground line) for an actor **facing right**: `x` is the left edge, `y` the top edge (negative is up). They mirror with the sprite. `body` and `crouchBody` are collision boxes; the simulation centres the actor on the body box's horizontal middle. An ability's `box` is active during the `melee`, `area`, `impact` or `emit` event window of that slot's animation (§4.3).
+- **Boxes were drafted from the sprite pixels** and are adjusted by eye in the viewer (§16.1).
+- **Ability names** come from the animation labels in the sheet JSON and are not repeated here.
+- **Ability types:** `melee`, `area` (short-range effect in front), `projectile`, `target` (applies to a chosen enemy, no projectile), `heal`. Optional `effect` values: `knockback` (px/s), `slow` (speed factor) and `stun` (seconds) with `duration`, `damageTaken` (multiplier on the target).
+- **`air`** says whether the ability can be used while jumping or flying. Ranged abilities can; melee and ground effects cannot.
+- **`flight.mode`** is `"none"`, `"mp"` (drains `mpPerSecond` while airborne) or `"free"`.
 
-`flight.mode` is one of `"none"` (cannot fly), `"mp"` (drains MP while airborne), or `"free"` (unrestricted). Enemy and boss entries add an `ai` block (§9).
+**Heroes**
+
+| Hero | Role | HP | MP | Attack 1 | Attack 2 | Attack 3 (no MP) | Flight |
+|---|---|---|---|---|---|---|---|
+| Light and space mage | Support | 90 | 140 | Heal 30 HP (25 MP) | Space bolt 16 (12 MP) | Staff 10 | MP, 10/s |
+| Fire mage | High damage, fragile | 80 | 120 | Flame fan 22 (15 MP) | Firebolt 18 (10 MP) | Dagger 8 | MP, 10/s |
+| Water mage | Control | 100 | 110 | Wave 14, knockback (14 MP) | Bolt 14, slows (10 MP) | Spear 12 | MP, 10/s |
+| Wind mage | Mobility, ranged | 85 | 110 | Gust 10, strong knockback (12 MP) | Blade 14, passes through (12 MP) | Arrow 9 | Free |
+| Earth mage | Tank | 140 | 80 | Spires 20, ground only (16 MP) | Stone 16, arcs (10 MP) | Shield bash 12, stuns | MP, 20/s |
+| Dark swordsman | Melee | 130 | 70 | Mind jolt 6, stuns (12 MP) | Hex: target takes +50% damage for 6 s (18 MP) | Sword 18 | None |
+
+**Enemies** (`attack1`–`attack3` are light, medium, heavy)
+
+| Enemy | Archetype | HP | Damage L / M / H | Speed | Touch | Score |
+|---|---|---|---|---|---|---|
+| Normal skeleton | walker | 30 | 8 / 12 / 18 | 110 | 4 | 10 |
+| Skeleton knight | guard | 60 | 10 / 16 / 22 | 80 | 5 | 25 |
+| Death knight | guard | 120 | 12 / 20 / 30 | 60 | 6 | 60 |
+| Undead wolf | pouncer | 45 | 8 / 12 / 20 | 240 | 4 | 20 |
+| Wight | guard | 80 | 12 / 14 / 24 | 90 | 6 | 40 |
+| Lich | caster | 70 | bolt 10 / three bolts of 8 / eruption 26 | 100 | 5 | 50 |
+
+**Bosses** have three phases, changing at 66% and 33% health; each phase adds an attack and raises the tempo (1.0, 1.15, 1.3). The fourth attack is used only in the last phase.
+
+| Boss | HP | Attacks 1–4 |
+|---|---|---|
+| Undead dragon | 600 | Bite 20; tail sweep 26 with knockback; gravefire breath 30; dive 40 |
+| Undead Fenrir | 700 | Fang snap 20; raking lunge 26; pounce 34; howl 24 in a wide radius, stuns |
+| Death monarch | 800 | Thrust 22; sweep 28 with knockback; cleave 38; three spectral blades of 30 |
+
+**Objects** carry `use` (`touch`, `interact`, `attack`, `none`), a `behaviour`, what they give, and a `box` (the touch, interaction or hit area; also the collision box when `solid`). Values: potions restore 40 HP or 40 MP; coin 1 point, gem 10; scroll doubles damage for 15 s; shrine refills HP and MP every 30 s; flag sets the respawn point and refills HP; crates and barrels are solid and break in one hit; the relic ends the level.
 
 ### 4.3 Per-sheet JSON — art facts
 
@@ -378,7 +424,7 @@ All values below are starting points held in JSON (`dungeon.json` for world valu
 | Move | ← → | Walk |
 | Run | hold Shift | Uses the `run` animation if the sheet has both; otherwise the one cycle, faster (§4.3) |
 | Jump | Space | Hold longer for a higher jump |
-| Crouch / crawl | ↓ / ↓ + ← → | Lower body box; fits under 1-tile-high gaps |
+| Crouch / crawl | ↓ / ↓ + ← → | Lower body box: ducks under projectiles and high swings, and fits through low passages |
 | Drop through platform | ↓ + Space | One-way platforms only |
 | Attacks 1, 2, 3 | Z, X, C | Character-specific abilities |
 | Teleport | V | Short blink in the facing direction, costs MP |
@@ -412,7 +458,11 @@ Entering flight plays `fly_up` once, then holds its last frame while hovering or
 - One-way platforms: solid only when landing from above.
 - Fast projectiles are swept so they cannot pass through thin walls.
 
-**Scale reference** for level design and the generator: the hero is about 0.45 tiles tall; a default jump clears roughly 1.5 tiles vertically and 3 tiles horizontally at walking speed (about 5 when running); crawling fits a 1-tile-high gap.
+**Crouching** has two uses. In combat the lower `crouchBody` box lets projectiles and high swings pass overhead. In levels it opens **low passages**: a standing hero is about 52 px tall and fits any one-tile gap, so a passage that forces a crawl must leave less than that. Crouched heroes are 29–37 px tall, so a low-passage tile should leave a **40 px gap** (solid from the top of the cell down to 56 px). Such a tile needs no new collision shape — it is a `rect` of `[0, 0, 96, 56]` — but the current tilesets do not contain one yet. A hero cannot stand up while under a low ceiling.
+
+**Attacking in the air.** Ranged abilities (`air: true`) can be used while jumping or flying; melee and ground effects only on the ground.
+
+**Scale reference** for level design and the generator: the hero is about half a tile tall; a jump clears 1.5 tiles vertically, and about 1.1 tiles horizontally at walking speed or 2 when running.
 
 ---
 
@@ -422,6 +472,8 @@ Entering flight plays `fly_up` once, then holds its last frame while hovering or
 
 **Attacks.** Each hero has three ability slots whose behaviour is declared in the player catalog: `melee` (a hit box during chosen frames), `projectile` (spawned at a chosen frame), `heal`, or `area`. The moment of effect comes from the animation's `events`, so a swing damages when the art shows it landing. Projectiles without sprite art are drawn as particle effects (§4.5).
 
+**Touching enemies.** A hero whose body overlaps an enemy's body takes that enemy's `touchDamage` — about half its light attack — and is pushed back; the short invulnerability after any hit stops it repeating. A boss's touch damage doubles while it is charging, leaping or diving. `rules.touchDamage` turns this off for a site.
+
 **Damage.** Attack boxes overlap body boxes. A hit applies damage, knock-back, the `hit` animation, a short hit-stop for impact, and a floating damage number.
 
 **Objects** (all present in the object sheet):
@@ -430,7 +482,7 @@ Entering flight plays `fly_up` once, then holds its last frame while hovering or
 |---|---|
 | Gold coin, gem | Score pickup |
 | Healing potion / space potion | Restore HP / MP |
-| Spell scroll | Temporary boost (design detail pending) |
+| Spell scroll | Doubles damage for 15 seconds |
 | Iron key | Opens one locked chest or grate |
 | Treasure chest | Interact to open; releases loot |
 | Lever | Toggles a linked grate, platform, or door |
@@ -612,7 +664,7 @@ Each phase ends with something that can be opened in a browser and checked.
 
 | Phase | Deliverable |
 |---|---|
-| **0. Asset JSON** | **Done for all guided sheets:** the JSON file for every sprite sheet and tileset that has a markdown guide, in the formats of §4.3 and §4.4, plus `example.dungeon.json`. New sheets get their JSON when their guide is uploaded. Still to come in this phase: the gameplay catalogs in `data/`. |
+| **0. Asset JSON** | **Done:** JSON for every sprite sheet, tileset and hero card, `example.dungeon.json`, and the gameplay catalogs in `data/` with drafted boxes. Boxes and values are refined through the viewer and play-testing. |
 | **1. Skeleton and viewer** | **Done:** `viewer.html`, configuration loading with the `example.dungeon.json` fallback (`js/config.js`), vendored PixiJS, the asset loader with per-entity sheet slicing and JSON-against-image checks (`js/assets/loader.js`), and animation playback maths shared with the future simulation (`js/assets/animation.js`). Still to come in this phase: the real `index.html` game shell. |
 | **2. Simulation core** | Fixed-step loop, hero movement, all tile shapes, camera and zoom, on a small hand-written test level. In-browser tests for collision. |
 | **3. Procedural levels** | Seeded generator with section templates and reachability check; level schema loader; three or four generated levels saved as static test files. |
@@ -633,7 +685,8 @@ Each phase ends with something that can be opened in a browser and checked.
 - **Characters, enemies, bosses, objects:** one animation at a time with a frame-by-frame timeline (durations, event frames, blank frames), or every animation at once. Play, pause, step, slow motion, mirror to the other facing, integer zoom. Overlays show the cell, the pivot and ground line, and the measured idle bounds.
 - **Tilesets:** the sheet with each tile's collision shape drawn over it and details on hover, plus example constructions built from the tileset's `runs` and `assemblies`.
 - **Cards:** the card with its text area outlined and sample text laid out inside it.
-- **Checks:** image size, grid, checksum, row usage, required animation slots, event frames, tile references and card subjects. The header shows the number of problems found.
+- **Gameplay values and boxes:** the details panel lists each entity's catalog values. The collision box (green), hit box (red, filled while its frames are active) and use box (blue) are drawn over the sprite. Choose a box in the *Adjust* list to move it with the arrows and resize it with W−/W+/H−/H+ (Shift + arrows, Shift + Alt + arrows). Changes join the unsaved adjustments.
+- **Checks:** image size, grid, checksum, row usage, required animation slots, event frames, tile references, card subjects, and catalog entries (sheet entity exists, every ability has an animation, melee and area attacks have a box and a triggering frame). The header shows the number of problems found.
 
 - **Frame alignment:** in the single view, the nudge buttons (or Shift + arrow keys) move the frame on screen one pixel at a time; the optional "idle ghost" draws a faint copy of the first idle frame as a fixed reference. Adjustments are kept in the browser and listed in the details panel as JSON, ready to copy; they become permanent when written into the sheet JSON as `offsets` (§4.3). The viewer cannot write files itself.
 
@@ -641,7 +694,7 @@ Keys: Space play/pause, ←/→ step a frame, Shift + arrows nudge a frame, F mi
 
 ## 17. Open items
 
-1. **Gameplay catalogs** (`data/*.json`): stats, abilities, collision and hit boxes, AI archetypes, dialogue. These are design choices, not art facts, and need agreeing.
+1. **Box review**: the drafted collision and hit boxes need checking in the viewer. **Low-passage tiles** need drawing (a 40 px gap). NPC, audio and level catalogs do not exist yet.
 2. **Cards**: the first card PNGs, and the rectangle of the common information area.
 3. **NPC sheet layout** and what NPCs do in version 1.
 4. **Parallax backgrounds** per theme.

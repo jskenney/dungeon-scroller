@@ -1,0 +1,249 @@
+{
+  "schema": "dungeon-scroller/catalog@1",
+  "kind": "enemy",
+  "notes": [
+    "Boxes use the same convention as players.json: relative to the pivot, for an actor facing right.",
+    "An enemy uses an attack when a hero is inside that attack's box (melee) or range (others), choosing by weight among those off cooldown.",
+    "touchDamage is dealt when a hero's body overlaps the enemy's body; the hero's short invulnerability after a hit stops it repeating.",
+    "attack1, attack2 and attack3 are the light, medium and heavy attacks of the sheet."
+  ],
+  "entries": {
+    "normal_skeleton": {
+      "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
+      "entity": "normal_skeleton",
+      "stats": { "hp": 30, "speed": 110, "touchDamage": 4, "score": 10 },
+      "ai": { "archetype": "walker", "sight": 480, "leavesPlatform": false, "dropsOffLedges": false },
+      "body": { "x": -7, "y": -56, "w": 20, "h": 56 },
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 8,
+          "cooldown": 0.9,
+          "weight": 5,
+          "box": { "x": 13, "y": -53, "w": 35, "h": 53 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 12,
+          "cooldown": 1.6,
+          "weight": 3,
+          "box": { "x": 13, "y": -49, "w": 45, "h": 49 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 18,
+          "cooldown": 2.6,
+          "weight": 2,
+          "box": { "x": 13, "y": -44, "w": 31, "h": 43 }
+        }
+      },
+      "drops": [
+        { "object": "gold_coin", "chance": 0.5 },
+        { "object": "healing_potion", "chance": 0.08 }
+      ]
+    },
+    "skeleton_knight": {
+      "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
+      "entity": "skeleton_knight",
+      "stats": { "hp": 60, "speed": 80, "touchDamage": 5, "score": 25 },
+      "ai": {
+        "archetype": "guard",
+        "sight": 380,
+        "leash": 300,
+        "leavesPlatform": false,
+        "dropsOffLedges": false
+      },
+      "body": { "x": -13, "y": -57, "w": 24, "h": 57 },
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 10,
+          "cooldown": 0.9,
+          "weight": 5,
+          "box": { "x": 11, "y": -56, "w": 39, "h": 55 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 16,
+          "cooldown": 1.6,
+          "weight": 3,
+          "box": { "x": 11, "y": -50, "w": 29, "h": 49 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 22,
+          "cooldown": 2.6,
+          "weight": 2,
+          "box": { "x": 11, "y": -55, "w": 61, "h": 55 }
+        }
+      },
+      "drops": [
+        { "object": "gold_coin", "chance": 0.5 },
+        { "object": "healing_potion", "chance": 0.08 }
+      ]
+    },
+    "death_knight": {
+      "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
+      "entity": "death_knight",
+      "stats": { "hp": 120, "speed": 60, "touchDamage": 6, "score": 60 },
+      "ai": {
+        "archetype": "guard",
+        "sight": 380,
+        "leash": 300,
+        "leavesPlatform": false,
+        "dropsOffLedges": false
+      },
+      "body": { "x": -16, "y": -55, "w": 26, "h": 55 },
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 12,
+          "cooldown": 0.9,
+          "weight": 5,
+          "box": { "x": 10, "y": -52, "w": 35, "h": 52 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 20,
+          "cooldown": 1.6,
+          "weight": 3,
+          "box": { "x": 10, "y": -50, "w": 39, "h": 50 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 30,
+          "cooldown": 2.6,
+          "weight": 2,
+          "box": { "x": 10, "y": -48, "w": 38, "h": 48 }
+        }
+      },
+      "drops": [
+        { "object": "gold_coin", "chance": 0.5 },
+        { "object": "healing_potion", "chance": 0.08 }
+      ]
+    },
+    "undead_wolf": {
+      "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
+      "entity": "undead_wolf",
+      "stats": { "hp": 45, "speed": 240, "touchDamage": 4, "score": 20 },
+      "ai": {
+        "archetype": "pouncer",
+        "sight": 560,
+        "leavesPlatform": true,
+        "dropsOffLedges": true,
+        "retreatAfterAttack": 0.6
+      },
+      "body": { "x": -14, "y": -33, "w": 43, "h": 33 },
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 8,
+          "cooldown": 0.9,
+          "weight": 5,
+          "box": { "x": 29, "y": -26, "w": 6, "h": 10 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 12,
+          "cooldown": 1.6,
+          "weight": 3,
+          "box": { "x": 29, "y": -21, "w": 7, "h": 21 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 20,
+          "cooldown": 2.6,
+          "weight": 2,
+          "leap": { "distance": 220, "height": 60 },
+          "box": { "x": 29, "y": -22, "w": 6, "h": 22 }
+        }
+      },
+      "drops": [
+        { "object": "gold_coin", "chance": 0.5 },
+        { "object": "healing_potion", "chance": 0.08 }
+      ]
+    },
+    "wight": {
+      "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
+      "entity": "wight",
+      "stats": { "hp": 80, "speed": 90, "touchDamage": 6, "score": 40 },
+      "ai": {
+        "archetype": "guard",
+        "sight": 380,
+        "leash": 300,
+        "leavesPlatform": false,
+        "dropsOffLedges": false
+      },
+      "body": { "x": -17, "y": -53, "w": 21, "h": 53 },
+      "attacks": {
+        "attack1": {
+          "type": "melee",
+          "damage": 12,
+          "cooldown": 0.9,
+          "weight": 5,
+          "box": { "x": 4, "y": -55, "w": 26, "h": 55 }
+        },
+        "attack2": {
+          "type": "melee",
+          "damage": 14,
+          "cooldown": 1.6,
+          "weight": 3,
+          "box": { "x": 4, "y": -53, "w": 22, "h": 53 }
+        },
+        "attack3": {
+          "type": "melee",
+          "damage": 24,
+          "cooldown": 2.6,
+          "weight": 2,
+          "box": { "x": 4, "y": -49, "w": 34, "h": 49 }
+        }
+      },
+      "drops": [
+        { "object": "gold_coin", "chance": 0.5 },
+        { "object": "healing_potion", "chance": 0.08 }
+      ]
+    },
+    "lich": {
+      "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
+      "entity": "lich",
+      "stats": { "hp": 70, "speed": 100, "touchDamage": 5, "score": 50 },
+      "ai": {
+        "archetype": "caster",
+        "sight": 640,
+        "preferredDistance": 360,
+        "hover": true,
+        "leavesPlatform": true
+      },
+      "body": { "x": -19, "y": -65, "w": 23, "h": 55 },
+      "attacks": {
+        "attack1": {
+          "type": "projectile",
+          "damage": 10,
+          "cooldown": 0.9,
+          "weight": 5,
+          "projectile": { "speed": 380, "range": 620 }
+        },
+        "attack2": {
+          "type": "projectile",
+          "damage": 8,
+          "cooldown": 1.6,
+          "weight": 3,
+          "projectile": { "speed": 340, "range": 620, "count": 3, "spread": 18 }
+        },
+        "attack3": {
+          "type": "eruption",
+          "damage": 26,
+          "cooldown": 2.6,
+          "weight": 2,
+          "range": 520,
+          "radius": 56,
+          "delay": 0.5
+        }
+      },
+      "drops": [
+        { "object": "gold_coin", "chance": 0.5 },
+        { "object": "healing_potion", "chance": 0.08 }
+      ]
+    }
+  }
+}

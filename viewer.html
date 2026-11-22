@@ -47,14 +47,21 @@
         <button id="flip" type="button" aria-pressed="false" title="Mirror to the other facing (F)">Flip</button>
       </span>
       <span class="group" id="nudge-group">
-        <span class="muted">Nudge frame</span>
-        <button id="nudge-left" type="button" title="Move this frame 1 px left (Shift+←)">←</button>
-        <button id="nudge-right" type="button" title="Move this frame 1 px right (Shift+→)">→</button>
-        <button id="nudge-up" type="button" title="Move this frame 1 px up (Shift+↑)">↑</button>
-        <button id="nudge-down" type="button" title="Move this frame 1 px down (Shift+↓)">↓</button>
-        <button id="nudge-reset" type="button" title="Remove this frame's offset">0</button>
+        <label>Adjust
+          <select id="nudge-target" title="What the arrows move: the current frame, or one of the entity's boxes"></select>
+        </label>
+        <button id="nudge-left" type="button" title="Move 1 px left (Shift+←)">←</button>
+        <button id="nudge-right" type="button" title="Move 1 px right (Shift+→)">→</button>
+        <button id="nudge-up" type="button" title="Move 1 px up (Shift+↑)">↑</button>
+        <button id="nudge-down" type="button" title="Move 1 px down (Shift+↓)">↓</button>
+        <button id="size-w-minus" type="button" title="Narrower (Shift+Alt+←)">W−</button>
+        <button id="size-w-plus" type="button" title="Wider (Shift+Alt+→)">W+</button>
+        <button id="size-h-minus" type="button" title="Shorter (Shift+Alt+↓)">H−</button>
+        <button id="size-h-plus" type="button" title="Taller (Shift+Alt+↑)">H+</button>
+        <button id="nudge-reset" type="button" title="Undo the unsaved change to this frame or box">Reset</button>
       </span>
       <span class="group" data-for="entity">
+        <label title="Collision box (green), hit box (red, filled while active) and use box (blue)"><input type="checkbox" id="show-boxes" checked> Boxes</label>
         <label title="Faint blue copy of the first idle frame, as a fixed reference"><input type="checkbox" id="show-ghost"> Idle ghost</label>
         <label><input type="checkbox" id="show-cell" checked> Cell</label>
         <label><input type="checkbox" id="show-pivot" checked> Pivot &amp; ground</label>
