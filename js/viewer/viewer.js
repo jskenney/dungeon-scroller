@@ -43,7 +43,9 @@ const state = {
   pan: { x: 0, y: 0 },
   playing: true, speed: 1, flip: false, elapsed: 0,
   hoverTile: null, pinnedTile: null,
+  edits: {},                // unsaved frame offsets: "sheet.json|entity|slot" -> [[dx, dy], …]
 };
+const EDITS_KEY = 'dungeon-scroller.viewer.offsetEdits';
 
 let app;
 /** Things the per-frame update needs from the scene that was last built. */
@@ -62,6 +64,48 @@ function displayFrame(clip, elapsed) {
 
 function frameStart(clip, frame) {
   return clip.durations.slice(0, frame).reduce((a, b) => a + b, 0);
+}
+
+const editKey = (entity, clip) => `${entity.sheet.url.split('/').pop()}|${entity.id}|${clip.slot}`;
+
+/** Per-frame [dx, dy] offsets in art pixels: unsaved edits first, then the JSON, then none. */
+function offsetsFor(entity, clip) {
+  return state.edits[editKey(entity, clip)] ?? clip.offsets ?? clip.durations.map(() => [0, 0]);
+}
+
+function saveEdits() {
+  try { localStorage.setItem(EDITS_KEY, JSON.stringify(state.edits)); } catch { /* storage unavailable */ }
+}
+
+function loadEdits() {
+  try { state.edits = JSON.parse(localStorage.getItem(EDITS_KEY)) ?? {}; } catch { state.edits = {}; }
+}
+
+/** Move the frame on screen by (dx, dy) art pixels and remember it as an unsaved edit. */
+function nudge(dx, dy) {
+  const entity = state.selection?.type === 'entity' ? state.selection.item : null;
+  const clip = currentClip();
+  if (!entity || state.entityView !== 'single') return;
+  const offsets = offsetsFor(entity, clip).map(o => [...o]);
+  const frame = displayFrame(clip, state.elapsed);
+  offsets[frame] = dx === null ? [0, 0] : [offsets[frame][0] + dx, offsets[frame][1] + dy];
+  const original = clip.offsets ?? clip.durations.map(() => [0, 0]);
+  if (JSON.stringify(offsets) === JSON.stringify(original)) delete state.edits[editKey(entity, clip)];
+  else state.edits[editKey(entity, clip)] = offsets;
+  saveEdits();
+  state.playing = false;
+  state.elapsed = frameStart(clip, frame);
+  refresh();
+}
+
+/** Unsaved edits as JSON grouped by sheet file, entity and animation slot. */
+function editsAsJson() {
+  const out = {};
+  for (const [key, offsets] of Object.entries(state.edits)) {
+    const [file, entity, slot] = key.split('|');
+    ((out[file] ??= {})[entity] ??= {})[slot] = offsets;
+  }
+  return JSON.stringify(out, null, 1).replace(/\[\s+(-?\d+),\s+(-?\d+)\s+\]/g, '[$1, $2]').replace(/\],\s+\[/g, '], [').replace(/\[\s+\[/g, '[[').replace(/\]\s+\]/g, ']]');
 }
 
 function currentClip() {
@@ -202,8 +246,19 @@ function buildEntitySingle(entity) {
   }
   const sprite = new Sprite(clip.frames[0]);
   sprite.pivot.set(pivot.x, pivot.y);
-  sprite.position.set(ox, oy);
   sprite.scale.set(S * mirror, S);
+  // Faint copy of the first idle frame, as a fixed reference for lining frames up.
+  let ghost = null;
+  if ($('show-ghost').checked && entity.animations.idle) {
+    const idle = entity.animations.idle;
+    const [gx, gy] = offsetsFor(entity, idle)[0];
+    ghost = new Sprite(idle.frames[0]);
+    ghost.pivot.set(pivot.x, pivot.y);
+    ghost.scale.set(S * mirror, S);
+    ghost.position.set(ox + gx * S * mirror, oy + gy * S);
+    ghost.alpha = 0.35;
+    ghost.tint = 0x66ccff;
+  }
   const overlay = new Graphics();
   if ($('show-bounds').checked && entity.idleBounds) {
     const b = entity.idleBounds;
@@ -213,8 +268,10 @@ function buildEntitySingle(entity) {
   if ($('show-pivot').checked) {
     overlay.moveTo(ox - 7, oy).lineTo(ox + 7, oy).moveTo(ox, oy - 7).lineTo(ox, oy + 7).stroke({ width: 1, color: COLORS.pivot });
   }
-  app.stage.addChild(g, sprite, overlay);
-  scene.sprites = [{ sprite, clip }];
+  app.stage.addChild(g);
+  if (ghost) app.stage.addChild(ghost);
+  app.stage.addChild(sprite, overlay);
+  scene.sprites = [{ sprite, clip, entity, x: ox, y: oy, S, mirror }];
   return zoom;
 }
 
@@ -252,14 +309,13 @@ function buildEntityAll(entity) {
       .stroke({ width: 1, color: selected ? COLORS.selected : COLORS.cell });
     const sprite = new Sprite(clip.frames[0]);
     sprite.scale.set(state.flip ? -S : S, S);
-    sprite.position.set(state.flip ? x + cw * S : x, y);
     sprite.eventMode = 'static';
     sprite.cursor = 'pointer';
     sprite.on('pointertap', () => { state.entityView = 'single'; state.zoom = null; state.pan = { x: 0, y: 0 }; setHash(state.selection, clip.slot); });
     const caption = label(`${clip.slot} · ${clip.label}`, x + 2, y + ch * S + 3, selected ? COLORS.selected : COLORS.label);
     if (caption.width > cw * S - 4) caption.text = clip.slot;
     app.stage.addChild(sprite, caption);
-    scene.sprites.push({ sprite, clip });
+    scene.sprites.push({ sprite, clip, entity, x: state.flip ? x + cw * S : x, y, S, mirror: state.flip ? -1 : 1 });
   });
   return zoom;
 }
@@ -462,6 +518,11 @@ function buildProblemsView() {
   }
 }
 
+/** Fill the details panel, skipping empty entries. */
+function setDetails(...nodes) {
+  $('details').replaceChildren(...nodes.flat().filter(n => n != null && n !== false));
+}
+
 function row(dl, term, value) {
   if (value == null || value === '') return;
   dl.append(h('dt', {}, term), h('dd', {}, value));
@@ -502,12 +563,28 @@ function entityDetails(entity) {
   const events = (clip.events ?? []).map(e => h('li', {},
     h('span', { class: 'tag' }, e.type), ` frame ${e.frame}${e.until ? '–' + e.until : ''}`, e.note ? ` — ${e.note}` : ''));
 
-  $('details').replaceChildren(
+  const offsets = offsetsFor(entity, clip);
+  row(cdl, 'Frame offsets', offsets.some(o => o[0] || o[1]) ? JSON.stringify(offsets) : 'none');
+  const editCount = Object.keys(state.edits).length;
+  const editsPanel = editCount ? [
+    h('h3', {}, `Unsaved adjustments (${editCount})`),
+    h('p', { class: 'muted' }, 'These exist only in this browser. Copy them and send them to be written into the JSON files.'),
+    h('textarea', { readonly: true, rows: 8, 'aria-label': 'Unsaved frame offsets as JSON' }, editsAsJson()),
+    h('div', { class: 'row' },
+      h('button', { type: 'button', onclick: async e => {
+        try { await navigator.clipboard.writeText(editsAsJson()); e.target.textContent = 'Copied'; }
+        catch { e.target.textContent = 'Select the text and copy it'; }
+      } }, 'Copy'),
+      h('button', { type: 'button', onclick: () => { if (confirm('Discard all unsaved frame adjustments?')) { state.edits = {}; saveEdits(); refresh(); } } }, 'Discard all')),
+  ] : [];
+
+  setDetails(
     h('h2', {}, entity.name), h('p', { class: 'muted' }, entity.description), dl,
     moveText && h('p', { class: 'muted', style: { marginTop: '10px' } }, moveText),
     h('h3', {}, 'Animations'), list,
     h('h3', {}, clip.label), cdl,
     events.length ? h('h3', {}, 'Events') : null, events.length ? h('ul', {}, events) : null,
+    ...editsPanel,
     sheet.notes?.length ? h('h3', {}, 'Sheet notes') : null,
     sheet.notes?.length ? h('ul', {}, sheet.notes.map(n => h('li', {}, n))) : null);
 }
@@ -545,7 +622,7 @@ function tilesetDetails(tileset) {
     parts.push(h('h3', {}, 'Assemblies'), h('ul', {}, notes.map(([n, a]) => h('li', {}, h('b', {}, n.replaceAll('_', ' ')), ': ', a.note))));
   }
   if (tileset.notes?.length) parts.push(h('h3', {}, 'Notes'), h('ul', {}, tileset.notes.map(n => h('li', {}, n))));
-  $('details').replaceChildren(...parts);
+  setDetails(...parts);
 }
 
 function cardDetails(card) {
@@ -558,7 +635,7 @@ function cardDetails(card) {
   row(dl, 'Guide text area', rect(card.guideTextArea));
   row(dl, 'Text tone', card.textTone);
   row(dl, 'Background', card.textBackground);
-  $('details').replaceChildren(
+  setDetails(
     h('h2', {}, `${card.subjectEntity?.name ?? card.id} card`), dl,
     h('p', { class: 'muted', style: { marginTop: '10px' } },
       'Solid green: the area the game writes into. Dashed red: the smaller area the guide reserved.'),
@@ -568,8 +645,12 @@ function cardDetails(card) {
 
 function buildTimeline(clip) {
   const bar = $('timeline');
+  const offsets = offsetsFor(state.selection.item, clip);
+  const signed = v => (v > 0 ? '+' : '') + v;
   bar.replaceChildren(...clip.durations.map((ms, i) => {
     const tags = eventsOnFrame(clip, i).map(e => h('span', { class: 'tag' }, e.type));
+    const [dx, dy] = offsets[i];
+    if (dx || dy) tags.push(h('span', { class: 'tag offset' }, [dx ? `x${signed(dx)}` : '', dy ? `y${signed(dy)}` : ''].filter(Boolean).join(' ')));
     if (clip.emptyFrames?.includes(i + 1)) tags.push(h('span', { class: 'tag empty' }, 'blank'));
     return h('button', { type: 'button', title: `Show frame ${i + 1}`, onclick: () => { state.playing = false; state.elapsed = frameStart(clip, i); syncToolbar(); } },
       h('span', { class: 'f' }, `F${i + 1}`), h('span', { class: 'ms' }, `${ms} ms`), h('span', {}, tags));
@@ -589,6 +670,7 @@ function syncToolbar() {
   $('flip').setAttribute('aria-pressed', String(state.flip));
   $('play').textContent = state.playing ? 'Pause' : 'Play';
   for (const id of ['zoom-in', 'zoom-out', 'zoom-label']) $(id).hidden = type === 'card';
+  $('nudge-group').hidden = type !== 'entity' || state.entityView !== 'single';
 }
 
 /** Rebuild everything for the current selection. */
@@ -615,7 +697,7 @@ function refresh() {
     cardDetails(sel.item);
   } else {
     buildProblemsView();
-    $('details').replaceChildren(h('p', { class: 'muted' }, 'Choose an asset on the left to view it.'));
+    setDetails(h('p', { class: 'muted' }, 'Choose an asset on the left to view it.'));
   }
   scene.zoom = zoom;
   if (zoom != null) $('zoom-label').textContent = `${zoom / dpr() === Math.round(zoom / dpr()) ? zoom / dpr() : (zoom / dpr()).toFixed(2)}×`;
@@ -624,9 +706,11 @@ function refresh() {
 
 /** Per-frame: advance animations and keep the timeline and readout in step. */
 function updateFrames(force = false) {
-  for (const { sprite, clip } of scene.sprites) {
+  for (const { sprite, clip, entity, x, y, S, mirror } of scene.sprites) {
     const frame = displayFrame(clip, state.elapsed);
     if (sprite.texture !== clip.frames[frame]) sprite.texture = clip.frames[frame];
+    const [dx, dy] = offsetsFor(entity, clip)[frame];
+    sprite.position.set(x + dx * S * mirror, y + dy * S);
   }
   if (state.selection?.type !== 'entity' || state.entityView !== 'single') return;
   const clip = currentClip();
@@ -673,7 +757,12 @@ function wire() {
   $('step-forward').addEventListener('click', () => stepFrame(1));
   $('speed').addEventListener('change', e => { state.speed = Number(e.target.value); });
   $('flip').addEventListener('click', () => { state.flip = !state.flip; refresh(); });
-  for (const id of ['show-cell', 'show-pivot', 'show-bounds', 'show-shapes', 'show-grid', 'show-areas', 'show-sample']) {
+  $('nudge-left').addEventListener('click', () => nudge(state.flip ? 1 : -1, 0));
+  $('nudge-right').addEventListener('click', () => nudge(state.flip ? -1 : 1, 0));
+  $('nudge-up').addEventListener('click', () => nudge(0, -1));
+  $('nudge-down').addEventListener('click', () => nudge(0, 1));
+  $('nudge-reset').addEventListener('click', () => nudge(null));
+  for (const id of ['show-ghost', 'show-cell', 'show-pivot', 'show-bounds', 'show-shapes', 'show-grid', 'show-areas', 'show-sample']) {
     $(id).addEventListener('change', refresh);
   }
 
@@ -716,9 +805,13 @@ function wire() {
   }, { passive: false });
 
   window.addEventListener('keydown', e => {
-    if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLInputElement || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.ctrlKey || e.metaKey || e.altKey) return;
     const entity = state.selection?.type === 'entity';
-    if (e.code === 'Space' && entity) { state.playing = !state.playing; syncToolbar(); }
+    // Shift + arrows nudge the frame on screen; mirrored view nudges in screen direction too.
+    const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.code];
+    if (e.shiftKey && dir && entity) nudge(dir[0] * (state.flip ? -1 : 1), dir[1]);
+    else if (e.shiftKey) return;
+    else if (e.code === 'Space' && entity) { state.playing = !state.playing; syncToolbar(); }
     else if (e.code === 'ArrowRight' && entity) stepFrame(1);
     else if (e.code === 'ArrowLeft' && entity) stepFrame(-1);
     else if (e.code === 'KeyF' && entity) { state.flip = !state.flip; refresh(); }
@@ -767,6 +860,7 @@ async function main() {
     button.textContent = problems.length ? `${problems.length} problem${problems.length === 1 ? '' : 's'}` : 'No problems';
     button.className = errors ? 'bad' : problems.length ? 'warn' : 'good';
 
+    loadEdits();
     buildNav();
     wire();
     app.ticker.add(ticker => {

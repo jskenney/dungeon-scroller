@@ -203,6 +203,7 @@ One JSON file per PNG, written from the sheet's markdown guide and checked again
 | `row` | Sheet row, 1-based. Frames always play left to right, one per column. |
 | `loop` / `end` | Either `"loop": true`, or `end`: `"state"` (the actor's state machine chooses what follows), `"hold"` (stay on the last frame), `"remove"` (objects: delete after the last frame). |
 | `durations` | Milliseconds per frame, one per column. Starting values from the guide; tune freely. |
+| `offsets` | Optional. One `[dx, dy]` pair per frame, in whole art pixels, that shifts where that frame is drawn. It corrects frames that were drawn slightly out of position in the sheet, without editing the image. Values are in the sheet's drawn orientation (positive x is right in the image) and are mirrored automatically with the sprite. Omitted means no shift. |
 | `events` | Fired once on entering `frame` (1-based). With `until`, the event is a window that stays active through that frame. `note` carries the guide's advice. |
 | `emptyFrames` | Frames that are intentionally fully transparent (teleport-out's last frame, the last frame of every object's vanish row). |
 
@@ -634,7 +635,9 @@ Each phase ends with something that can be opened in a browser and checked.
 - **Cards:** the card with its text area outlined and sample text laid out inside it.
 - **Checks:** image size, grid, checksum, row usage, required animation slots, event frames, tile references and card subjects. The header shows the number of problems found.
 
-Keys: Space play/pause, ←/→ step a frame, F mirror, A single/all, +/− zoom. Each view has its own address (for example `viewer.html#boss/undead_dragon/attack3`), so a specific animation can be linked.
+- **Frame alignment:** in the single view, the nudge buttons (or Shift + arrow keys) move the frame on screen one pixel at a time; the optional "idle ghost" draws a faint copy of the first idle frame as a fixed reference. Adjustments are kept in the browser and listed in the details panel as JSON, ready to copy; they become permanent when written into the sheet JSON as `offsets` (§4.3). The viewer cannot write files itself.
+
+Keys: Space play/pause, ←/→ step a frame, Shift + arrows nudge a frame, F mirror, A single/all, +/− zoom. Each view has its own address (for example `viewer.html#boss/undead_dragon/attack3`), so a specific animation can be linked.
 
 ## 17. Open items
 

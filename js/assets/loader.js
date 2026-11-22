@@ -79,6 +79,11 @@ async function loadSpritesheet(jsonUrl, problems) {
       if (clip.durations.length !== json.columns) {
         problems.push({ level: 'error', file, message: `${id}.${slot}: ${clip.durations.length} durations for ${json.columns} frames.` });
       }
+      if (clip.offsets && (clip.offsets.length !== json.columns ||
+          !clip.offsets.every(o => Array.isArray(o) && o.length === 2 && o.every(Number.isInteger)))) {
+        problems.push({ level: 'error', file, message: `${id}.${slot}: "offsets" must be one [dx, dy] pair of whole numbers per frame.` });
+        clip.offsets = undefined;
+      }
       if (!clip.loop && !clip.end) {
         problems.push({ level: 'warning', file, message: `${id}.${slot}: neither "loop" nor "end" is set.` });
       }
@@ -96,7 +101,7 @@ async function loadSpritesheet(jsonUrl, problems) {
       for (let c = 0; c < json.columns; c++) {
         frames.push(new Texture({ source, frame: new Rectangle(c * cw - r.x, y, cw, ch) }));
       }
-      animations[slot] = { ...clip, slot, frames };
+      animations[slot] = { ...clip, offsets: clip.offsets ?? null, slot, frames };
     }
     for (const slot of REQUIRED_SLOTS[json.kind] ?? []) {
       if (!(slot in animations)) problems.push({ level: 'error', file, message: `${id}: missing the "${slot}" animation.` });

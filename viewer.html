@@ -46,7 +46,16 @@
         </label>
         <button id="flip" type="button" aria-pressed="false" title="Mirror to the other facing (F)">Flip</button>
       </span>
+      <span class="group" id="nudge-group">
+        <span class="muted">Nudge frame</span>
+        <button id="nudge-left" type="button" title="Move this frame 1 px left (Shift+←)">←</button>
+        <button id="nudge-right" type="button" title="Move this frame 1 px right (Shift+→)">→</button>
+        <button id="nudge-up" type="button" title="Move this frame 1 px up (Shift+↑)">↑</button>
+        <button id="nudge-down" type="button" title="Move this frame 1 px down (Shift+↓)">↓</button>
+        <button id="nudge-reset" type="button" title="Remove this frame's offset">0</button>
+      </span>
       <span class="group" data-for="entity">
+        <label title="Faint blue copy of the first idle frame, as a fixed reference"><input type="checkbox" id="show-ghost"> Idle ghost</label>
         <label><input type="checkbox" id="show-cell" checked> Cell</label>
         <label><input type="checkbox" id="show-pivot" checked> Pivot &amp; ground</label>
         <label><input type="checkbox" id="show-bounds"> Idle bounds</label>
