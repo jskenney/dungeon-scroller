@@ -450,6 +450,38 @@ tests.push(
     runWorld(crawling, i => ({ down: true, dir: 1, attack2: i === 0 }), 30);
     assert(crawling.hero.action?.slot === 'attack2' && crawling.hero.body.x > x + 15 && crawling.hero.crouching, 'could not cast while crawling');
   }],
+  ['attack speed can be changed for a site, a hero or one ability', () => {
+    // Ticks from pressing the key until the bolt appears (it leaves on frame 3, 200 ms in at normal speed).
+    const ticksToFire = (change, config = QUIET) => {
+      const hero = fighter();
+      change(hero.gameplay);
+      const world = arena([], { hero, config });
+      let fired = -1;
+      runWorld(world, i => ({ attack2: i === 0 }), 60, (w, i) => { if (fired < 0 && w.projectiles.length) fired = i; });
+      return fired;
+    };
+    const normal = ticksToFire(() => {});
+    const quickAbility = ticksToFire(g => { g.abilities.attack2.speed = 2; });
+    const quickHero = ticksToFire(g => { g.stats.attackSpeed = 2; });
+    const quickSite = ticksToFire(() => {}, { ...QUIET, difficulty: { attackSpeed: 2 } });
+    const slowHero = ticksToFire(g => { g.stats.attackSpeed = 0.5; });
+    assert(normal >= 11 && normal <= 13, `expected the bolt after about 12 ticks, got ${normal}`);
+    for (const [name, ticks] of [['the ability', quickAbility], ['the hero', quickHero], ['the site', quickSite]]) {
+      assert(ticks >= 5 && ticks <= 7, `doubling the speed for ${name} gave ${ticks} ticks, expected about 6`);
+    }
+    assert(slowHero >= 23 && slowHero <= 25, `halving the hero's speed gave ${slowHero} ticks, expected about 24`);
+  }],
+  ['an ability with a cooldown cannot be used again until it has passed', () => {
+    const hero = fighter();
+    hero.gameplay.abilities.attack2.cooldown = 2;
+    const world = arena([], { hero, config: QUIET });
+    let shots = 0;
+    const count = w => { shots += w.events.filter(e => e.type === 'ability').length; w.events.length = 0; };
+    runWorld(world, i => ({ attack2: i % 10 === 0 }), 100, count);
+    assert(shots === 1, `expected one shot inside the cooldown, got ${shots}`);
+    runWorld(world, i => ({ attack2: i % 10 === 0 }), 60, count);
+    assert(shots === 2, `expected a second shot after the cooldown, got ${shots}`);
+  }],
   ['a melee ability marked for the air can be used in a jump', () => {
     const hero = fighter();
     hero.gameplay.abilities.attack1.air = true;

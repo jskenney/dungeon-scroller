@@ -118,7 +118,7 @@ The site configuration, fetched from the directory the game was loaded from. **`
 | `controls` | Default key bindings: action → list of `KeyboardEvent.code` values. |
 | `levels` | Path to the index of static levels (`data/levels.json`). |
 | `rules` | Lives (default 9999), respawn behaviour, and whether touching an enemy hurts. |
-| `difficulty` | Multipliers applied on top of the catalog values (enemy health, enemy damage, touch damage, player damage, MP regeneration, loot). All are 1 for now; changing them here retunes the whole game without editing the catalogs. |
+| `difficulty` | Multipliers applied on top of the catalog values (enemy health, enemy damage, touch damage, player damage, attack speed, MP regeneration, loot). All are 1 for now; changing them here retunes the whole game without editing the catalogs. |
 | `physics` | World constants: tick rate, gravity, terminal speed, run multiplier. |
 | `audio`, `speech` | Default volumes and whether synthesized stand-in effects are used; whether lines are read aloud by default. |
 | `generator` | Defaults for random levels. |
@@ -167,6 +167,7 @@ A catalog holds the **gameplay** values for every thing of one kind: `data/playe
 - **Ability types:** `melee`, `area` (short-range effect in front), `projectile`, `target` (applies to a chosen enemy, no projectile), `heal`. Optional `effect` values: `knockback` (px/s), `slow` (speed factor) and `stun` (seconds) with `duration`, `damageTaken` (multiplier on the target).
 - **`air`** says whether the ability can be used while jumping or flying. Every ability can, except the earth mage's ground spires.
 - **`crouch`** abilities can be used while crouching or crawling; the hero stays low and the shot leaves from crouch height. The ranged abilities have it; melee and close-range effects do not.
+- **Attack speed** is set at three levels, which multiply together. `difficulty.attackSpeed` in `dungeon.json` applies to every hero. `stats.attackSpeed` applies to one hero (it has a default of 1 in the catalog's `defaults`). An ability's own `speed` applies to that ability alone. A value of 2 plays the ability's animation twice as fast, so its bolt, arrow or swing happens in half the time and it can be used again sooner; 0.5 is half speed. An ability may also have a `cooldown` in seconds before it can be used again, shortened by the hero and site multipliers; the HUD dims an ability while it cools.
 - **`mobile`** abilities can be used while walking or running. Ranged abilities (bolts, the arrow, the stone, the hex, the heal) are mobile; melee swings and close-range effects stop the hero until they finish.
 - **`flight.mode`** is `"none"`, `"mp"` (drains `mpPerSecond` while airborne) or `"free"`.
 

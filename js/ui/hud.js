@@ -76,6 +76,7 @@ export class Hud {
       this.mp.el.setAttribute('aria-valuenow', mp);
       for (const slot of this.slots) slot.el.classList.toggle('unaffordable', mp < slot.cost);
     }
+    for (const slot of this.slots) slot.el.classList.toggle('cooling', (s.cooldowns?.[slot.action] ?? 0) > 0);
     if (s.lives !== this.last.lives) this.lives.textContent = s.lives >= 9000 ? '∞' : s.lives;   // the default of 9999 means unlimited
     if (s.score !== this.last.score) this.score.textContent = s.score;
     const keys = s.keys ?? 0, boost = s.buff?.time > 0 ? Math.ceil(s.buff.time) : 0;

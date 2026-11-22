@@ -44,6 +44,7 @@ export class Hero extends Actor {
     this.visualLift = 0;         // smooths stair steps on screen; decays to 0
     this.deadTime = 0;
     this.buff = { damage: 1, time: 0 };
+    this.cooldowns = {};         // seconds until each ability can be used again
     this.events = [];
   }
 
@@ -91,11 +92,20 @@ export class Hero extends Actor {
     const ability = this.g.abilities[slot];
     if (!ability || this.action) return;
     if (this.crouching && !ability.crouch) return;        // only some abilities work from a crouch
+    if ((this.cooldowns[slot] ?? 0) > 0) return;
     if (!this.body.grounded && !ability.air) return;      // a few abilities only work from the ground
     if (this.mp < ability.mp) return;
     this.mp -= ability.mp;
-    this.action = { slot, t: 0, frame: -1, ability, struck: new Set() };
+    // How fast it plays: the ability's own speed, the hero's, and the site-wide setting multiply together.
+    const quickness = this.attackQuickness;
+    this.action = { slot, t: 0, frame: -1, ability, struck: new Set(), rate: (ability.speed ?? 1) * quickness };
+    if (ability.cooldown) this.cooldowns[slot] = ability.cooldown / quickness;
     this.events.push({ type: 'ability', slot, kind: ability.type, x: this.body.x, y: this.body.y });
+  }
+
+  /** Multiplier on how fast this hero attacks: from the hero's stats and the site's difficulty settings. */
+  get attackQuickness() {
+    return (this.g.stats.attackSpeed ?? 1) * (this.config.difficulty?.attackSpeed ?? 1);
   }
 
   /** Things that happen on entering a frame of an ability's animation. */
@@ -141,6 +151,7 @@ export class Hero extends Actor {
     this.prev = { x: b.x, y: b.y, lift: this.visualLift };
     this.tickStatus(dt);
     this.buff.time = Math.max(0, this.buff.time - dt);
+    for (const slot of Object.keys(this.cooldowns)) this.cooldowns[slot] = Math.max(0, this.cooldowns[slot] - dt);
     if (this.dead) { this.deadTime += dt; intents = NOTHING; }
     else if (this.stun > 0) intents = NOTHING;
     this.running = intents.run;
@@ -148,7 +159,7 @@ export class Hero extends Actor {
     // One-shot actions: attacks, the two halves of a teleport, being hit, dying.
     if (this.action) {
       const a = this.action, clip = this.entity.animations[a.slot];
-      a.t += dt * 1000;
+      a.t += dt * 1000 * (a.rate ?? 1);
       const now = sampleClip(clip, a.t).frame;
       while (a.frame < now) { a.frame++; this.onFrame(world, clip, a.frame); }
       // Melee and close-range effects hurt each enemy once while their frames show.
