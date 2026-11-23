@@ -1,0 +1,142 @@
+# Mahjongg Set — Collectible Card Guide
+
+## 1. Asset summary
+
+This guide describes **`mahjongg_set_card.png`**, the finished collectible object card for the Mahjongg Set. It is one complete illustration, viewed straight-on and filling the canvas edge to edge. The game supplies any item name, description, statistics or other lettering as a separate overlay.
+
+| Property | Value |
+|---|---|
+| Image filename | `mahjongg_set_card.png` |
+| Canvas | 1000 × 1400 pixels |
+| Aspect ratio | 5:7, portrait |
+| Format | PNG |
+| Color mode | RGB; fully opaque, with no alpha channel |
+| Artwork style | Detailed pixel art with crisp contours and shaded pixel clusters |
+| Object view | Slightly elevated three-quarter view of a wooden tray, with two upright tiles facing the viewer |
+| Embedded lettering | None; the visible circle and bamboo motifs are pictures |
+| Reserved text rectangle | `(450, 952, 490, 364)` in `(x, y, width, height)` notation |
+| Verified image SHA-256 | `37776fbbb4a1c29f0c25fa3cb64d71c06ffe5be07cb139ddbf940d7cc1b44fd7` |
+
+The checksum identifies the final 1000 × 1400 card documented here. This is a single static card illustration; there is no animation grid or frame sequence. It depicts the revealed Mahjongg Set associated with the minigame object sprite, but the card itself does not contain the sprite's idle, interaction or disappearance frames.
+
+## 2. Picture description
+
+### Tray and tiles
+
+A low, weathered wooden tray holds two short rows of ivory-colored tiles, with three tiles visible in each row. The tray has a thick raised rim, worn corners, dark seams and small dark metal fittings. Warm highlights catch its upper edges and the grain of the brown wood.
+
+The six tiles in the tray are thick blocks with rounded, beveled edges. Their visible broad upper surfaces are blank and cream-colored, with pale highlights and warm amber shading along their sides. Narrow dark gaps separate the tiles, making both rows readable. The perspective reveals the tray's interior and its front and right outer faces.
+
+### Revealed faces and composition
+
+Two additional tiles stand upright in front of the tray in the lower-left portion of the card. The left tile shows three red hollow circles arranged with one above two. The right tile shows two muted-green bamboo stalks with simple segments and small leaves. These are decorative tile motifs rather than readable letters or numbers.
+
+The two upright tiles are clearly separated and face the viewer, with their thickness visible along the sides. Their pale surfaces and contrasting motifs form the strongest foreground details. The tray rises diagonally behind them into the middle of the illustration, and the complete tray and all eight visible tiles remain inside the card border.
+
+The scene is viewed from a slightly elevated three-quarter angle on a worn tavern table. The front tiles sit to the left of the reserved text field, and the tray and its shadows stay above that field. Warm light defines the tile bevels and the tray rim without extending into the lower-right text area.
+
+### Background and card frame
+
+A hanging lantern in the upper-left background lights dark timber framing and slate masonry. A recessed stone arch occupies the upper-right background, with a small distant amber light inside the shadowed opening. These details remain lower in contrast than the tray and foreground tiles.
+
+The wooden tabletop is visible around the set and along the left side. Its grain and warm reflections fade into a smooth, very dark midnight-blue region toward the lower right. The text reserve contains no table grain, tile edge or tray shadow.
+
+A thin antique-gold border follows the card perimeter. A small hollow-circle motif marks the upper-left corner, and a bamboo motif decorates the upper-right corner. Small gold star-like accents sit near the lower corners; the lower-right ornament is outside the reserved text rectangle. There are no item names, readable writing, labels, logos or placeholder text in the image.
+
+## 3. Reserved text rectangle
+
+### Coordinate convention
+
+Coordinates use the **top-left image boundary as `(0, 0)`**, with x increasing to the right and y increasing downward. Coordinates are zero-based. The rectangle includes its left and top edges and excludes its right and bottom edges.
+
+**Canonical rectangle: `(x: 450, y: 952, width: 490, height: 364)` pixels.**
+
+| Measurement | Pixels | Fraction of the complete image |
+|---|---:|---:|
+| Left edge / x | 450 | 45% of width |
+| Top edge / y | 952 | 68% of height |
+| Width | 490 | 49% of width |
+| Height | 364 | 26% of height |
+| Right edge, excluded | 940 | 94% of width |
+| Bottom edge, excluded | 1316 | 94% of height |
+
+The covered pixel columns are **450–939**, inclusive. The covered pixel rows are **952–1315**, inclusive. Equivalently, a point is inside when `450 ≤ x < 940` and `952 ≤ y < 1316`.
+
+The normalized rectangle is **`(0.45, 0.68, 0.49, 0.26)`** in `(x, y, width, height)` notation. Its normalized corner bounds are `(0.45, 0.68)` to `(0.94, 0.94)`.
+
+### Appearance and intended use
+
+The entire reserved rectangle is a smooth, very dark midnight-blue field with slight tonal variation. It contains no tray, tiles, tabletop grain, contact shadows, masonry details or corner ornament. The top and left transitions blend into the surrounding illustration; no visible box outline or panel border is drawn.
+
+This is an **opaque part of the artwork**, ready for the game to draw light text over it. It is not a transparent cutout. Keep the complete text layout, including outlines, shadows and any additional icons, inside the reserved bounds. Allow padding within the rectangle so glyphs do not touch its edges.
+
+## 4. Placement at other display sizes
+
+Preserve the card's 5:7 aspect ratio and scale the image and text rectangle together. When the displayed card has width `W`, its height is `H = W × 1.4`. For an image drawn at screen position `(imageLeft, imageTop)`:
+
+```text
+scale = W / 1000
+textX = imageLeft + 450 * scale
+textY = imageTop  + 952 * scale
+textWidth  = 490 * scale
+textHeight = 364 * scale
+```
+
+| Displayed card size | Text rectangle relative to the card's top left |
+|---|---|
+| 1000 × 1400 | `(450, 952, 490, 364)` |
+| 500 × 700 | `(225, 476, 245, 182)` |
+| 2000 × 2800 | `(900, 1904, 980, 728)` |
+
+These examples use `(x, y, width, height)`. If a UI container adds padding or letterboxing, calculate the rectangle from the actual displayed image origin and size, including that offset. Cropping the card changes the mapping and can remove part of the reserved area or its border.
+
+For an engine that uses a **bottom-left origin with y increasing upward**, the same native rectangle is **`(450, 84, 490, 364)`**. The bottom offset is `1400 - 1316 = 84`. In normalized bottom-left coordinates, its rectangle is `(0.45, 0.06, 0.49, 0.26)`. Use one coordinate convention consistently.
+
+## 5. Integration notes
+
+- Draw the card first, then draw the game's text and UI elements over the reserved rectangle.
+- The tray, tile faces and circle/bamboo motifs are baked into this static illustration. Use separate minigame artwork and game state for tile selection, matching or other gameplay; this card does not define interactive tile regions.
+- Use light text, such as ivory or near-white, against the dark field. Choose the font size, line spacing and internal padding for the actual display size.
+- Wrap and clip text to the reserved rectangle. The artwork does not define a particular title line, statistic layout or number of description lines.
+- Keep the image upright and preserve its full composition. Mirroring would move the quiet text region to the opposite side and require a different overlay layout.
+- Use nearest-neighbor/point sampling when retaining crisp pixel edges is the priority. Avoid lossy recompression or texture settings that introduce halos.
+- Keep the gold border and corner accents visible. The lower-right ornament sits outside the reserved bounds and should not become part of the text layout.
+
+The image contains artwork only. Overlay text, fonts, interaction behavior and any animated UI effects are supplied by the game.
+
+## 6. Copyable asset metadata
+
+The following JSON is an integration reference, not metadata embedded in the PNG. Rectangle right and bottom boundaries are exclusive.
+
+```json
+{
+  "image": "mahjongg_set_card.png",
+  "width": 1000,
+  "height": 1400,
+  "aspectRatio": "5:7",
+  "format": "PNG",
+  "colorMode": "RGB",
+  "opaque": true,
+  "embeddedLettering": false,
+  "coordinateOrigin": "top-left",
+  "positiveX": "right",
+  "positiveY": "down",
+  "textOverlay": {
+    "x": 450,
+    "y": 952,
+    "width": 490,
+    "height": 364,
+    "rightExclusive": 940,
+    "bottomExclusive": 1316,
+    "normalized": {
+      "x": 0.45,
+      "y": 0.68,
+      "width": 0.49,
+      "height": 0.26
+    },
+    "background": "very dark midnight blue, with slight tonal variation"
+  },
+  "sha256": "37776fbbb4a1c29f0c25fa3cb64d71c06ffe5be07cb139ddbf940d7cc1b44fd7"
+}
+```
+
