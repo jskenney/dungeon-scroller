@@ -1,0 +1,26 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "playing_card_deck_card.png",
+  "guide": "playing_card_deck_card.md",
+  "sha256": "de4e1e57af46e6710708a093eb878b47e8eb910bdeb277f647e62997f4e7b9b8",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "object",
+    "sheet": "../sprites/objects/interactive_minigame_objects_spritesheet.json",
+    "entity": "deck_of_cards"
+  },
+  "textArea": { "x": 440, "y": 910, "w": 510, "h": 420 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#000923",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended over the measured area that is equally dark and empty, clear of the figure, border and corner ornaments.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
+    "The gold border and corner ornaments lie outside textArea and must stay visible."
+  ]
+}

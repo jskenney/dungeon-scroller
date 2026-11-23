@@ -15,11 +15,16 @@
       "assets/sprites/enemies/undead_tier2_spritesheet.json",
       "assets/sprites/bosses/undead_boss_spritesheet.json",
       "assets/sprites/objects/interactive_world_objects_spritesheet.json",
+      "assets/sprites/objects/interactive_minigame_objects_spritesheet.json",
       "assets/sprites/NPCs/shopkeeper_spritesheet.json",
       "assets/sprites/NPCs/traveling_merchant_spritesheet.json",
       "assets/sprites/NPCs/village_elder_spritesheet.json",
       "assets/sprites/NPCs/village_priest_spritesheet.json",
       "assets/sprites/NPCs/young_male_villager_spritesheet.json"
+    ],
+    "atlases": [
+      "assets/sprites/games/playing_card_spritesheet.json",
+      "assets/sprites/games/polyhedral_dice_spritesheet.json"
     ],
     "tilesets": [
       "assets/tilesheets/old_stone_dungeon_tileset.json",
@@ -39,7 +44,35 @@
       "assets/cards/traveling_merchant_card.json",
       "assets/cards/village_elder_card.json",
       "assets/cards/village_priest_card.json",
-      "assets/cards/young_male_villager_card.json"
+      "assets/cards/young_male_villager_card.json",
+      "assets/cards/barrel_card.json",
+      "assets/cards/building_blocks_card.json",
+      "assets/cards/burial_urn_card.json",
+      "assets/cards/checkpoint_flag_card.json",
+      "assets/cards/chess_set_card.json",
+      "assets/cards/computer_game_card.json",
+      "assets/cards/death_knight_card.json",
+      "assets/cards/dungeon_dice_card.json",
+      "assets/cards/dungeon_relic_card.json",
+      "assets/cards/gem_card.json",
+      "assets/cards/gold_coin_card.json",
+      "assets/cards/gravestone_card.json",
+      "assets/cards/healing_potion_card.json",
+      "assets/cards/healing_shrine_card.json",
+      "assets/cards/iron_key_card.json",
+      "assets/cards/lever_card.json",
+      "assets/cards/lich_card.json",
+      "assets/cards/mahjongg_set_card.json",
+      "assets/cards/normal_skeleton_card.json",
+      "assets/cards/playing_card_deck_card.json",
+      "assets/cards/skeleton_knight_card.json",
+      "assets/cards/space_potion_card.json",
+      "assets/cards/spell_scroll_card.json",
+      "assets/cards/treasure_chest_card.json",
+      "assets/cards/undead_wolf_card.json",
+      "assets/cards/wall_torch_card.json",
+      "assets/cards/wight_card.json",
+      "assets/cards/wooden_crate_card.json"
     ]
   },
 

@@ -1,0 +1,181 @@
+{
+  "schema": "dungeon-scroller/atlas@1",
+  "kind": "minigame",
+  "image": "polyhedral_dice_spritesheet.png",
+  "guide": "polyhedral_dice_spritesheet.md",
+  "sha256": "978fae711f635c76b5840d463ab2ac4b2c6c6d4420559f712c9a512b103e80cc",
+  "size": { "w": 576, "h": 288 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 3,
+  "pivot": { "x": 48, "y": 48 },
+  "sprites": {
+    "bone_d4": {
+      "row": 1,
+      "col": 1,
+      "role": "die",
+      "material": "bone",
+      "sides": 4,
+      "bounds": { "x": 17, "y": 10, "w": 64, "h": 59 }
+    },
+    "bone_d6": {
+      "row": 1,
+      "col": 2,
+      "role": "die",
+      "material": "bone",
+      "sides": 6,
+      "bounds": { "x": 22, "y": 10, "w": 64, "h": 61 }
+    },
+    "bone_d8": {
+      "row": 1,
+      "col": 3,
+      "role": "die",
+      "material": "bone",
+      "sides": 8,
+      "bounds": { "x": 14, "y": 16, "w": 68, "h": 70 }
+    },
+    "bone_d10": {
+      "row": 1,
+      "col": 4,
+      "role": "die",
+      "material": "bone",
+      "sides": 10,
+      "bounds": { "x": 10, "y": 14, "w": 74, "h": 73 }
+    },
+    "bone_d12": {
+      "row": 1,
+      "col": 5,
+      "role": "die",
+      "material": "bone",
+      "sides": 12,
+      "bounds": { "x": 10, "y": 12, "w": 76, "h": 73 }
+    },
+    "bone_d20": {
+      "row": 1,
+      "col": 6,
+      "role": "die",
+      "material": "bone",
+      "sides": 20,
+      "bounds": { "x": 12, "y": 10, "w": 70, "h": 74 }
+    },
+    "slate_d4": {
+      "row": 2,
+      "col": 1,
+      "role": "die",
+      "material": "slate",
+      "sides": 4,
+      "bounds": { "x": 17, "y": 10, "w": 64, "h": 59 }
+    },
+    "slate_d6": {
+      "row": 2,
+      "col": 2,
+      "role": "die",
+      "material": "slate",
+      "sides": 6,
+      "bounds": { "x": 22, "y": 10, "w": 64, "h": 61 }
+    },
+    "slate_d8": {
+      "row": 2,
+      "col": 3,
+      "role": "die",
+      "material": "slate",
+      "sides": 8,
+      "bounds": { "x": 14, "y": 16, "w": 68, "h": 70 }
+    },
+    "slate_d10": {
+      "row": 2,
+      "col": 4,
+      "role": "die",
+      "material": "slate",
+      "sides": 10,
+      "bounds": { "x": 10, "y": 14, "w": 74, "h": 73 }
+    },
+    "slate_d12": {
+      "row": 2,
+      "col": 5,
+      "role": "die",
+      "material": "slate",
+      "sides": 12,
+      "bounds": { "x": 10, "y": 12, "w": 76, "h": 73 }
+    },
+    "slate_d20": {
+      "row": 2,
+      "col": 6,
+      "role": "die",
+      "material": "slate",
+      "sides": 20,
+      "bounds": { "x": 12, "y": 10, "w": 70, "h": 74 }
+    },
+    "bone_pip_6": {
+      "row": 3,
+      "col": 1,
+      "role": "pip",
+      "material": "bone",
+      "diameter": 6,
+      "crop": { "x": 45, "y": 45, "w": 6, "h": 6 }
+    },
+    "bone_pip_8": {
+      "row": 3,
+      "col": 2,
+      "role": "pip",
+      "material": "bone",
+      "diameter": 8,
+      "crop": { "x": 44, "y": 44, "w": 8, "h": 8 }
+    },
+    "bone_pip_10": {
+      "row": 3,
+      "col": 3,
+      "role": "pip",
+      "material": "bone",
+      "diameter": 10,
+      "crop": { "x": 43, "y": 43, "w": 10, "h": 10 }
+    },
+    "slate_pip_6": {
+      "row": 3,
+      "col": 4,
+      "role": "pip",
+      "material": "slate",
+      "diameter": 6,
+      "crop": { "x": 45, "y": 45, "w": 6, "h": 6 }
+    },
+    "slate_pip_8": {
+      "row": 3,
+      "col": 5,
+      "role": "pip",
+      "material": "slate",
+      "diameter": 8,
+      "crop": { "x": 44, "y": 44, "w": 8, "h": 8 }
+    },
+    "slate_pip_10": {
+      "row": 3,
+      "col": 6,
+      "role": "pip",
+      "material": "slate",
+      "diameter": 10,
+      "crop": { "x": 43, "y": 43, "w": 10, "h": 10 }
+    }
+  },
+  "layouts": {
+    "d6": {
+      "pip": 8,
+      "note": "Pip centres in the cell for results 1 to 6, for 6 px or 8 px pips. For 10 px pips use 37 and 59 in place of 36 and 60.",
+      "results": {
+        "1": [[48, 48]],
+        "2": [[36, 36], [60, 60]],
+        "3": [[36, 36], [48, 48], [60, 60]],
+        "4": [[36, 36], [60, 36], [36, 60], [60, 60]],
+        "5": [[36, 36], [60, 36], [48, 48], [36, 60], [60, 60]],
+        "6": [[36, 36], [60, 36], [36, 48], [60, 48], [36, 60], [60, 60]]
+      }
+    },
+    "numeralBox": { "x": 40, "y": 42, "w": 16, "h": 12 },
+    "rollFeedbackMs": 480
+  },
+  "notes": [
+    "Static art for dice mini-games: twelve blank dice (six shapes in bone and in slate) and six pip stamps. Nothing here is an animation.",
+    "pivot (48, 48) is the centre of each die's result face; draw every die and its markings around it. 'bounds' is the whole visible die, not the result face.",
+    "A result is drawn by stamping pips, or a numeral the game supplies, onto the blank die. A pip's 'crop' is its tight source rectangle in the cell; stamp it at native size.",
+    "Only the D6 has pip layouts. For the other shapes the guide suggests a numeral inside numeralBox, since their faces have no room for many pips.",
+    "Rolling is shown by jiggling the same die for about rollFeedbackMs; there are no tumbling frames."
+  ]
+}

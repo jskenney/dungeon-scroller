@@ -11,6 +11,7 @@
     "normal_skeleton": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
       "entity": "normal_skeleton",
+      "card": "../assets/cards/normal_skeleton_card.json",
       "lines": {
         "alert": ["…clack…", "…warm blood…"],
         "death": ["…rattle…"]
@@ -49,6 +50,7 @@
     "skeleton_knight": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
       "entity": "skeleton_knight",
+      "card": "../assets/cards/skeleton_knight_card.json",
       "lines": {
         "alert": ["Halt.", "None shall pass."],
         "death": ["My watch… ends…"]
@@ -93,6 +95,7 @@
     "death_knight": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",
       "entity": "death_knight",
+      "card": "../assets/cards/death_knight_card.json",
       "lines": {
         "alert": ["Kneel.", "Another for the pit."],
         "death": ["At last…"]
@@ -137,6 +140,7 @@
     "undead_wolf": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "undead_wolf",
+      "card": "../assets/cards/undead_wolf_card.json",
       "lines": {
         "alert": ["Grrrr…", "*snarl*"],
         "death": ["*whine*"]
@@ -182,6 +186,7 @@
     "wight": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "wight",
+      "card": "../assets/cards/wight_card.json",
       "lines": {
         "alert": ["So cold… come closer.", "Give me your warmth."],
         "death": ["Cold… again…"]
@@ -226,6 +231,7 @@
     "lich": {
       "sheet": "../assets/sprites/enemies/undead_tier2_spritesheet.json",
       "entity": "lich",
+      "card": "../assets/cards/lich_card.json",
       "lines": {
         "alert": ["A living mind. How rare.", "You will make a fine servant."],
         "death": ["This is not… the end…"]

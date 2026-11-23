@@ -25,6 +25,42 @@
   "entities": [
     {
       "type": "object",
+      "id": "deck_of_cards",
+      "col": 3,
+      "row": 8
+    },
+    {
+      "type": "object",
+      "id": "dice",
+      "col": 6,
+      "row": 8
+    },
+    {
+      "type": "object",
+      "id": "mahjongg_set",
+      "col": 8,
+      "row": 8
+    },
+    {
+      "type": "object",
+      "id": "board_game",
+      "col": 10,
+      "row": 8
+    },
+    {
+      "type": "object",
+      "id": "computer_game",
+      "col": 12,
+      "row": 8
+    },
+    {
+      "type": "object",
+      "id": "building_blocks",
+      "col": 14,
+      "row": 8
+    },
+    {
+      "type": "object",
       "id": "gem",
       "col": 4,
       "row": 8

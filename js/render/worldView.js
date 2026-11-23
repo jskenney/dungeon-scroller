@@ -180,6 +180,7 @@ export class WorldView {
       else if (e.type === 'hex') this.float(e.x, e.y, 'hexed', 0xd9a8ff);
       else if (e.type === 'kill') this.float(e.x, e.y - 40, 'defeated', 0xffffff);
       else if (e.type === 'locked') this.float(e.x, e.y, 'locked', 0xc9ced9);
+      else if (e.type === 'minigame') this.float(e.x, e.y, 'mini-game not built yet', 0xc9ced9);
       else if (e.type === 'shockwave') this.waves.push({ x: e.x, y: e.y, radius: e.radius, color: tint(e.color), age: 0 });
       else if (e.type === 'bossPhase') this.float(e.x, e.y, 'enraged', 0xff8a8a);
       else if (e.type === 'checkpoint') this.float(e.x, e.y - 12, 'checkpoint', 0x7be495);

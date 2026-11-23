@@ -1,0 +1,257 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "object",
+  "image": "interactive_minigame_objects_spritesheet.png",
+  "guide": "interactive_minigame_objects_spritesheet.md",
+  "sha256": "64c8d68c39c9182d7b9195b409286ce38a0b072ffd97092b6583ec1e83b0a5a3",
+  "size": { "w": 576, "h": 1728 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 18,
+  "facing": "right",
+  "pivot": { "x": 48, "y": 85 },
+  "groundY": 84,
+  "notes": [
+    "Six props that open mini-games. After the interact row the object holds its last frame while the mini-game runs; it vanishes only if the game asks.",
+    "interact F1 is already an action pose (it is not a copy of idle F1). idle F6 equals idle F1. vanish F1 equals interact F6; vanish F6 is fully transparent.",
+    "The dice lift off the ground in interact F1, F2 and F4; keep the pivot fixed.",
+    "The pips, card faces, tiles, board pieces and screen picture are fixed illustrations. Playable cards and dice come from the atlases in sprites/games.",
+    "Objects are not directional; 'facing' is nominal."
+  ],
+  "entities": {
+    "deck_of_cards": {
+      "name": "Deck of cards",
+      "description": "A short face-down deck has midnight-blue backs, thin antique-gold borders and a tiny dungeon-arch motif. Three parchment-faced cards rise above the stack during interaction; their small printed portraits echo the separate playing-card sheet.",
+      "rows": [1, 3],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 31, "y": 67, "w": 34, "h": 18 },
+      "animations": {
+        "idle": {
+          "id": "deck_of_cards_idle",
+          "label": "Idle",
+          "row": 1,
+          "loop": true,
+          "durations": [220, 160, 140, 160, 180, 220]
+        },
+        "interact": {
+          "id": "deck_of_cards_interaction",
+          "label": "Interaction",
+          "row": 2,
+          "end": "hold",
+          "durations": [110, 140, 140, 140, 140, 220],
+          "events": [
+            { "frame": 6, "type": "ready", "note": "The object is in its held pose; the mini-game can open." }
+          ]
+        },
+        "vanish": {
+          "id": "deck_of_cards_disappearance",
+          "label": "Disappearance",
+          "row": 3,
+          "end": "remove",
+          "durations": [100, 120, 130, 150, 150, 90],
+          "emptyFrames": [6]
+        }
+      },
+      "game": "cards",
+      "resultBounds": { "x": 20, "y": 44, "w": 56, "h": 41 }
+    },
+    "dice": {
+      "name": "Dice",
+      "description": "Two D6s sit together: carved bone ivory on the left and dark slate with antique-brass bevels on the right. Tiny circular pips use dark recesses and narrow opposite rim highlights. The pair keeps the same material identity as it tumbles.",
+      "rows": [4, 6],
+      "region": { "x": 0, "y": 288, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 30, "y": 66, "w": 37, "h": 19 },
+      "animations": {
+        "idle": {
+          "id": "dice_idle",
+          "label": "Idle",
+          "row": 4,
+          "loop": true,
+          "durations": [200, 150, 120, 150, 180, 220]
+        },
+        "interact": {
+          "id": "dice_interaction",
+          "label": "Interaction",
+          "row": 5,
+          "end": "hold",
+          "durations": [100, 130, 80, 100, 150, 220],
+          "events": [
+            { "frame": 6, "type": "ready", "note": "The object is in its held pose; the mini-game can open." }
+          ]
+        },
+        "vanish": {
+          "id": "dice_disappearance",
+          "label": "Disappearance",
+          "row": 6,
+          "end": "remove",
+          "durations": [100, 120, 140, 140, 150, 90],
+          "emptyFrames": [6]
+        }
+      },
+      "game": "dice",
+      "resultBounds": { "x": 31, "y": 67, "w": 36, "h": 18 }
+    },
+    "mahjongg_set": {
+      "name": "Mahjongg set",
+      "description": "A low wooden tray contains two short rows of ivory tiles. Red-dot and muted green bamboo marks distinguish the visible faces. Interaction reveals a red-dot tile and a green-bamboo tile at the front of the tray.",
+      "rows": [7, 9],
+      "region": { "x": 0, "y": 576, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 26, "y": 58, "w": 46, "h": 27 },
+      "animations": {
+        "idle": {
+          "id": "mahjongg_set_idle",
+          "label": "Idle",
+          "row": 7,
+          "loop": true,
+          "durations": [200, 160, 140, 160, 180, 220]
+        },
+        "interact": {
+          "id": "mahjongg_set_interaction",
+          "label": "Interaction",
+          "row": 8,
+          "end": "hold",
+          "durations": [120, 140, 140, 140, 160, 220],
+          "events": [
+            { "frame": 6, "type": "ready", "note": "The object is in its held pose; the mini-game can open." }
+          ]
+        },
+        "vanish": {
+          "id": "mahjongg_set_disappearance",
+          "label": "Disappearance",
+          "row": 9,
+          "end": "remove",
+          "durations": [100, 150, 140, 160, 140, 90],
+          "emptyFrames": [6]
+        }
+      },
+      "game": "mahjongg",
+      "resultBounds": { "x": 24, "y": 56, "w": 48, "h": 29 }
+    },
+    "board_game": {
+      "name": "Board game",
+      "description": "A closed folding wooden board has brass hinges and a small clasp. Opening reveals a checkerboard surface; four small carved pieces settle onto separate squares. The open board remains compact enough to read alongside the other world props.",
+      "rows": [10, 12],
+      "region": { "x": 0, "y": 864, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 28, "y": 67, "w": 40, "h": 18 },
+      "animations": {
+        "idle": {
+          "id": "board_game_idle",
+          "label": "Idle",
+          "row": 10,
+          "loop": true,
+          "durations": [220, 180, 140, 180, 200, 240]
+        },
+        "interact": {
+          "id": "board_game_interaction",
+          "label": "Interaction",
+          "row": 11,
+          "end": "hold",
+          "durations": [100, 160, 160, 160, 180, 240],
+          "events": [
+            { "frame": 6, "type": "ready", "note": "The object is in its held pose; the mini-game can open." }
+          ]
+        },
+        "vanish": {
+          "id": "board_game_disappearance",
+          "label": "Disappearance",
+          "row": 12,
+          "end": "remove",
+          "durations": [100, 140, 160, 160, 140, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "game": "board",
+      "resultBounds": { "x": 21, "y": 59, "w": 54, "h": 26 }
+    },
+    "computer_game": {
+      "name": "Computer game",
+      "description": "A compact tabletop console has a dark slate housing, a brass bezel, a recessed screen, two chunky buttons and a tiny cyan status light. The powered screen contains a miniature pixel dungeon corridor and a small adventurer silhouette.",
+      "rows": [13, 15],
+      "region": { "x": 0, "y": 1152, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 29, "y": 52, "w": 38, "h": 33 },
+      "animations": {
+        "idle": {
+          "id": "computer_game_idle",
+          "label": "Idle",
+          "row": 13,
+          "loop": true,
+          "durations": [160, 160, 180, 180, 160, 160]
+        },
+        "interact": {
+          "id": "computer_game_interaction",
+          "label": "Interaction",
+          "row": 14,
+          "end": "hold",
+          "durations": [90, 130, 160, 160, 180, 240],
+          "events": [
+            { "frame": 6, "type": "ready", "note": "The object is in its held pose; the mini-game can open." }
+          ]
+        },
+        "vanish": {
+          "id": "computer_game_disappearance",
+          "label": "Disappearance",
+          "row": 15,
+          "end": "remove",
+          "durations": [120, 160, 140, 150, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "game": "computer",
+      "resultBounds": { "x": 30, "y": 52, "w": 37, "h": 33 }
+    },
+    "building_blocks": {
+      "name": "Building blocks",
+      "description": "A compact pile contains four wooden cubes, one rectangular foundation beam and one curved teal arch block. Faded red, muted teal and natural wood separate the pieces. The interaction builds a miniature dungeon gateway with two stacked supports and the arch between them.",
+      "rows": [16, 18],
+      "region": { "x": 0, "y": 1440, "w": 576, "h": 288 },
+      "registration": "ground",
+      "commit": "complete",
+      "persistent": true,
+      "idleBounds": { "x": 28, "y": 54, "w": 38, "h": 31 },
+      "animations": {
+        "idle": {
+          "id": "building_blocks_idle",
+          "label": "Idle",
+          "row": 16,
+          "loop": true,
+          "durations": [180, 160, 160, 160, 180, 220]
+        },
+        "interact": {
+          "id": "building_blocks_interaction",
+          "label": "Interaction",
+          "row": 17,
+          "end": "hold",
+          "durations": [140, 160, 160, 160, 180, 240],
+          "events": [
+            { "frame": 6, "type": "ready", "note": "The object is in its held pose; the mini-game can open." }
+          ]
+        },
+        "vanish": {
+          "id": "building_blocks_disappearance",
+          "label": "Disappearance",
+          "row": 18,
+          "end": "remove",
+          "durations": [120, 140, 160, 160, 150, 100],
+          "emptyFrames": [6]
+        }
+      },
+      "game": "blocks",
+      "resultBounds": { "x": 29, "y": 49, "w": 36, "h": 36 }
+    }
+  }
+}

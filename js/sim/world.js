@@ -228,6 +228,7 @@ export class World {
       this.complete = true;
       this.events.push({ type: 'levelComplete' });
     } else if (kind === 'breakable' && object.solid) {
+      // (a mini-game object needs nothing here: it opens when its interaction finishes)
       this.unblock(object.solid);
       object.solid = null;
     }
@@ -236,8 +237,14 @@ export class World {
   /** Called by an object when its use animation ends. */
   objectFinished(object) {
     const kind = object.g.behaviour;
-    if (kind === 'container' || kind === 'breakable') this.dropLoot(object.loot, object.x, object.y);
-    else if (kind === 'switch') for (const gate of this.gates) if (gate.id === object.link) this.openGate(gate);
+    if (kind === 'container' || kind === 'breakable') {
+      this.dropLoot(object.loot, object.x, object.y);
+    } else if (kind === 'switch') {
+      for (const gate of this.gates) if (gate.id === object.link) this.openGate(gate);
+    } else if (kind === 'minigame') {
+      // The object now holds its last pose; the game opens the mini-game it names.
+      this.events.push({ type: 'minigame', game: object.g.game, object, x: object.x, y: object.rect().t });
+    }
   }
 
   /** Break anything breakable inside an attack's area. `struck` remembers what one attack already hit. */

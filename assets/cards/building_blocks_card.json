@@ -1,0 +1,26 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "building_blocks_card.png",
+  "guide": "building_blocks_card.md",
+  "sha256": "7c63a3189302f03c51c9d24447611e98471a3829b1701212c0fb2ccd2a38ab5e",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "object",
+    "sheet": "../sprites/objects/interactive_minigame_objects_spritesheet.json",
+    "entity": "building_blocks"
+  },
+  "textArea": { "x": 440, "y": 950, "w": 510, "h": 380 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#000820",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended slightly over the measured area that is equally dark and empty; the artwork leaves little more room.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
+    "The gold border and corner ornaments lie outside textArea and must stay visible."
+  ]
+}

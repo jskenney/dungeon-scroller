@@ -8,7 +8,7 @@
     {
       "id": "village",
       "file": "../levels/village.json",
-      "description": "All five villagers, four of them merchants, with gems to spend on upgrades."
+      "description": "All five villagers, four of them merchants, with gems to spend on upgrades, and the six mini-game objects."
     },
     {
       "id": "dungeon-test",

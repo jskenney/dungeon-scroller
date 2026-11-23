@@ -238,6 +238,9 @@ function selectionFromHash() {
   if (type === 'tileset') {
     const item = a.tilesets.find(t => t.id === id);
     if (item) return { selection: { type: 'tileset', item } };
+  } else if (type === 'atlas') {
+    const item = a.atlases.find(t => t.id === id);
+    if (item) return { selection: { type: 'atlas', item } };
   } else if (type === 'card') {
     const item = a.cards.find(c => c.id === id);
     if (item) return { selection: { type: 'card', item } };
@@ -270,6 +273,10 @@ function buildNav() {
   if (a.tilesets.length) {
     nav.append(h('h3', {}, 'Tilesets'));
     for (const t of a.tilesets) nav.append(h('a', { href: `#tileset/${t.id}` }, t.id.replaceAll('_', ' ')));
+  }
+  if (a.atlases?.length) {
+    nav.append(h('h3', {}, 'Mini-game art'));
+    for (const t of a.atlases) nav.append(h('a', { href: `#atlas/${t.id}` }, t.id.replaceAll('_', ' ')));
   }
   if (a.cards.length) {
     nav.append(h('h3', {}, 'Cards'));
@@ -592,6 +599,105 @@ function buildTilesetBuilt(tileset) {
   return zoom;
 }
 
+// ------------------------------------------------------------ mini-game art
+
+/** A playing card put together from the atlas the way the game will: face, corner indices and pips. */
+function composeCard(atlas, rank, suit) {
+  const L = atlas.layouts, card = new Container();
+  const face = { J: 'jack', Q: 'queen', K: 'king' }[rank] ?? 'plain_face';
+  card.addChild(new Sprite(atlas.sprites[face].texture));
+  const symbol = atlas.sprites[suit], color = parseInt(symbol.color.slice(1), 16);
+  const stamp = (x, y, size, flipped) => {
+    const pip = new Sprite(symbol.cropTexture);
+    pip.anchor.set(0.5);
+    pip.position.set(x, y);
+    pip.scale.set(size / symbol.crop.w);
+    if (flipped) pip.rotation = Math.PI;
+    return pip;
+  };
+  for (const [x, y] of L.pips.centers[rank] ?? []) card.addChild(stamp(x, y, rank === 'A' ? L.pips.aceSize : L.pips.size, y > atlas.pivot.y));
+  // The corner index, then the same group turned half a circle about the card's centre.
+  for (const turned of [false, true]) {
+    const group = new Container();
+    const r = L.index.rank, m = L.index.suit;
+    const text = new Text({ text: rank, style: { fontFamily: 'Georgia, serif', fontSize: 19, fontWeight: '700', fill: color } });
+    text.anchor.set(0.5);
+    text.position.set(r.x + r.w / 2, r.y + r.h / 2);
+    group.addChild(text, stamp(m.x + m.w / 2, m.y + m.h / 2, m.w, false));
+    if (turned) { group.pivot.set(atlas.pivot.x, atlas.pivot.y); group.position.set(atlas.pivot.x, atlas.pivot.y); group.rotation = Math.PI; }
+    card.addChild(group);
+  }
+  return card;
+}
+
+/** A die showing a result, drawn by stamping pips onto the blank die. */
+function composeDie(atlas, material, result) {
+  const die = new Container(), layout = atlas.layouts.d6;
+  die.addChild(new Sprite(atlas.sprites[`${material}_d6`].texture));
+  const pip = atlas.sprites[`${material}_pip_${layout.pip}`];
+  for (const [x, y] of layout.results[result]) {
+    const dot = new Sprite(pip.cropTexture);
+    dot.anchor.set(0.5);
+    dot.position.set(x, y);
+    die.addChild(dot);
+  }
+  return die;
+}
+
+/** Every piece of an atlas, then examples assembled from its layouts. */
+function buildAtlas(atlas) {
+  const W = app.screen.width, H = app.screen.height;
+  const { w: cw, h: ch } = atlas.cell;
+  const margin = 14, labelH = 20, gap = 10;
+  const isCards = Boolean(atlas.layouts?.pips);
+  const examples = isCards
+    ? [['A', 'heart'], ['7', 'spade'], ['10', 'diamond'], ['J', 'club'], ['K', 'heart']].map(([rank, suit]) => ({ name: `${rank} of ${suit}s`, make: () => composeCard(atlas, rank, suit) }))
+    : atlas.layouts?.d6 ? ['1', '2', '3', '4', '5', '6'].map((n, i) => ({ name: `${i % 2 ? 'slate' : 'bone'} D6 showing ${n}`, make: () => composeDie(atlas, i % 2 ? 'slate' : 'bone', n) })) : [];
+  const zoom = state.zoom ?? Math.max(1, Math.floor(((W - margin * 2) / (atlas.columns * (cw + gap))) * dpr()));
+  const S = zoom / dpr();
+  const rowH = ch * S + labelH + gap;
+  const height = margin * 2 + atlas.rows * rowH + (examples.length ? rowH + 34 : 0);
+  scene.contentHeight = height;
+  state.pan.y = Math.min(0, Math.max(state.pan.y, H - height));
+  state.pan.x = 0;
+  const left = Math.max(margin, (W - atlas.columns * (cw * S + gap) + gap) / 2);
+  const back = new Graphics();
+  app.stage.addChild(back);
+  const place = (node, col, y, name) => {
+    const x = snap(left + col * (cw * S + gap));
+    checker(back, x, y, cw * S, ch * S, cw * S / 4);
+    node.position.set(x, y);
+    node.scale.set(S);
+    const caption = label(name, x + 2, y + ch * S + 3);
+    if (caption.width > cw * S - 4) caption.style.fontSize = 10;
+    app.stage.addChild(node, caption);
+  };
+  for (const sprite of Object.values(atlas.sprites)) {
+    place(new Sprite(sprite.texture), sprite.col - 1, snap(margin + state.pan.y + (sprite.row - 1) * rowH), sprite.id);
+  }
+  if (examples.length) {
+    const top = snap(margin + state.pan.y + atlas.rows * rowH + 8);
+    app.stage.addChild(label('Examples assembled from the layouts in the JSON', left, top, COLORS.selected));
+    examples.forEach((ex, i) => place(ex.make(), i, top + 26, ex.name));
+  }
+  return zoom;
+}
+
+function atlasDetails(atlas) {
+  const dl = h('dl');
+  row(dl, 'Image', atlas.image);
+  row(dl, 'Grid', `${atlas.columns} × ${atlas.rows} cells of ${atlas.cell.w} × ${atlas.cell.h}`);
+  row(dl, 'Pivot', `(${atlas.pivot.x}, ${atlas.pivot.y})`);
+  row(dl, 'Pieces', Object.keys(atlas.sprites).length);
+  const describe = sp => [sp.role, sp.material, sp.sides ? `${sp.sides} sides` : '', sp.diameter ? `${sp.diameter} px` : '', sp.color ?? '',
+    sp.sameUpsideDown === false ? 'one way up' : ''].filter(Boolean).join(' · ');
+  setDetails(
+    h('h2', {}, atlas.id.replaceAll('_', ' ')), dl,
+    h('h3', {}, 'Pieces'), h('ul', {}, Object.values(atlas.sprites).map(sp => h('li', {}, h('b', {}, sp.id), ' — ', describe(sp)))),
+    atlas.notes?.length ? h('h3', {}, 'Notes') : null,
+    atlas.notes?.length ? h('ul', {}, atlas.notes.map(n => h('li', {}, n))) : null);
+}
+
 // ----------------------------------------------------------------- DOM panels
 
 function buildCardView(card) {
@@ -841,6 +947,9 @@ function refresh() {
   } else if (sel.type === 'tileset') {
     zoom = state.tilesetView === 'atlas' ? buildTilesetAtlas(sel.item) : buildTilesetBuilt(sel.item);
     tilesetDetails(sel.item);
+  } else if (sel.type === 'atlas') {
+    zoom = buildAtlas(sel.item);
+    atlasDetails(sel.item);
   } else if (sel.type === 'card') {
     buildCardView(sel.item);
     cardDetails(sel.item);

@@ -1,0 +1,26 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "iron_key_card.png",
+  "guide": "iron_key_card.md",
+  "sha256": "b9e0d783bb23c652db8aa993a4c5f407b003236f21bf36e72cb57ef80721c1de",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "object",
+    "sheet": "../sprites/objects/interactive_world_objects_spritesheet.json",
+    "entity": "iron_key"
+  },
+  "textArea": { "x": 440, "y": 950, "w": 510, "h": 380 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#000821",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended slightly over the measured area that is equally dark and empty; the artwork leaves little more room.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
+    "The gold border and corner ornaments lie outside textArea and must stay visible."
+  ]
+}

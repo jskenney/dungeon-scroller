@@ -310,6 +310,32 @@ Tiles are static. The tileset JSON names each cell and gives its default collisi
 - **`bounds`** is the measured opaque area for tiles that do not fill their cell; `empty` marks an intentionally blank cell.
 - **`groups`** are interchangeable variants; **`runs`** say how to cap and fill a horizontal stretch; **`assemblies`** are multi-tile constructions (stairs with landings, arches, the graveyard entrance, the two-piece tree) with offsets in tiles. The level generator builds from these, so a new tileset that supplies the same structure works without code changes.
 
+### 4.4b Atlas JSON — static mini-game art
+
+Sheets of separate pieces that are assembled by the game instead of played as animations use the schema `dungeon-scroller/atlas@1` and are listed under `assets.atlases`.
+
+```json
+{
+  "schema": "dungeon-scroller/atlas@1",
+  "kind": "minigame",
+  "image": "playing_card_spritesheet.png",
+  "cell": { "w": 160, "h": 224 }, "columns": 5, "rows": 2,
+  "pivot": { "x": 80, "y": 112 },
+  "sprites": {
+    "king":  { "row": 1, "col": 3, "name": "King", "role": "face", "sameUpsideDown": true },
+    "heart": { "row": 2, "col": 2, "name": "Heart", "role": "suit", "color": "#922738",
+               "crop": { "x": 32, "y": 64, "w": 96, "h": 96 }, "bounds": { "x": 37, "y": 71, "w": 86, "h": 82 } }
+  },
+  "layouts": { "pips": { "aceSize": 32, "size": 20, "centers": { "A": [[80, 112]], "2": [[80, 60], [80, 164]] } } }
+}
+```
+
+- **`sprites`** name each cell. `crop` is the part of a cell to stamp from (a suit symbol, a dice pip); `bounds` is the exact painted area.
+- **`layouts`** hold the guide's recipes for assembling things from the pieces, so a mini-game needs no numbers of its own.
+  - *Playing cards:* the two index areas on every face, where the rank and suit go inside them, the centres of the suit symbols for the ace and 2–10, which template each rank uses, and the flip time.
+  - *Dice:* the pip centres for a D6 showing 1–6, a box for a numeral on the other shapes, and the time to jiggle a die while it "rolls".
+- The viewer shows every piece and, beneath them, example cards and dice assembled from the layouts, which is how the JSON was checked.
+
 ### 4.5 Asset inventory today
 
 | Sheet | Contents | Guide | JSON |
@@ -329,6 +355,9 @@ Tiles are static. The tileset JSON names each cell and gives its default collisi
 | `enemies/undead_tier2` | undead wolf, wight, lich (7 rows each) | yes | **done** |
 | `bosses/undead_boss` | undead dragon, undead Fenrir, death monarch (9 rows each, 1536×6912) | yes | **done** |
 | `objects/interactive_world_objects` | 16 objects × 3 rows: chest, healing potion, space potion, coin, gem, key, gravestone, checkpoint flag, crate, barrel, urn, wall torch, lever, spell scroll, healing shrine, relic | yes | **done** |
+| `objects/interactive_minigame_objects` | 6 objects × 3 rows: deck of cards, dice, Mahjongg set, board game, computer game, building blocks | yes | **done** |
+| `games/playing_card` | Atlas: card back, joker, king, queen, jack, plain face, four suit symbols | yes | **done** |
+| `games/polyhedral_dice` | Atlas: D4–D20 in bone and slate, six pip stamps | yes | **done** |
 | `tilesheets/old_stone_dungeon` | 40 tiles: floors, platforms, stairs, walls, ceilings, details | yes | **done** |
 | `tilesheets/ruined_graveyard` | 40 tiles (one blank): ground, platforms, 45° slopes, entrance, ruins, props | yes | **done** |
 
@@ -338,7 +367,7 @@ All six hero sheets share one 14-row layout: idle, run, jump, three attacks (lis
 
 All five NPC sheets share one 12-row layout: idle, walk, death, take a hit, receive healing, buy, sell, wave, talking, hide, teleport out, teleport in. `buy` and `sell` are named from the NPC's point of view, and their `trade` events mark the frames where goods and payment visibly change hands; the game decides what is actually traded. The young villager's buy row runs in the opposite order to the others (he pays first). `data/npcs.json` holds what they do (§16.7).
 
-Not yet in the repository: cards for enemies, music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
+Not yet in the repository: music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
 
 **Cards.** Each card is a PNG with no lettering and a quiet reserved area that the game writes into, plus a guide and a JSON file (`dungeon-scroller/card@1`):
 
@@ -359,7 +388,7 @@ Not yet in the repository: cards for enemies, music, sound effects, parallax bac
 - `textArea` is in card pixels and scales with the displayed card. Every card is 1000 × 1400, but **each card has its own text area**, so the layout adapts to the rectangle it is given (font size and line count are fitted to it) and never assumes a fixed position. Where the art allows, `textArea` is extended beyond the guide's rectangle over pixels measured to be just as dark and empty, keeping clear of the figure, border and corner ornaments; the guide's original is kept as `guideTextArea`. The game lays out name, statistics and abilities from the gameplay catalog inside it as an HTML overlay; `textTone` (`light` or `dark`) and `textBackground` (the measured average colour of the area) choose a readable text colour.
 - Cards are listed under `assets.cards` in `dungeon.json`. Cards are 5:7 and are drawn with smooth scaling when shown smaller than native size, nearest-neighbour when larger.
 
-All six heroes, all three bosses and all five NPCs have a card with JSON. The boss artwork fills most of each card, so their text areas stay close to the guide's rectangle (about 510 × 378), roughly half the room of a hero card; the NPC cards fall in between (about 500–530 wide and 410–550 tall). Enemy cards are still to come. The game shows only the hero cards so far.
+**Everything has a card with JSON** — 62 in all: 6 heroes, 6 enemies, 3 bosses, 5 NPCs, the 16 world objects and the 6 mini-game objects. Text areas vary with the artwork: hero cards have the most room (about 500 × 650 and up), NPC cards about 500–530 wide by 410–550 tall, and most object, enemy and boss cards stay close to the guide's rectangle (about 500 × 380), with a few taller ones. Four mini-game cards are named differently from the object they show: *Playing Card Deck* is the deck of cards, *Dungeon Dice* the dice, and *Chess Set* the folding board game. The game shows hero cards on the selection screen and merchant cards in their shops; the rest are not used yet.
 
 **When a guide and this design disagree, this design wins.** The markdown guides are the source for facts about the art (grid, rows, measurements); rendering and gameplay choices — scaling filters, text areas, collision, timing — follow this document and the JSON files.
 
@@ -889,6 +918,10 @@ Heroes grow stronger by buying upgrades from NPC merchants. Values are in `data/
 Prices, amounts, limits and every line the NPCs say are first drafts.
 
 **Tests** cover gold from pickups, greeting and the shop prompt, prices that grow and stop at the limit, each kind of upgrade taking effect, buying without enough gold, repeatable items, the world waiting during shopping, talkers, and upgrades carried into a new level.
+
+### 16.8 Mini-game objects
+
+The six mini-game objects (`data/objects.json`, behaviour `minigame`) can be placed in a level like any other object. The interact key plays the object's interaction; when that finishes the object stays in its held pose and the simulation raises a `minigame` event naming the game: `cards`, `dice`, `mahjongg`, `board`, `computer` or `blocks`. **No mini-games are built yet**, so the game only shows a short notice. The playing-card and dice atlases (§4.4b) are the art those games will be drawn with. The village level has all six objects.
 
 ### 16.6 Bosses
 

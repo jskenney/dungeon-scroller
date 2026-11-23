@@ -1103,3 +1103,23 @@ tests.push(
     assert(fired >= 5 && fired <= 7, `a carried haste upgrade fired after ${fired} ticks, expected about 6`);
   }],
 );
+
+// --------------------------------------------------------- mini-game objects
+
+tests.push(
+  ['a mini-game object opens its game once and stays in its held pose', () => {
+    const table = fakeObject({ use: 'interact', behaviour: 'minigame', game: 'dice' }, true);
+    const level = mapLevel(['............', '............', 'S...........', '############']);
+    level.doc.entities = [{ type: 'object', id: 'table', col: 2, row: 2 }];
+    const world = new World(level, fighter(), QUIET, { 'object/table': table });
+    walkTo(world, 2);
+    let opened = [];
+    const watch = w => { opened.push(...w.events.filter(e => e.type === 'minigame')); w.events.length = 0; };
+    runWorld(world, i => ({ interact: i === 0 }), 20, watch);
+    assert(opened.length === 0, 'the mini-game opened before the interaction finished');
+    runWorld(world, i => ({ interact: i % 5 === 0 }), 120, watch);
+    assert(opened.length === 1 && opened[0].game === 'dice', `expected one "dice" mini-game to open, got ${opened.length}`);
+    const object = world.objects[0];
+    assert(object && object.state === 'used' && object.pose.slot === 'interact' && object.pose.frame === 5, 'the object did not hold its last frame');
+  }],
+);

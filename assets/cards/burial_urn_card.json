@@ -1,0 +1,26 @@
+{
+  "schema": "dungeon-scroller/card@1",
+  "image": "burial_urn_card.png",
+  "guide": "burial_urn_card.md",
+  "sha256": "119865b8f7cdeffc35779836338dcd7a95bf5ff93a8285f410493c13aa1bb290",
+  "size": { "w": 1000, "h": 1400 },
+  "opaque": true,
+  "lettering": false,
+  "subject": {
+    "kind": "object",
+    "sheet": "../sprites/objects/interactive_world_objects_spritesheet.json",
+    "entity": "burial_urn"
+  },
+  "textArea": { "x": 410, "y": 920, "w": 540, "h": 410 },
+  "guideTextArea": { "x": 450, "y": 952, "w": 490, "h": 364 },
+  "textBackground": "#00071f",
+  "textTone": "light",
+  "notes": [
+    "The game draws all lettering; the image contains none.",
+    "Keep every glyph, outline, shadow and icon inside textArea, with padding so text does not touch its edges.",
+    "Scale textArea with the card: multiply by displayed width / 1000. Do not crop or mirror the card.",
+    "textArea is larger than the guide's rectangle (kept as guideTextArea): it was extended over the measured area that is equally dark and empty, clear of the figure, border and corner ornaments.",
+    "Draw the card with smooth scaling when shown smaller than native size and nearest-neighbour when larger.",
+    "The gold border and corner ornaments lie outside textArea and must stay visible."
+  ]
+}

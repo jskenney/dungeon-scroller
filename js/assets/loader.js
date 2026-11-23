@@ -154,6 +154,35 @@ async function loadTileset(jsonUrl, problems) {
   return { ...json, id, url: jsonUrl, imageUrl, tiles, source };
 }
 
+/** A sheet of static pieces (playing cards, dice) used to draw mini-games. Each sprite gets a texture. */
+async function loadAtlas(jsonUrl, problems) {
+  const { json, imageUrl, bitmap, file } = await loadPair(jsonUrl, problems);
+  const { w: cw, h: ch } = json.cell;
+  if (json.columns * cw !== bitmap.width || json.rows * ch !== bitmap.height) {
+    problems.push({ level: 'error', file, message: `Grid ${json.columns}×${json.rows} of ${cw}×${ch} cells does not match the image size.` });
+  }
+  const source = nearestTexture(bitmap);
+  const sprites = {}, used = new Set();
+  for (const [id, sprite] of Object.entries(json.sprites)) {
+    if (sprite.row < 1 || sprite.row > json.rows || sprite.col < 1 || sprite.col > json.columns) {
+      problems.push({ level: 'error', file, message: `Sprite ${id}: row/col is outside the grid.` });
+      continue;
+    }
+    const key = `${sprite.row},${sprite.col}`;
+    if (used.has(key)) problems.push({ level: 'warning', file, message: `Sprite ${id} shares a cell with another sprite.` });
+    used.add(key);
+    const ox = (sprite.col - 1) * cw, oy = (sprite.row - 1) * ch;
+    const c = sprite.crop;
+    if (c && (c.x < 0 || c.y < 0 || c.x + c.w > cw || c.y + c.h > ch)) problems.push({ level: 'error', file, message: `Sprite ${id}: crop extends outside its cell.` });
+    sprites[id] = { ...sprite, id,
+      texture: new Texture({ source, frame: new Rectangle(ox, oy, cw, ch) }),
+      cropTexture: c ? new Texture({ source, frame: new Rectangle(ox + c.x, oy + c.y, c.w, c.h) }) : null };
+  }
+  if (used.size !== json.columns * json.rows) problems.push({ level: 'warning', file, message: `${json.columns * json.rows - used.size} cells of the image are not named.` });
+  const id = file.replace(/_spritesheet\.json$|\.json$/, '');
+  return { ...json, id, url: jsonUrl, imageUrl, sprites, source };
+}
+
 async function loadCard(jsonUrl, problems) {
   const { json, imageUrl, bitmap, file } = await loadPair(jsonUrl, problems);
   const inside = a => a && a.x >= 0 && a.y >= 0 && a.x + a.w <= bitmap.width && a.y + a.h <= bitmap.height;
@@ -286,9 +315,10 @@ export async function loadAssets(config, configUrl, onProgress = () => {}) {
   const jobs = [
     ...(lists.spritesheets ?? []).map(path => ({ path, load: loadSpritesheet, into: 'sheets' })),
     ...(lists.tilesets ?? []).map(path => ({ path, load: loadTileset, into: 'tilesets' })),
+    ...(lists.atlases ?? []).map(path => ({ path, load: loadAtlas, into: 'atlases' })),
     ...(lists.cards ?? []).map(path => ({ path, load: loadCard, into: 'cards' })),
   ];
-  const result = { sheets: [], tilesets: [], cards: [], problems };
+  const result = { sheets: [], tilesets: [], atlases: [], cards: [], problems };
   let done = 0;
   onProgress(0, jobs.length, '');
   const loaded = await Promise.all(jobs.map(async job => {
