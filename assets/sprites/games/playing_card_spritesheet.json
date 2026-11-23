@@ -3,7 +3,7 @@
   "kind": "minigame",
   "image": "playing_card_spritesheet.png",
   "guide": "playing_card_spritesheet.md",
-  "sha256": "411d1c57fb065ffa00340613f7f5d104c0e1342c3c1d7f37a71f6b9024ff9d49",
+  "sha256": "9102bded2f018047b82cd68a199b3f925f556bc18bed446d1ae2868d70360fb3",
   "size": { "w": 800, "h": 448 },
   "cell": { "w": 160, "h": 224 },
   "columns": 5,

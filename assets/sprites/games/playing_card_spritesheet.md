@@ -24,7 +24,7 @@ The guide follows the same six-section structure as `light_space_mage_spriteshee
 | Suggested fixed card pivot | (80, 112), measured from the cell's top-left boundary |
 | Shared suit sampling area | Cell-local `(32, 64, 96, 96)` |
 | Suggested pivot inside that suit crop | (48, 48) |
-| Verified SHA-256 | `411d1c57fb065ffa00340613f7f5d104c0e1342c3c1d7f37a71f6b9024ff9d49` |
+| Verified SHA-256 | `9102bded2f018047b82cd68a199b3f925f556bc18bed446d1ae2868d70360fb3` |
 
 The **160 × 224 size is the extraction rectangle**, including any transparency. A card occupies the full cell bounds with transparent pixels around its rounded corners. A suit occupies a smaller area inside the same-sized cell. Preserve these distinctions when importing: a suit cell is not another parchment card.
 
