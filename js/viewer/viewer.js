@@ -631,11 +631,22 @@ function composeCard(atlas, rank, suit) {
 }
 
 /** A die showing a result, drawn by stamping pips onto the blank die. */
-function composeDie(atlas, material, result) {
-  const die = new Container(), layout = atlas.layouts.d6;
-  die.addChild(new Sprite(atlas.sprites[`${material}_d6`].texture));
-  const pip = atlas.sprites[`${material}_pip_${layout.pip}`];
-  for (const [x, y] of layout.results[result]) {
+function composeDie(atlas, material, result, sides = 6) {
+  const die = new Container(), L = atlas.layouts, sprite = atlas.sprites[`${material}_d${sides}`];
+  die.addChild(new Sprite(sprite.texture));
+  if (sprite.result === 'numeral') {
+    // Shapes other than the cube show a number, drawn by the game inside the numeral box.
+    const box = L.numeralBox;
+    const text = new Text({ text: String(result), resolution: 4,
+      style: { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 12, fontWeight: '700', fill: parseInt(L.numeralColor[material].slice(1), 16) } });
+    text.anchor.set(0.5);
+    text.position.set(box.x + box.w / 2, box.y + box.h / 2);
+    text.scale.set(Math.min(1, box.w / text.width, box.h / text.height));
+    die.addChild(text);
+    return die;
+  }
+  const pip = atlas.sprites[`${material}_pip_${L.d6.pip}`];
+  for (const [x, y] of L.d6.results[result]) {
     const dot = new Sprite(pip.cropTexture);
     dot.anchor.set(0.5);
     dot.position.set(x, y);
@@ -652,11 +663,15 @@ function buildAtlas(atlas) {
   const isCards = Boolean(atlas.layouts?.pips);
   const examples = isCards
     ? [['A', 'heart'], ['7', 'spade'], ['10', 'diamond'], ['J', 'club'], ['K', 'heart']].map(([rank, suit]) => ({ name: `${rank} of ${suit}s`, make: () => composeCard(atlas, rank, suit) }))
-    : atlas.layouts?.d6 ? ['1', '2', '3', '4', '5', '6'].map((n, i) => ({ name: `${i % 2 ? 'slate' : 'bone'} D6 showing ${n}`, make: () => composeDie(atlas, i % 2 ? 'slate' : 'bone', n) })) : [];
+    : atlas.layouts?.d6 ? [
+        ...['1', '2', '3', '4', '5', '6'].map((n, i) => ({ name: `${i % 2 ? 'slate' : 'bone'} D6 showing ${n}`, make: () => composeDie(atlas, i % 2 ? 'slate' : 'bone', n) })),
+        ...[[4, 3], [8, 7], [10, 10], [12, 12], [20, 20], [20, 1]].map(([sides, n], i) => ({ name: `${i % 2 ? 'bone' : 'slate'} D${sides} showing ${n}`, make: () => composeDie(atlas, i % 2 ? 'bone' : 'slate', n, sides) })),
+      ] : [];
   const zoom = state.zoom ?? Math.max(1, Math.floor(((W - margin * 2) / (atlas.columns * (cw + gap))) * dpr()));
   const S = zoom / dpr();
   const rowH = ch * S + labelH + gap;
-  const height = margin * 2 + atlas.rows * rowH + (examples.length ? rowH + 34 : 0);
+  const exampleRows = Math.ceil(examples.length / atlas.columns);
+  const height = margin * 2 + atlas.rows * rowH + (examples.length ? exampleRows * rowH + 34 : 0);
   scene.contentHeight = height;
   state.pan.y = Math.min(0, Math.max(state.pan.y, H - height));
   state.pan.x = 0;
@@ -678,7 +693,7 @@ function buildAtlas(atlas) {
   if (examples.length) {
     const top = snap(margin + state.pan.y + atlas.rows * rowH + 8);
     app.stage.addChild(label('Examples assembled from the layouts in the JSON', left, top, COLORS.selected));
-    examples.forEach((ex, i) => place(ex.make(), i, top + 26, ex.name));
+    examples.forEach((ex, i) => place(ex.make(), i % atlas.columns, top + 26 + Math.floor(i / atlas.columns) * rowH, ex.name));
   }
   return zoom;
 }

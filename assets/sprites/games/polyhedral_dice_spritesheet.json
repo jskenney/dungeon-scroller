@@ -16,6 +16,7 @@
       "role": "die",
       "material": "bone",
       "sides": 4,
+      "result": "numeral",
       "bounds": { "x": 17, "y": 10, "w": 64, "h": 59 }
     },
     "bone_d6": {
@@ -24,6 +25,7 @@
       "role": "die",
       "material": "bone",
       "sides": 6,
+      "result": "pips",
       "bounds": { "x": 22, "y": 10, "w": 64, "h": 61 }
     },
     "bone_d8": {
@@ -32,6 +34,7 @@
       "role": "die",
       "material": "bone",
       "sides": 8,
+      "result": "numeral",
       "bounds": { "x": 14, "y": 16, "w": 68, "h": 70 }
     },
     "bone_d10": {
@@ -40,6 +43,7 @@
       "role": "die",
       "material": "bone",
       "sides": 10,
+      "result": "numeral",
       "bounds": { "x": 10, "y": 14, "w": 74, "h": 73 }
     },
     "bone_d12": {
@@ -48,6 +52,7 @@
       "role": "die",
       "material": "bone",
       "sides": 12,
+      "result": "numeral",
       "bounds": { "x": 10, "y": 12, "w": 76, "h": 73 }
     },
     "bone_d20": {
@@ -56,6 +61,7 @@
       "role": "die",
       "material": "bone",
       "sides": 20,
+      "result": "numeral",
       "bounds": { "x": 12, "y": 10, "w": 70, "h": 74 }
     },
     "slate_d4": {
@@ -64,6 +70,7 @@
       "role": "die",
       "material": "slate",
       "sides": 4,
+      "result": "numeral",
       "bounds": { "x": 17, "y": 10, "w": 64, "h": 59 }
     },
     "slate_d6": {
@@ -72,6 +79,7 @@
       "role": "die",
       "material": "slate",
       "sides": 6,
+      "result": "pips",
       "bounds": { "x": 22, "y": 10, "w": 64, "h": 61 }
     },
     "slate_d8": {
@@ -80,6 +88,7 @@
       "role": "die",
       "material": "slate",
       "sides": 8,
+      "result": "numeral",
       "bounds": { "x": 14, "y": 16, "w": 68, "h": 70 }
     },
     "slate_d10": {
@@ -88,6 +97,7 @@
       "role": "die",
       "material": "slate",
       "sides": 10,
+      "result": "numeral",
       "bounds": { "x": 10, "y": 14, "w": 74, "h": 73 }
     },
     "slate_d12": {
@@ -96,6 +106,7 @@
       "role": "die",
       "material": "slate",
       "sides": 12,
+      "result": "numeral",
       "bounds": { "x": 10, "y": 12, "w": 76, "h": 73 }
     },
     "slate_d20": {
@@ -104,6 +115,7 @@
       "role": "die",
       "material": "slate",
       "sides": 20,
+      "result": "numeral",
       "bounds": { "x": 12, "y": 10, "w": 70, "h": 74 }
     },
     "bone_pip_6": {
@@ -169,13 +181,14 @@
       }
     },
     "numeralBox": { "x": 40, "y": 42, "w": 16, "h": 12 },
+    "numeralColor": { "bone": "#3b2a1c", "slate": "#ecd29a" },
     "rollFeedbackMs": 480
   },
   "notes": [
     "Static art for dice mini-games: twelve blank dice (six shapes in bone and in slate) and six pip stamps. Nothing here is an animation.",
     "pivot (48, 48) is the centre of each die's result face; draw every die and its markings around it. 'bounds' is the whole visible die, not the result face.",
     "A result is drawn by stamping pips, or a numeral the game supplies, onto the blank die. A pip's 'crop' is its tight source rectangle in the cell; stamp it at native size.",
-    "Only the D6 has pip layouts. For the other shapes the guide suggests a numeral inside numeralBox, since their faces have no room for many pips.",
+    "Each die's 'result' says how its roll is shown: the D6 with pips, every other shape with a number drawn by the game inside numeralBox, in numeralColor for its material. The image contains no numbers or font.",
     "Rolling is shown by jiggling the same die for about rollFeedbackMs; there are no tumbling frames."
   ]
 }
