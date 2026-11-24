@@ -2,13 +2,16 @@
 
 ## 1. Asset and deck
 
-This guide describes the final game asset **[playing_card_spritesheet.png](playing_card_spritesheet.png)**: a reusable dungeon-themed playing-card atlas with a shared midnight-blue back, five parchment face templates, and four separate suit icons. The cards have thin antique-gold frames, dark slate accents, rounded corners, and worn fantasy materials. The Joker and court cards contain pixel-art portraits; ranks and suit assignments are supplied by the game.
+This guide describes the final game asset **[playing_card_spritesheet_v2.png](playing_card_spritesheet_v2.png)**: a reusable dungeon-themed playing-card atlas with a shared midnight-blue back, five parchment face templates, and four separate suit icons. The cards have thin antique-gold frames, dark slate accents, rounded corners, and worn fantasy materials. The Joker and court cards contain pixel-art portraits; ranks and suit assignments are supplied by the game.
+
+This updated `playing_card_spritesheet.md` documents **`playing_card_spritesheet_v2.png`**, including the skeletal Jack, the aligned shared borders, and the centered, mirrored card-back pattern. Keep the guide beside that PNG so its relative image link resolves correctly.
 
 The guide follows the same six-section structure as `light_space_mage_spritesheet.md`, with card assembly and display behavior in place of character animation playback.
 
 | Property | Value |
 |---|---|
-| Image filename | `playing_card_spritesheet.png` |
+| Image filename | `playing_card_spritesheet_v2.png` |
+| File size | 378,050 bytes |
 | Canvas | 800 × 448 pixels |
 | Grid | 5 columns × 2 rows |
 | Full-cell extraction size | 160 × 224 pixels for every sprite |
@@ -20,13 +23,13 @@ The guide follows the same six-section structure as `light_space_mage_spriteshee
 | Format | RGBA PNG; alpha values are 0 or 255 |
 | Native view | Straight-on, upright portrait cards |
 | Sheet margin and inter-cell spacing | 0 pixels |
-| Card outline | Matching 160 × 224 bounds with transparent rounded corners |
+| Card outline | Identical alpha masks; tight visible rectangle `(1, 0, 158, 224)` inside each 160 × 224 cell |
 | Suggested fixed card pivot | (80, 112), measured from the cell's top-left boundary |
 | Shared suit sampling area | Cell-local `(32, 64, 96, 96)` |
 | Suggested pivot inside that suit crop | (48, 48) |
 | Verified SHA-256 | `9102bded2f018047b82cd68a199b3f925f556bc18bed446d1ae2868d70360fb3` |
 
-The **160 × 224 size is the extraction rectangle**, including any transparency. A card occupies the full cell bounds with transparent pixels around its rounded corners. A suit occupies a smaller area inside the same-sized cell. Preserve these distinctions when importing: a suit cell is not another parchment card.
+The **160 × 224 size is the extraction rectangle**, including transparency. Each card's tight visible bounds are **`(1, 0, 158, 224)`**, covering local pixel columns 1–158 and rows 0–223; its rounded corners add further transparent pixels inside that rectangle. Keep the full 160 × 224 extraction cell and the fixed pivot for ordinary card rendering. A suit occupies a smaller area inside the same-sized cell. Preserve these distinctions when importing: a suit cell is not another parchment card.
 
 The PNG contains pixels only. Card identities, ranks, suits, deck order, number-card pip layouts, selection states, dealing, and flip timing are game data or controller behavior. The assembly layouts and display timings below are implementation recommendations, not metadata embedded in the image. All measured properties in this guide refer to the PNG identified by the digest above.
 
@@ -71,6 +74,8 @@ Both areas are opaque parchment **`#F7E6D1`**, RGB **(247, 230, 209)**, in the d
 
 Rotate the complete upper-left index group by **180° around the card center `(80, 112)`** to place its matching lower-right group. In boundary coordinates, this maps `(x, y)` to `(160 - x, 224 - y)`. A rectangle `(x, y, w, h)` maps to `(160 - x - w, 224 - y - h, w, h)`. Use a rotation, not a horizontal reflection of the text.
 
+Those formulas describe continuous coordinates and rectangle boundaries. When addressing individual zero-based pixels, a 180° rotation maps pixel **`(x, y)` to `(159 - x, 223 - y)`**. The distinction prevents a one-pixel offset when copying or rotating raster data.
+
 The exact global index rectangles for all five faces are listed in section 6. If the card is drawn at screen position `(screenX, screenY)` with scale `s`, a local coordinate becomes `(screenX + localX*s, screenY + localY*s)`. Apply the same scale and transform to the card artwork, index groups, and central pips.
 
 ## 3. Sprite catalog
@@ -83,7 +88,7 @@ Read the sheet left to right to identify its components. **Adjacent cells are di
 | 1 | 2 | 1 | `joker` | Upright skeletal jester | Optional Joker card |
 | 1 | 3 | 2 | `king` | Double-ended skeletal monarch | King of any suit |
 | 1 | 4 | 3 | `queen` | Double-ended crypt queen | Queen of any suit |
-| 1 | 5 | 4 | `jack` | Double-ended dungeon guard | Jack of any suit |
+| 1 | 5 | 4 | `jack` | Double-ended skeletal dungeon guard | Jack of any suit |
 | 2 | 1 | 5 | `plain_face` | Blank parchment card | Ace and ranks 2–10; other custom cards |
 | 2 | 2 | 6 | `heart` | Deep-crimson Heart | Corner suit marks and central pips |
 | 2 | 3 | 7 | `diamond` | Deep-crimson Diamond | Corner suit marks and central pips |
@@ -92,7 +97,9 @@ Read the sheet left to right to identify its components. **Adjacent cells are di
 
 ### Card Back — `card_back`
 
-A midnight-blue field carries opposing antique-gold dungeon arches, hinge-like crossbars, dark masonry accents, and a central geometric ornament. Its outline matches the face templates. The complete card is **pixel-identical after a 180° rotation**, including the frame and texture, so the back does not identify which end of a hidden card is upright. Use this one sprite for every rank and suit; hidden identity remains in the card's game data.
+A midnight-blue field carries opposing antique-gold dungeon arches, hinge-like crossbars, dark masonry accents, and a central geometric ornament. The gold spine, arch peaks, columns, and ironwork are centered and aligned through the card's midpoint. The lower half is an **exact vertical mirror of the upper half**, and the full card is also exactly symmetric left to right. Its outline matches the face templates.
+
+The complete back is **pixel-identical after a 180° rotation**, including the frame and texture, so it does not identify which end of a hidden card is upright. The shared border remains straight through local rows 111 and 112. Use this one sprite for every rank and suit; hidden identity remains in the card's game data.
 
 ### Joker — `joker`
 
@@ -108,7 +115,7 @@ A skeletal crypt queen wears a dark veil, a **silver diadem**, and blue-green ge
 
 ### Jack — `jack`
 
-A young living dungeon guard with tousled brown hair wears a muted tabard and holds a chipped short sword beside the shoulder. A small crenellated gate-like device decorates the tabard. Matching upright and inverted portraits form the double-ended composition. Add `J` and the selected suit in the clear corners; the tabard device is decorative artwork, not a rank glyph.
+A young skeletal dungeon guard has an exposed ivory skull, dark eye sockets, a connected vertebral neck, and bony hands. It wears a plain, worn tabard in muted brown and charcoal tones and holds a chipped short sword beside the shoulder. Matching upright and inverted portraits form the double-ended composition. Add `J` and the selected suit in the clear corners. The tabard has no baked-in rank, suit assignment, lettering, or emblem.
 
 ### Plain Card Face — `plain_face`
 
@@ -187,9 +194,11 @@ All listed stamp rectangles fit within the plain face and avoid both index reser
 
 ### JavaScript example: descriptors and card composition
 
-This Canvas 2D example draws one native-size card at the current local origin. It assumes the PNG is loaded into `image`. The caller supplies `drawRankGlyph(ctx, rank, rectangle, color)`, a routine that draws the game's pixel-font glyphs inside the given rectangle. That callback is required for ordinary face-up cards because rank glyphs are not part of the atlas.
+This Canvas 2D example draws one native-size card at the current local origin. It assumes `playing_card_spritesheet_v2.png` is loaded into `image`; the `DECK_ID` and `DECK_IMAGE_FILE` constants below identify that theme for the caller's loader and cache. The caller supplies `drawRankGlyph(ctx, rank, rectangle, color)`, a routine that draws the game's pixel-font glyphs inside the given rectangle. That callback is required for ordinary face-up cards because rank glyphs are not part of the atlas.
 
 ```javascript
+const DECK_ID = "dungeon";
+const DECK_IMAGE_FILE = "playing_card_spritesheet_v2.png";
 const CARD_WIDTH = 160;
 const CARD_HEIGHT = 224;
 const CARD_COLUMNS = 5;
@@ -243,23 +252,29 @@ function drawCardSprite(ctx, image, id) {
 function stampSuit(ctx, image, suit, centerX, centerY, size, upsideDown = false) {
   const r = CARD_SPRITES[suit].rect;
   ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.translate(centerX, centerY);
-  if (upsideDown) ctx.rotate(Math.PI);
-  ctx.drawImage(image, r.x + 32, r.y + 64, 96, 96,
-    -size / 2, -size / 2, size, size);
-  ctx.restore();
+  try {
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(centerX, centerY);
+    if (upsideDown) ctx.rotate(Math.PI);
+    ctx.drawImage(image, r.x + 32, r.y + 64, 96, 96,
+      -size / 2, -size / 2, size, size);
+  } finally {
+    ctx.restore();
+  }
 }
 
 function drawUpperIndex(ctx, image, rank, suit, drawRankGlyph) {
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(12, 12, 32, 48);
-  ctx.clip();
-  drawRankGlyph(ctx, rank, { x: 14, y: 14, width: 28, height: 22 },
-    SUIT_COLORS[suit]);
-  stampSuit(ctx, image, suit, 28, 45, 12);
-  ctx.restore();
+  try {
+    ctx.beginPath();
+    ctx.rect(12, 12, 32, 48);
+    ctx.clip();
+    drawRankGlyph(ctx, rank, { x: 14, y: 14, width: 28, height: 22 },
+      SUIT_COLORS[suit]);
+    stampSuit(ctx, image, suit, 28, 45, 12);
+  } finally {
+    ctx.restore();
+  }
 }
 
 function drawDeckCard(ctx, image, card, drawRankGlyph) {
@@ -295,10 +310,13 @@ function drawDeckCard(ctx, image, card, drawRankGlyph) {
     }
     drawUpperIndex(ctx, image, rank, suit, drawRankGlyph);
     ctx.save();
-    ctx.translate(CARD_WIDTH, CARD_HEIGHT);
-    ctx.rotate(Math.PI);
-    drawUpperIndex(ctx, image, rank, suit, drawRankGlyph);
-    ctx.restore();
+    try {
+      ctx.translate(CARD_WIDTH, CARD_HEIGHT);
+      ctx.rotate(Math.PI);
+      drawUpperIndex(ctx, image, rank, suit, drawRankGlyph);
+    } finally {
+      ctx.restore();
+    }
   } finally {
     ctx.restore();
   }
@@ -311,9 +329,11 @@ function drawDeckCard(ctx, image, card, drawRankGlyph) {
 // drawDeckCard(ctx, image, { rank: "JOKER" });
 ```
 
+The composition helpers restore the caller's Canvas state if a rank renderer or image draw throws an error, and the error continues to the caller.
+
 The function draws into the caller's current coordinate system; it does not clear the destination or position the card on a game table. Clear an offscreen card texture before composing into it, or let the scene renderer redraw its background. To place a card around a world/UI center, translate to that center, apply the card's scale and rotation, then translate by `(-80, -112)` before calling the function. This keeps portraits, ranks, corner symbols, and central pips together during movement.
 
-If faces are cached, key each cached image by its rank, suit, and relevant visual style. Keep the logical card object separate from that image so several identical-looking cards or Jokers can still be distinct game objects.
+If faces are cached, include the **deck skin or image asset identity**, rank, suit, and relevant visual style in the cache key. For example, `dungeon:K:spade` and `hero:K:spade` must resolve to different portrait textures. Keep the logical card object separate from that image so several identical-looking cards or Jokers can still be distinct game objects.
 
 ### Display states and transitions
 
@@ -339,7 +359,10 @@ These checks refer to the final PNG pixels, not only the original design request
 
 | Relationship or property | Verified result |
 |---|---|
-| Six card outlines | Identical alpha masks, each with 35,472 opaque pixels inside its 160 × 224 cell |
+| Six card outlines | Identical alpha masks, each with **35,252 opaque pixels**; tight local bounds `(1, 0, 158, 224)` inside its 160 × 224 cell |
+| Shared eight-pixel perimeter | Identical RGBA pixels on all six card templates |
+| Border alignment | Straight side bounds x1–158 throughout rows 8–215; left and right border strips match across rows 111/112 |
+| Back mirrored vertically or horizontally | Identical pixels; its lower half exactly mirrors the upper half |
 | Shared back rotated 180° | Identical pixels |
 | King, Queen, and Jack rotated 180° | Each template is identical to its own rotated copy |
 | Plain face rotated 180° | Identical pixels |
@@ -349,6 +372,12 @@ These checks refer to the final PNG pixels, not only the original design request
 | Spade and Club | One opaque color each, RGB `(34, 38, 48)` |
 | Transparency | Every pixel has alpha 0 or 255; no translucent fringe |
 | Baked-in card identity | No ranks, numbers, or corner suit assignments; game data supplies them |
+
+### Compatibility with the hero deck
+
+The companion **[hero_playing_card_spritesheet.png](hero_playing_card_spritesheet.png)** uses the same 800 × 448 canvas, ten sprite IDs, cell locations, 160 × 224 extraction rectangles, pivots, index reserves, and suit sampling rectangles. Its **Card Back and entire bottom row—Plain Face, Heart, Diamond, Spade, and Club—are pixel-for-pixel copies of this corrected dungeon deck**.
+
+Only the four portrait interiors differ. A renderer can switch deck skins by loading the other image and passing it to the same composition functions. The rank and suit data, pip layouts, flip transforms, and source rectangles stay the same. Keep the image or deck-skin identity in cached face keys so a previously composed dungeon court is not reused for a hero court. Character palettes do not assign suits or change card values. See [hero_playing_card_spritesheet.md](hero_playing_card_spritesheet.md) for the hero portraits and their specific notes.
 
 ### Preserve pivots and relative symbol sizes
 
@@ -362,7 +391,7 @@ If an importer trims icons, preserve each trim offset and use the corresponding 
 
 Use point sampling and integer display positions when practical. Integer enlargement preserves the native pixel grid; deliberate reduction of suit symbols is already supported by sampling their common crop. Inspect corner marks at the game's actual display size, especially the two-digit rank `10`. A bitmap font keeps the rank treatment consistent with the artwork.
 
-The card interiors are opaque parchment or midnight blue. Only the pixels outside their rounded outlines are transparent. The suit cells are transparent everywhere except the silhouettes. No floor shadow, glow, guide line, or sheet border is included.
+The card interiors are opaque parchment or midnight blue. Only the pixels outside their rounded outlines are transparent. The suit cells are transparent everywhere except the silhouettes. The atlas has no shadows outside the cards, guide lines, or sheet border. Any highlights within a portrait or the back belong to that artwork.
 
 The source atlas has **zero gutters**. When repacking it for a renderer that uses filtering or mipmaps, add padding/extrusion in the destination atlas and retain the original logical rectangles and pivots. Do not expand a source crop into an adjacent cell to create padding. Preserve the original PNG alpha and avoid lossy recompression.
 
@@ -384,6 +413,21 @@ All rectangles below use **`(x, y, width, height)`**, with excluded right and bo
 |---|---|---|---|---|---|
 | 1 | Back `(0, 0, 160, 224)` | Joker `(160, 0, 160, 224)` | King `(320, 0, 160, 224)` | Queen `(480, 0, 160, 224)` | Jack `(640, 0, 160, 224)` |
 | 2 | Plain face `(0, 224, 160, 224)` | Heart `(160, 224, 160, 224)` | Diamond `(320, 224, 160, 224)` | Spade `(480, 224, 160, 224)` | Club `(640, 224, 160, 224)` |
+
+### Card visible bounds and optional trimming
+
+Every card template has the same local tight alpha bounds **`(1, 0, 158, 224)`**, while its full source cell remains 160 × 224. The table below is useful only when an importer requires a tight bounding rectangle; rounded corners still contain transparency within that rectangle.
+
+| Card template | Tight visible atlas rectangle |
+|---|---|
+| Back | `(1, 0, 158, 224)` |
+| Joker | `(161, 0, 158, 224)` |
+| King | `(321, 0, 158, 224)` |
+| Queen | `(481, 0, 158, 224)` |
+| Jack | `(641, 0, 158, 224)` |
+| Plain face | `(1, 224, 158, 224)` |
+
+A trimmed card has offset **`(1, 0)`** from its logical cell and pivot **`(79, 112)`** within the 158 × 224 crop. Preserve that offset when restoring the 160 × 224 logical frame. The composition example uses full cells and needs no trimming adjustment.
 
 ### Global index rectangles in the atlas
 
