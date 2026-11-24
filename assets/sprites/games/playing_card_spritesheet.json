@@ -9,12 +9,21 @@
   "columns": 5,
   "rows": 2,
   "pivot": { "x": 80, "y": 112 },
+  "deck": "dungeon",
+  "name": "Dungeon",
   "sprites": {
     "card_back": { "row": 1, "col": 1, "name": "Card back", "role": "back", "sameUpsideDown": true },
-    "joker": { "row": 1, "col": 2, "name": "Joker", "role": "face", "sameUpsideDown": false },
-    "king": { "row": 1, "col": 3, "name": "King", "role": "face", "sameUpsideDown": true },
-    "queen": { "row": 1, "col": 4, "name": "Queen", "role": "face", "sameUpsideDown": true },
-    "jack": { "row": 1, "col": 5, "name": "Jack", "role": "face", "sameUpsideDown": true },
+    "joker": { "row": 1, "col": 2, "name": "Joker", "role": "face", "shows": "Upright skeletal jester", "sameUpsideDown": false },
+    "king": { "row": 1, "col": 3, "name": "King", "role": "face", "shows": "Double-ended skeletal monarch", "sameUpsideDown": true },
+    "queen": { "row": 1, "col": 4, "name": "Queen", "role": "face", "shows": "Double-ended crypt queen", "sameUpsideDown": true },
+    "jack": {
+      "row": 1,
+      "col": 5,
+      "name": "Jack",
+      "role": "face",
+      "shows": "Double-ended skeletal dungeon guard",
+      "sameUpsideDown": true
+    },
     "plain_face": { "row": 2, "col": 1, "name": "Plain card face", "role": "face", "sameUpsideDown": true },
     "heart": {
       "row": 2,
@@ -55,6 +64,7 @@
   },
   "layouts": {
     "parchment": "#f7e6d1",
+    "cardBounds": { "x": 1, "y": 0, "w": 158, "h": 224 },
     "indexAreas": {
       "upperLeft": { "x": 12, "y": 12, "w": 32, "h": 48 },
       "lowerRight": { "x": 116, "y": 164, "w": 32, "h": 48 }
@@ -68,16 +78,81 @@
       "aceSize": 32,
       "size": 20,
       "centers": {
-        "A": [[80, 112]],
-        "2": [[80, 60], [80, 164]],
-        "3": [[80, 60], [80, 112], [80, 164]],
-        "4": [[56, 60], [104, 60], [56, 164], [104, 164]],
-        "5": [[56, 60], [104, 60], [80, 112], [56, 164], [104, 164]],
-        "6": [[56, 60], [104, 60], [56, 112], [104, 112], [56, 164], [104, 164]],
-        "7": [[56, 60], [104, 60], [80, 86], [56, 112], [104, 112], [56, 164], [104, 164]],
-        "8": [[56, 60], [104, 60], [80, 86], [56, 112], [104, 112], [80, 138], [56, 164], [104, 164]],
-        "9": [[56, 52], [104, 52], [56, 92], [104, 92], [80, 112], [56, 132], [104, 132], [56, 172], [104, 172]],
-        "10": [[56, 52], [104, 52], [80, 72], [56, 92], [104, 92], [56, 132], [104, 132], [80, 152], [56, 172], [104, 172]]
+        "A": [
+          [80, 112]
+        ],
+        "2": [
+          [80, 60],
+          [80, 164]
+        ],
+        "3": [
+          [80, 60],
+          [80, 112],
+          [80, 164]
+        ],
+        "4": [
+          [56, 60],
+          [104, 60],
+          [56, 164],
+          [104, 164]
+        ],
+        "5": [
+          [56, 60],
+          [104, 60],
+          [80, 112],
+          [56, 164],
+          [104, 164]
+        ],
+        "6": [
+          [56, 60],
+          [104, 60],
+          [56, 112],
+          [104, 112],
+          [56, 164],
+          [104, 164]
+        ],
+        "7": [
+          [56, 60],
+          [104, 60],
+          [80, 86],
+          [56, 112],
+          [104, 112],
+          [56, 164],
+          [104, 164]
+        ],
+        "8": [
+          [56, 60],
+          [104, 60],
+          [80, 86],
+          [56, 112],
+          [104, 112],
+          [80, 138],
+          [56, 164],
+          [104, 164]
+        ],
+        "9": [
+          [56, 52],
+          [104, 52],
+          [56, 92],
+          [104, 92],
+          [80, 112],
+          [56, 132],
+          [104, 132],
+          [56, 172],
+          [104, 172]
+        ],
+        "10": [
+          [56, 52],
+          [104, 52],
+          [80, 72],
+          [56, 92],
+          [104, 92],
+          [56, 132],
+          [104, 132],
+          [80, 152],
+          [56, 172],
+          [104, 172]
+        ]
       },
       "note": "Centres of the suit symbols on the plain face for the ace and 2 to 10. Turn pips below the middle line (y greater than 112) upside down."
     },
@@ -92,12 +167,18 @@
     },
     "flipMs": 200
   },
+  "sharedWith": [
+    "hero_playing_card_spritesheet.json",
+    "npc_playing_card_spritesheet.json"
+  ],
   "notes": [
     "Static art for card mini-games: one shared back, five face templates and four suit symbols. Nothing here is an animation.",
     "A playing card is assembled by the game: a face template, the rank and suit drawn into the two index areas, and for the ace and 2 to 10 the suit symbols placed at the pip centres.",
     "The index areas are blank parchment on every face template. No ranks, numbers or fonts are in the image.",
     "Stamp a suit from its 'crop' (the same 96 x 96 area in every suit cell) so the four symbols keep their relative sizes; 'bounds' is the exact painted area.",
     "The back, plain face and the three court cards look the same upside down; the joker does not.",
-    "A flip is shown by squeezing the card to nothing across its width over half of flipMs, swapping the side, and widening again."
+    "A flip is shown by squeezing the card to nothing across its width over half of flipMs, swapping the side, and widening again.",
+    "The three decks are skins of one layout: the back, plain face and four suits are the same pixels in each, and only the joker, king, queen and jack pictures differ. A game can swap decks by swapping the image.",
+    "The guide calls this image playing_card_spritesheet_v2.png; the file in the repository is playing_card_spritesheet.png and its checksum matches the guide."
   ]
 }

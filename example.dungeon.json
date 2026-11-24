@@ -24,6 +24,8 @@
     ],
     "atlases": [
       "assets/sprites/games/playing_card_spritesheet.json",
+      "assets/sprites/games/hero_playing_card_spritesheet.json",
+      "assets/sprites/games/npc_playing_card_spritesheet.json",
       "assets/sprites/games/polyhedral_dice_spritesheet.json"
     ],
     "tilesets": [

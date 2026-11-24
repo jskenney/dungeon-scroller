@@ -662,7 +662,7 @@ function buildAtlas(atlas) {
   const margin = 14, labelH = 20, gap = 10;
   const isCards = Boolean(atlas.layouts?.pips);
   const examples = isCards
-    ? [['A', 'heart'], ['7', 'spade'], ['10', 'diamond'], ['J', 'club'], ['K', 'heart']].map(([rank, suit]) => ({ name: `${rank} of ${suit}s`, make: () => composeCard(atlas, rank, suit) }))
+    ? [['A', 'heart'], ['7', 'spade'], ['10', 'diamond'], ['J', 'club'], ['Q', 'spade'], ['K', 'heart']].map(([rank, suit]) => ({ name: `${rank} of ${suit}s`, make: () => composeCard(atlas, rank, suit) }))
     : atlas.layouts?.d6 ? [
         ...['1', '2', '3', '4', '5', '6'].map((n, i) => ({ name: `${i % 2 ? 'slate' : 'bone'} D6 showing ${n}`, make: () => composeDie(atlas, i % 2 ? 'slate' : 'bone', n) })),
         ...[[4, 3], [8, 7], [10, 10], [12, 12], [20, 20], [20, 1]].map(([sides, n], i) => ({ name: `${i % 2 ? 'bone' : 'slate'} D${sides} showing ${n}`, make: () => composeDie(atlas, i % 2 ? 'bone' : 'slate', n, sides) })),

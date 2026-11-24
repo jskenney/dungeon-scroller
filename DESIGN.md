@@ -334,6 +334,7 @@ Sheets of separate pieces that are assembled by the game instead of played as an
 - **`layouts`** hold the guide's recipes for assembling things from the pieces, so a mini-game needs no numbers of its own.
   - *Playing cards:* the two index areas on every face, where the rank and suit go inside them, the centres of the suit symbols for the ace and 2–10, which template each rank uses, and the flip time.
   - *Dice:* each die's `result` says how a roll is shown. The D6 uses pips, at the listed centres for 1–6. Every other shape shows a number, drawn by the game inside `numeralBox` in the `numeralColor` for its material (dark on bone, pale brass on slate). Also the time to jiggle a die while it "rolls".
+- **Card decks** are skins of one layout. Each deck atlas has a `deck` id (`dungeon`, `hero`, `npc`) and a `name`; the back, plain face and suits are the same pixels in all three and only the joker, king, queen and jack pictures differ (`shows` says who is pictured). A card game picks a deck by id and uses the same assembly code for all of them.
 - The viewer shows every piece and, beneath them, example cards and dice assembled from the layouts, which is how the JSON was checked.
 
 ### 4.5 Asset inventory today
@@ -356,7 +357,9 @@ Sheets of separate pieces that are assembled by the game instead of played as an
 | `bosses/undead_boss` | undead dragon, undead Fenrir, death monarch (9 rows each, 1536×6912) | yes | **done** |
 | `objects/interactive_world_objects` | 16 objects × 3 rows: chest, healing potion, space potion, coin, gem, key, gravestone, checkpoint flag, crate, barrel, urn, wall torch, lever, spell scroll, healing shrine, relic | yes | **done** |
 | `objects/interactive_minigame_objects` | 6 objects × 3 rows: deck of cards, dice, Mahjongg set, board game, computer game, building blocks | yes | **done** |
-| `games/playing_card` | Atlas: card back, joker, king, queen, jack, plain face, four suit symbols | yes | **done** |
+| `games/playing_card` | Atlas, dungeon deck: card back, skeleton jester (joker), skeletal monarch (king), crypt queen, skeleton guard (jack), plain face, four suit symbols | yes | **done** |
+| `games/hero_playing_card` | Atlas, hero deck: same layout; dark swordsman (joker), light-and-space mage (king), water mage (queen), earth mage (jack) | yes | **done** |
+| `games/npc_playing_card` | Atlas, villager deck: same layout; young villager (joker), shopkeeper (king), village elder (queen), village priest (jack) | yes | **done** |
 | `games/polyhedral_dice` | Atlas: D4–D20 in bone and slate, six pip stamps | yes | **done** |
 | `tilesheets/old_stone_dungeon` | 40 tiles: floors, platforms, stairs, walls, ceilings, details | yes | **done** |
 | `tilesheets/ruined_graveyard` | 40 tiles (one blank): ground, platforms, 45° slopes, entrance, ruins, props | yes | **done** |
