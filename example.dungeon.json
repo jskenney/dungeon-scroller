@@ -29,6 +29,14 @@
       "assets/sprites/games/npc_playing_card_spritesheet.json",
       "assets/sprites/games/polyhedral_dice_spritesheet.json"
     ],
+    "parallax": [
+      "assets/tilesheets/dungeon_parallax.json",
+      "assets/tilesheets/graveyard_parallax.json"
+    ],
+    "backdrops": [
+      "assets/sprites/menus/welcome_screen_spritesheet.json",
+      "assets/sprites/menus/main_menu_background_spritesheet.json"
+    ],
     "tilesets": [
       "assets/tilesheets/old_stone_dungeon_tileset.json",
       "assets/tilesheets/ruined_graveyard_tileset.json"
@@ -95,7 +103,11 @@
     "defaultViewTiles": 8,
     "minViewTiles": 4,
     "maxViewTiles": 24,
-    "pixelPerfect": true
+    "pixelPerfect": true,
+    "parallax": true,
+    "parallaxReplacesBackgroundTiles": true,
+    "parallaxGround": 0.74,
+    "backdrops": { "title": "welcome_screen", "menus": "main_menu_background" }
   },
 
   "controls": {

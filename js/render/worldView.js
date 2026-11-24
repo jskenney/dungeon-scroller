@@ -12,11 +12,14 @@ const tint = hex => parseInt(String(hex ?? '#ffffff').slice(1), 16);
 const lerp = (a, b, t) => a + (b - a) * t;
 
 export class WorldView {
-  /** @param {import('./stage.js').Stage} stage @param {import('../sim/world.js').World} world */
-  constructor(stage, world) {
+  /**
+   * @param {import('./stage.js').Stage} stage @param {import('../sim/world.js').World} world
+   * @param {{parallax?: object, replaceBackground?: boolean}} [scenery]  strips to draw behind the level
+   */
+  constructor(stage, world, scenery = {}) {
     this.stage = stage;
     this.world = world;
-    stage.showLevel(world.level);
+    stage.showLevel(world.level, scenery.parallax ?? null, scenery.replaceBackground ?? false, scenery.ground ?? 1);
     this.effects = new Container();
     this.bars = new Graphics();
     // Objects and gates sit behind the hero and enemies.

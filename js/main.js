@@ -49,6 +49,34 @@ function progressNote(heroId) {
 const heroes = () => Object.values(game.assets.entities).filter(e => e.kind === 'player' && e.gameplay);
 const cardFor = entity => game.assets.cards.find(c => c.subjectEntity === entity);
 
+/**
+ * A menu screen drawn on one of the framed stone backgrounds. The whole frame
+ * is fitted inside the window; `content` goes in the area the art keeps clear.
+ * `which` is a key of display.backdrops in the site configuration. With no
+ * such art, the content is shown on a plain dimmed screen as before.
+ */
+function framed(which, content, extraClass = '') {
+  const art = game.assets.backdrops.find(b => b.id === game.config.display?.backdrops?.[which]);
+  if (!art) return h('div', { class: `screen centered ${extraClass}` }, content);
+  const { frame, menuRect: m, columns, rows, animation } = art;
+  const pct = (v, of) => `${(v / of) * 100}%`;
+  const picture = h('div', { class: 'frame-art', style: {
+    aspectRatio: `${frame.w} / ${frame.h}`, width: `min(100vw, 100vh * ${frame.w / frame.h})`, backgroundImage: `url("${art.imageUrl}")`, backgroundSize: `${columns * 100}% ${rows * 100}%` } },
+    h('div', { class: 'frame-area', style: { left: pct(m.x, frame.w), top: pct(m.y, frame.h), width: pct(m.w, frame.w), height: pct(m.h, frame.h) } }, content));
+  // Step through the frames at the art's own timings, for as long as the screen is shown.
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let index = 0;
+  const step = () => {
+    if (index > 0 && !picture.isConnected) return;
+    const i = index % animation.durations.length;
+    picture.style.backgroundPosition = `${columns > 1 ? ((i % columns) / (columns - 1)) * 100 : 0}% ${rows > 1 ? (Math.floor(i / columns) / (rows - 1)) * 100 : 0}%`;
+    index++;
+    if (!still) setTimeout(step, animation.durations[i]);
+  };
+  step();
+  return h('div', { class: `screen framed ${extraClass}` }, picture);
+}
+
 function panel(title, ...children) {
   return h('section', { class: 'panel' }, h('h1', {}, title), ...children);
 }
@@ -59,16 +87,16 @@ function titleScreen() {
   stopPlay();
   game.audio.music(game.audio.musicFor('title'));
   const problems = game.assets.problems.filter(p => p.level === 'error').length;
-  show(h('div', { class: 'screen title' },
-    h('div', { class: 'title-block' },
-      h('h1', { class: 'logo' }, game.config.title ?? 'Dungeon Scroller'),
-      h('div', { class: 'menu' },
-        h('button', { type: 'button', autofocus: true, onclick: heroScreen }, 'Play'),
-        h('button', { type: 'button', onclick: () => settingsScreen(titleScreen) }, 'Settings'),
-        h('a', { class: 'button', href: 'viewer.html' }, 'Asset viewer'))),
-    h('p', { class: 'footnote' },
-      game.usedExample ? 'Using example.dungeon.json (no dungeon.json found). ' : '',
-      problems ? h('a', { href: 'viewer.html#problems' }, `${problems} asset problem${problems === 1 ? '' : 's'} found — open the viewer.`) : '')));
+  const screen = framed('title', h('div', { class: 'title-block' },
+    h('h1', { class: 'logo' }, game.config.title ?? 'Dungeon Scroller'),
+    h('div', { class: 'menu' },
+      h('button', { type: 'button', autofocus: true, onclick: heroScreen }, 'Play'),
+      h('button', { type: 'button', onclick: () => settingsScreen(titleScreen, true) }, 'Settings'),
+      h('a', { class: 'button', href: 'viewer.html' }, 'Asset viewer'))), 'title');
+  screen.append(h('p', { class: 'footnote' },
+    game.usedExample ? 'Using example.dungeon.json (no dungeon.json found). ' : '',
+    problems ? h('a', { href: 'viewer.html#problems' }, `${problems} asset problem${problems === 1 ? '' : 's'} found — open the viewer.`) : ''));
+  show(screen);
 }
 
 // --------------------------------------------------------------- hero selection
@@ -93,13 +121,13 @@ function heroScreen() {
       onclick: () => (chosen === entity ? confirm() : choose(entity)) },
       card ? cardElement(card, entity) : h('div', { class: 'card missing' }, entity.name));
   }));
-  show(h('div', { class: 'screen select' },
+  show(framed('menus', h('div', { class: 'select' },
     h('header', { class: 'bar-top' },
       h('button', { type: 'button', onclick: titleScreen }, '← Back'),
       h('h1', {}, 'Choose your hero'),
       preview,
       h('button', { type: 'button', class: 'primary', onclick: confirm }, 'Continue')),
-    grid), titleScreen);
+    grid)), titleScreen);
   choose(chosen);
 }
 
@@ -140,7 +168,7 @@ function levelScreen() {
       h('label', {}, 'Seed ', seed), h('button', { type: 'submit', class: 'primary' }, 'Play')),
     error);
 
-  show(h('div', { class: 'screen centered' }, panel('Choose a level',
+  show(framed('menus', panel('Choose a level',
     h('p', { class: 'muted' }, `Playing as ${game.hero.name}.`),
     h('div', { class: 'levels' }, random, levels),
     h('div', { class: 'row' }, h('button', { type: 'button', onclick: heroScreen }, '← Change hero')))), heroScreen);
@@ -173,7 +201,8 @@ function startRandom({ theme, length, difficulty, seed }) {
 
 // --------------------------------------------------------------------- settings
 
-function settingsScreen(returnTo) {
+/** @param {Function} returnTo  where Done goes  @param {boolean} [onFrame]  draw on the menu background (not used over a paused game) */
+function settingsScreen(returnTo, onFrame = false) {
   const s = game.settings;
   let capturing = null;                       // action waiting for a key press
   const render = () => {
@@ -191,7 +220,7 @@ function settingsScreen(returnTo) {
     const zoomText = () => `about ${Math.round(game.stage.visibleTiles * 10) / 10} tiles across`;
     const zoomOut = h('span', { class: 'muted' }, zoomText());
     const zoom = direction => { game.stage.zoomBy(direction); zoomOut.textContent = zoomText(); };
-    show(h('div', { class: 'screen centered' }, panel('Settings',
+    show((onFrame ? c => framed('menus', c) : c => h('div', { class: 'screen centered' }, c))(panel('Settings',
       h('h2', {}, 'Display'),
       h('div', { class: 'field' }, 'Zoom ',
         h('button', { type: 'button', 'aria-label': 'Zoom out', onclick: () => zoom(-1) }, '−'),
@@ -240,7 +269,7 @@ function startPlay(entry) {
   Object.assign(game.world.hero, { gold: saved.gold, upgrades: saved.upgrades });
   game.world.hero.applyUpgrades(goods());
   game.savedState = progressKey(game.world.hero);
-  game.view = new WorldView(game.stage, game.world);
+  game.view = new WorldView(game.stage, game.world, sceneryFor(entry.tileset));
   game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
   game.speech.stop();
   game.lines = new LineDirector();
@@ -251,6 +280,14 @@ function startPlay(entry) {
   game.lookAhead = 0;
   game.stage.follow(b.x, b.y - 60, 0, true);
   resume();
+}
+
+/** The scenery strips made for a tileset, if the site has them switched on. */
+function sceneryFor(tileset) {
+  const display = game.config.display ?? {};
+  if (display.parallax === false) return {};
+  return { parallax: game.assets.parallax.find(p => p.tileset === tileset.id) ?? null,
+    replaceBackground: display.parallaxReplacesBackgroundTiles !== false, ground: display.parallaxGround ?? 1 };
 }
 
 function stopPlay() {
@@ -265,7 +302,8 @@ function showBackdrop() {
   const entry = game.assets.levels[0];
   if (!entry) { game.stage.clear(); return; }
   const level = new Level(entry.doc, entry.tileset);
-  game.stage.showLevel(level);
+  const scenery = sceneryFor(entry.tileset);
+  game.stage.showLevel(level, scenery.parallax, scenery.replaceBackground, scenery.ground);
   game.stage.follow(level.spawn.x + 300, level.spawn.y - 120, 0, true);
 }
 

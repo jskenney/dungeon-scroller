@@ -1,0 +1,40 @@
+{
+  "schema": "dungeon-scroller/backdrop@1",
+  "kind": "backdrop",
+  "id": "welcome_screen",
+  "name": "Welcome screen",
+  "image": "welcome_screen_spritesheet.png",
+  "guide": "welcome_screen_spritesheet.md",
+  "sha256": "fd5f13915480ba0941140d8ff684ba6ed6d431a7c6c53c4f4f2e7d8b6f18d121",
+  "size": { "w": 3000, "h": 1800 },
+  "frame": { "w": 1000, "h": 600 },
+  "columns": 3,
+  "rows": 3,
+  "animation": {
+    "id": "welcome_screen",
+    "loop": true,
+    "order": "row-major",
+    "durations": [177, 145, 159, 212, 220, 126, 128, 106, 113],
+    "pulse": [
+      [500, 55],
+      [854, 55],
+      [948, 250],
+      [910, 529],
+      [500, 543],
+      [80, 523],
+      [52, 300],
+      [80, 72],
+      [274, 55]
+    ]
+  },
+  "menuRect": { "x": 100, "y": 100, "w": 800, "h": 400 },
+  "stillRect": { "x": 81, "y": 70, "w": 838, "h": 459 },
+  "notes": [
+    "A framed stone panel for a screen's title and controls to be drawn on. Nine full frames, read left to right then down, loop to send a pulse of light clockwise round the frame.",
+    "'menuRect' is the guide's area for the title and controls, in frame pixels. Every frame is identical inside it, so text never sits on anything that moves.",
+    "'stillRect' is measured from the image: the largest area around menuRect that is also identical in every frame. Controls may spread into it if the art beneath is still clear.",
+    "Fit the whole frame inside the window (scale = the smaller of width / 1000 and height / 600), centre it, and place the controls with the same scale and offset.",
+    "'pulse' is where the light is in each frame. Frame 1 alone can be used as a still picture.",
+    "The guide says the PNG carries an 'Animation' text field; this file has none, so the timings here come from the guide."
+  ]
+}

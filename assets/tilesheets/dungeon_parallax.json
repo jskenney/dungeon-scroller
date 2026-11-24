@@ -1,0 +1,56 @@
+{
+  "schema": "dungeon-scroller/parallax@1",
+  "kind": "parallax",
+  "id": "dungeon_parallax",
+  "name": "Dungeon undercroft",
+  "guide": "dungeon_parallax_spritesheets.md",
+  "tileset": "old_stone_dungeon",
+  "viewport": { "w": 1000, "h": 600 },
+  "ready": true,
+  "layers": [
+    {
+      "id": "far",
+      "image": "dungeon_parallax_far.png",
+      "sha256": "0ad382d6002962e97dedca65c49cb32ad7032292bce0c9a2dca5c8ae5bfeb6a9",
+      "size": { "w": 2000, "h": 600 },
+      "opaque": true,
+      "alpha": "none",
+      "transparent": 0.0,
+      "factor": 0.15,
+      "seam": { "mismatchedRows": 338, "rows": 600 },
+      "below": "#151a1e"
+    },
+    {
+      "id": "mid",
+      "image": "dungeon_parallax_mid.png",
+      "sha256": "c96d04afb6dc02f027cdd8308cbb08c00a1c488d6b1829d5283d363ed750324a",
+      "size": { "w": 2000, "h": 600 },
+      "opaque": false,
+      "alpha": "binary",
+      "transparent": 0.6022,
+      "factor": 0.4,
+      "seam": { "mismatchedRows": 0, "rows": 600 },
+      "painted": { "top": 0, "bottom": 600 }
+    },
+    {
+      "id": "near",
+      "image": "dungeon_parallax_near.png",
+      "sha256": "6afd2878c78a9120e55e783568203e119dff6f74cca1b0961864e5be355718ff",
+      "size": { "w": 2000, "h": 600 },
+      "opaque": false,
+      "alpha": "binary",
+      "transparent": 0.938,
+      "factor": 0.7,
+      "seam": { "mismatchedRows": 67, "rows": 600 },
+      "painted": { "top": 0, "bottom": 228 }
+    }
+  ],
+  "notes": [
+    "Three strips drawn behind the level, far first. Each repeats sideways and moves at 'factor' times the camera's travel, so the far wall drifts slowly and the near ribs quickly.",
+    "All three share one top edge and one height. They are scenery only: nothing in them is solid.",
+    "'below' on the far strip is the average colour of its bottom row, measured from the image. The game fills with it beneath the strips when their bottom edge is raised to sit near the ground line.",
+    "'seam' counts the rows where the first and last pixel columns differ. The far and near strips are not perfectly seamless, so a faint join can show where they repeat; the middle strip's edge columns match.",
+    "The near strip is empty below 'painted.bottom', so it never covers the area the hero moves in.",
+    "'tileset' is the tileset these were made for (from the file names and the commit that added them); the guide does not name one."
+  ]
+}

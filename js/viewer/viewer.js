@@ -2,7 +2,7 @@
 // site configuration, exactly as the game's loader builds them, and reports
 // anything in the JSON that does not match the images.
 
-import { Application, Container, Graphics, Sprite, Text } from '../../vendor/pixi.min.mjs';
+import { Application, Container, Graphics, Sprite, Text, TilingSprite } from '../../vendor/pixi.min.mjs';
 import { loadConfig } from '../config.js';
 import { loadAssets } from '../assets/loader.js';
 import { sampleClip, eventsOnFrame, locomotion, clipLength } from '../assets/animation.js';
@@ -242,6 +242,9 @@ function selectionFromHash() {
   } else if (type === 'atlas') {
     const item = a.atlases.find(t => t.id === id);
     if (item) return { selection: { type: 'atlas', item } };
+  } else if (type === 'parallax' || type === 'backdrop') {
+    const item = (type === 'parallax' ? a.parallax : a.backdrops).find(t => t.id === id);
+    if (item) return { selection: { type, item } };
   } else if (type === 'card') {
     const item = a.cards.find(c => c.id === id);
     if (item) return { selection: { type: 'card', item } };
@@ -278,6 +281,14 @@ function buildNav() {
   if (a.atlases?.length) {
     nav.append(h('h3', {}, 'Mini-game art'));
     for (const t of a.atlases) nav.append(h('a', { href: `#atlas/${t.id}` }, t.id.replaceAll('_', ' ')));
+  }
+  if (a.parallax?.length) {
+    nav.append(h('h3', {}, 'Level scenery'));
+    for (const t of a.parallax) nav.append(h('a', { href: `#parallax/${t.id}` }, t.name ?? t.id));
+  }
+  if (a.backdrops?.length) {
+    nav.append(h('h3', {}, 'Menu backgrounds'));
+    for (const t of a.backdrops) nav.append(h('a', { href: `#backdrop/${t.id}` }, t.name ?? t.id));
   }
   if (a.cards.length) {
     nav.append(h('h3', {}, 'Cards'));
@@ -714,6 +725,64 @@ function atlasDetails(atlas) {
     atlas.notes?.length ? h('ul', {}, atlas.notes.map(n => h('li', {}, n))) : null);
 }
 
+/** The three scenery strips stacked as the game draws them, drifting sideways as if the camera were walking. */
+function buildParallax(item) {
+  const W = app.screen.width, H = app.screen.height, margin = 14;
+  const { w: vw, h: vh } = item.viewport;
+  const S = Math.min((W - margin * 2) / vw, (H - margin * 2 - 24) / vh);
+  const box = new Container();
+  box.position.set(snap((W - vw * S) / 2), margin);
+  const strips = item.layers.map(layer => {
+    const sprite = new TilingSprite({ texture: layer.texture, width: vw * S, height: vh * S });
+    sprite.tileScale.set((vh * S) / layer.texture.height);
+    box.addChild(sprite);
+    return { sprite, layer };
+  });
+  app.stage.addChild(box, label('All layers together, scrolling as the camera moves right.', box.x, margin + vh * S + 6));
+  scene.parallax = { strips, S };
+  return null;
+}
+
+/** A menu background playing its loop, with the area kept clear for controls outlined. */
+function buildBackdrop(item) {
+  const W = app.screen.width, H = app.screen.height, margin = 14;
+  const { w: fw, h: fh } = item.frame;
+  const S = Math.min((W - margin * 2) / fw, (H - margin * 2 - 24) / fh);
+  const x = snap((W - fw * S) / 2), sprite = new Sprite(item.frames[0]);
+  sprite.position.set(x, margin);
+  sprite.scale.set(S);
+  const g = new Graphics();
+  const outline = (r, color) => g.rect(x + r.x * S, margin + r.y * S, r.w * S, r.h * S).stroke({ width: 1, color });
+  if (item.stillRect) outline(item.stillRect, COLORS.use);
+  outline(item.menuRect, COLORS.selected);
+  app.stage.addChild(sprite, g, label('Gold: the area for title and controls. Blue: the largest area that never changes.', x, margin + fh * S + 6));
+  scene.backdrop = { sprite, item };
+  return null;
+}
+
+function sceneryDetails(item, type) {
+  const dl = h('dl');
+  if (type === 'backdrop') {
+    row(dl, 'Image', item.image);
+    row(dl, 'Frames', `${item.columns * item.rows} of ${item.frame.w} × ${item.frame.h}`);
+    row(dl, 'Loop', `${item.animation.durations.reduce((a, b) => a + b, 0)} ms`);
+    row(dl, 'Menu area', `${item.menuRect.w} × ${item.menuRect.h} at (${item.menuRect.x}, ${item.menuRect.y})`);
+    if (item.stillRect) row(dl, 'Never changes', `${item.stillRect.w} × ${item.stillRect.h} at (${item.stillRect.x}, ${item.stillRect.y})`);
+  } else {
+    row(dl, 'Made for', item.tileset?.replaceAll('_', ' '));
+    row(dl, 'Designed view', `${item.viewport.w} × ${item.viewport.h}`);
+    row(dl, 'Finished', item.ready === false ? 'no — see notes' : 'yes');
+  }
+  setDetails(
+    h('h2', {}, item.name ?? item.id), dl,
+    type === 'parallax' ? h('h3', {}, 'Layers') : null,
+    type === 'parallax' ? h('ul', {}, item.layers.map(l => h('li', {}, h('b', {}, l.id), ` — ${l.image}, ${l.size.w} × ${l.size.h}, moves at ${l.factor} of the camera, `,
+      l.opaque ? 'solid' : `${Math.round(l.transparent * 100)}% clear (${l.alpha} edges)`,
+      l.seam.mismatchedRows ? `, join differs on ${l.seam.mismatchedRows} of ${l.seam.rows} rows` : ', edges match'))) : null,
+    item.notes?.length ? h('h3', {}, 'Notes') : null,
+    item.notes?.length ? h('ul', {}, item.notes.map(n => h('li', {}, n))) : null);
+}
+
 // ----------------------------------------------------------------- DOM panels
 
 function buildCardView(card) {
@@ -933,7 +1002,7 @@ function syncToolbar() {
   $('view-built').setAttribute('aria-pressed', String(state.tilesetView === 'built'));
   $('flip').setAttribute('aria-pressed', String(state.flip));
   $('play').textContent = state.playing ? 'Pause' : 'Play';
-  for (const id of ['zoom-in', 'zoom-out', 'zoom-label']) $(id).hidden = type === 'card';
+  for (const id of ['zoom-in', 'zoom-out', 'zoom-label']) $(id).hidden = type === 'card' || type === 'parallax' || type === 'backdrop';
   const single = type === 'entity' && state.entityView === 'single';
   $('nudge-group').hidden = !single;
   if (single) {
@@ -968,6 +1037,9 @@ function refresh() {
   } else if (sel.type === 'atlas') {
     zoom = buildAtlas(sel.item);
     atlasDetails(sel.item);
+  } else if (sel.type === 'parallax' || sel.type === 'backdrop') {
+    (sel.type === 'parallax' ? buildParallax : buildBackdrop)(sel.item);
+    sceneryDetails(sel.item, sel.type);
   } else if (sel.type === 'card') {
     buildCardView(sel.item);
     cardDetails(sel.item);
@@ -987,6 +1059,14 @@ function updateFrames(force = false) {
     if (sprite.texture !== clip.frames[frame]) sprite.texture = clip.frames[frame];
     const [dx, dy] = offsetsFor(entity, clip)[frame];
     sprite.position.set(x + dx * S * mirror, y + dy * S);
+  }
+  if (scene.parallax) {
+    // 120 design pixels of camera travel a second.
+    for (const { sprite, layer } of scene.parallax.strips) sprite.tilePosition.x = -Math.round(state.elapsed * 0.12 * layer.factor * scene.parallax.S);
+  }
+  if (scene.backdrop) {
+    const { sprite, item } = scene.backdrop;
+    sprite.texture = item.frames[sampleClip({ durations: item.animation.durations, loop: true }, state.elapsed).frame];
   }
   if (state.selection?.type !== 'entity' || state.entityView !== 'single') return;
   const clip = currentClip();

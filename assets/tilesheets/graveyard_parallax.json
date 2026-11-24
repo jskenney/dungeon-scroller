@@ -1,0 +1,58 @@
+{
+  "schema": "dungeon-scroller/parallax@1",
+  "kind": "parallax",
+  "id": "graveyard_parallax",
+  "name": "Graveyard",
+  "guide": "graveyard_parallax_spritesheets.md",
+  "tileset": "ruined_graveyard",
+  "viewport": { "w": 1000, "h": 600 },
+  "ready": false,
+  "layers": [
+    {
+      "id": "far",
+      "image": "graveyard_parallax_far.png",
+      "sha256": "1150db9d0d548fdcb52e0fc8ea33308e714e30f4939d58ec3ad8158cc7242705",
+      "size": { "w": 2290, "h": 687 },
+      "opaque": true,
+      "alpha": "none",
+      "transparent": 0.0,
+      "factor": 0.15,
+      "seam": { "mismatchedRows": 670, "rows": 687 },
+      "below": "#333c47"
+    },
+    {
+      "id": "mid",
+      "image": "graveyard_parallax_mid.png",
+      "sha256": "b112b61c867cc0e8ef17c3afa0ca3fbf0bd4dff177e251525e2756b369241899",
+      "size": { "w": 2172, "h": 724 },
+      "opaque": false,
+      "alpha": "soft",
+      "transparent": 0.0,
+      "factor": 0.4,
+      "seam": { "mismatchedRows": 711, "rows": 724 },
+      "painted": { "top": 0, "bottom": 724 },
+      "haze": { "alphaMin": 0, "alphaMax": 253, "skyAlphaMedian": 37 }
+    },
+    {
+      "id": "near",
+      "image": "graveyard_parallax_near.png",
+      "sha256": "2507520890b38470a65145109d987d91ca8b8928c159f2e371e27516856c5da8",
+      "size": { "w": 2172, "h": 724 },
+      "opaque": false,
+      "alpha": "soft",
+      "transparent": 0.8169,
+      "factor": 0.7,
+      "seam": { "mismatchedRows": 240, "rows": 724 },
+      "painted": { "top": 0, "bottom": 724 }
+    }
+  ],
+  "notes": [
+    "Three strips drawn behind the level, far first. Each repeats sideways and moves at 'factor' times the camera's travel.",
+    "These are the images as generated, which the guide says are not finished: they are not 2000 x 600, the three are not the same size, and none repeats cleanly ('seam').",
+    "Because the sizes differ, the game scales each strip to one shared height, rather than drawing them pixel for pixel.",
+    "'below' on the far strip is the average colour of its bottom row, measured from the image. The game fills with it beneath the strips when their bottom edge is raised to sit near the ground line.",
+    "The middle strip has almost no fully clear pixels: its sky is a see-through haze ('haze'), so it lays a pale fog over the far strip instead of leaving it visible through clean openings. The guide asks for this to be cut out properly before release.",
+    "'ready' is false until corrected images replace these; the checksums here will then need updating.",
+    "'tileset' is the tileset these were made for (from the file names and the commit that added them); the guide does not name one."
+  ]
+}

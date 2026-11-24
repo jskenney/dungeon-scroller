@@ -24,8 +24,11 @@ async function sha256Hex(bytes) {
   return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Bitmaps are decoded with colour already multiplied by alpha, and the texture is
+// told so. (A browser ignores a request to do that at upload time for a decoded
+// bitmap, which leaves see-through pixels far too bright.)
 function nearestTexture(bitmap) {
-  return new ImageSource({ resource: bitmap, scaleMode: 'nearest', alphaMode: 'premultiply-alpha-on-upload' });
+  return new ImageSource({ resource: bitmap, scaleMode: 'nearest', alphaMode: 'premultiplied-alpha' });
 }
 
 function shortName(url) {
@@ -34,12 +37,17 @@ function shortName(url) {
 
 /** Load a JSON file and the PNG it names; report size and checksum mismatches. */
 async function loadPair(jsonUrl, problems) {
-  const file = shortName(jsonUrl);
   const json = await fetchJson(jsonUrl);
+  return { json, jsonUrl, ...await loadImage(json, jsonUrl, problems) };
+}
+
+/** Load the PNG named by `json.image` (a whole file's JSON, or one layer of it) and check its size and checksum. */
+async function loadImage(json, jsonUrl, problems) {
+  const file = shortName(jsonUrl);
   const imageUrl = resolve(json.image, jsonUrl);
   const bytes = await fetchBytes(imageUrl);
   const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }),
-    { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+    { premultiplyAlpha: 'premultiply', colorSpaceConversion: 'none' });
   if (json.size && (bitmap.width !== json.size.w || bitmap.height !== json.size.h)) {
     problems.push({ level: 'error', file,
       message: `Image is ${bitmap.width}×${bitmap.height} but the JSON says ${json.size.w}×${json.size.h}.` });
@@ -53,7 +61,7 @@ async function loadPair(jsonUrl, problems) {
         message: `${json.image} has changed since this JSON was written (checksum differs). Re-check the JSON against the image.` });
     }
   }
-  return { json, jsonUrl, imageUrl, bitmap, file };
+  return { imageUrl, bitmap, file };
 }
 
 async function loadSpritesheet(jsonUrl, problems) {
@@ -69,7 +77,7 @@ async function loadSpritesheet(jsonUrl, problems) {
     // Each entity's block of rows becomes its own texture, so a tall sheet
     // never exceeds the graphics hardware's texture size limit.
     const r = entity.region;
-    const block = await createImageBitmap(bitmap, r.x, r.y, r.w, r.h, { premultiplyAlpha: 'none' });
+    const block = await createImageBitmap(bitmap, r.x, r.y, r.w, r.h, { premultiplyAlpha: 'premultiply' });
     const source = nearestTexture(block);
     const animations = {};
     for (const [slot, clip] of Object.entries(entity.animations)) {
@@ -181,6 +189,34 @@ async function loadAtlas(jsonUrl, problems) {
   if (used.size !== json.columns * json.rows) problems.push({ level: 'warning', file, message: `${json.columns * json.rows - used.size} cells of the image are not named.` });
   const id = file.replace(/_spritesheet\.json$|\.json$/, '');
   return { ...json, id, url: jsonUrl, imageUrl, sprites, source };
+}
+
+/** Scenery strips drawn behind a level, each moving at its own share of the camera's travel. */
+async function loadParallax(jsonUrl, problems) {
+  const json = await fetchJson(jsonUrl), file = shortName(jsonUrl);
+  const layers = await Promise.all((json.layers ?? []).map(async layer => {
+    const { imageUrl, bitmap } = await loadImage(layer, jsonUrl, problems);
+    if (!(layer.factor >= 0 && layer.factor <= 1)) problems.push({ level: 'error', file, message: `Layer ${layer.id}: factor must be between 0 and 1.` });
+    return { ...layer, imageUrl, texture: new Texture({ source: nearestTexture(bitmap) }) };
+  }));
+  if (!layers.length) problems.push({ level: 'error', file, message: 'No layers.' });
+  if (json.ready === false) problems.push({ level: 'warning', file, message: 'Marked not ready: its images still need the corrections listed in its guide.' });
+  return { ...json, id: json.id ?? file.replace(/\.json$/, ''), url: jsonUrl, layers };
+}
+
+/** An animated full-screen picture for menus to be drawn on: frames in a grid, and the area kept clear for controls. */
+async function loadBackdrop(jsonUrl, problems) {
+  const { json, imageUrl, bitmap, file } = await loadPair(jsonUrl, problems);
+  const { w, h } = json.frame, count = json.columns * json.rows;
+  if (json.columns * w !== bitmap.width || json.rows * h !== bitmap.height) {
+    problems.push({ level: 'error', file, message: `Grid ${json.columns}×${json.rows} of ${w}×${h} frames does not match the image size.` });
+  }
+  if (json.animation?.durations?.length !== count) problems.push({ level: 'error', file, message: `${json.animation?.durations?.length ?? 0} durations for ${count} frames.` });
+  const m = json.menuRect;
+  if (!m || m.x < 0 || m.y < 0 || m.x + m.w > w || m.y + m.h > h) problems.push({ level: 'error', file, message: 'menuRect is missing or extends outside the frame.' });
+  const source = nearestTexture(bitmap);
+  const frames = Array.from({ length: count }, (_, i) => new Texture({ source, frame: new Rectangle((i % json.columns) * w, Math.floor(i / json.columns) * h, w, h) }));
+  return { ...json, id: json.id ?? file.replace(/_spritesheet\.json$|\.json$/, ''), url: jsonUrl, imageUrl, frames };
 }
 
 async function loadCard(jsonUrl, problems) {
@@ -320,8 +356,10 @@ export async function loadAssets(config, configUrl, onProgress = () => {}) {
     ...(lists.tilesets ?? []).map(path => ({ path, load: loadTileset, into: 'tilesets' })),
     ...(lists.atlases ?? []).map(path => ({ path, load: loadAtlas, into: 'atlases' })),
     ...(lists.cards ?? []).map(path => ({ path, load: loadCard, into: 'cards' })),
+    ...(lists.parallax ?? []).map(path => ({ path, load: loadParallax, into: 'parallax' })),
+    ...(lists.backdrops ?? []).map(path => ({ path, load: loadBackdrop, into: 'backdrops' })),
   ];
-  const result = { sheets: [], tilesets: [], atlases: [], cards: [], problems };
+  const result = { sheets: [], tilesets: [], atlases: [], cards: [], parallax: [], backdrops: [], problems };
   let done = 0;
   onProgress(0, jobs.length, '');
   const loaded = await Promise.all(jobs.map(async job => {

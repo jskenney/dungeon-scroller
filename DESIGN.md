@@ -350,6 +350,17 @@ Sheets of separate pieces that are assembled by the game instead of played as an
 - **Card decks** are skins of one layout. Each deck atlas has a `deck` id (`dungeon`, `hero`, `npc`) and a `name`; the back, plain face and suits are the same pixels in all three and only the joker, king, queen and jack pictures differ (`shows` says who is pictured). A card game picks a deck by id and uses the same assembly code for all of them.
 - The viewer shows every piece and, beneath them, example cards and dice assembled from the layouts, which is how the JSON was checked.
 
+### 4.4c Level scenery (parallax) and menu backgrounds
+
+**Scenery** uses `dungeon-scroller/parallax@1` and is listed under `assets.parallax`. One file describes a set of strips for one tileset (`tileset`), drawn far to near behind the level. Each layer has its own `image`, `sha256`, `size`, a `factor` (its share of the camera's sideways travel: 0.15, 0.40, 0.70), and measured facts: how much is clear, whether edges are hard or soft, and on how many rows the left and right edges differ (`seam`).
+
+- The strips are fixed to the window, not the world. All of a set share one scale, chosen so the strip's bottom edge sits at `display.parallaxGround` of the window height (0.74 in the example), a little below where the hero usually stands; this keeps drawn walls and ruins meeting the ground rather than hidden behind it. Beneath that edge the far strip's `below` colour carries on. They do not move vertically.
+- `display.parallax: false` turns scenery off. `display.parallaxReplacesBackgroundTiles` (default true) leaves out a level's background tile layer when scenery is shown, because the dungeon levels fill that layer with plain wall that would cover it.
+- `ready: false` marks a set whose images still need work; the viewer lists it as a warning. The graveyard set is in this state: its images are not 2000×600, are three different sizes, do not repeat cleanly, and the middle strip's sky is a translucent haze instead of clear openings. The game draws them anyway, scaled to a shared height.
+- Images are decoded with colour premultiplied by alpha. (Soft-edged layers showed as solid white before this; hard-edged sprites were unaffected.)
+
+**Menu backgrounds** use `dungeon-scroller/backdrop@1` and are listed under `assets.backdrops`: a grid of full 1000×600 frames, `animation.durations`, and `menuRect`, the area every frame leaves unchanged for a title and controls (`stillRect` is the measured largest such area). `display.backdrops` says which is used where: `title` for the title screen, `menus` for hero selection, level selection and settings opened from the title. The whole frame is fitted inside the window and the screen's controls are laid out inside `menuRect`, scrolling if they do not fit. Pause, shop and end-of-level panels still appear over the game as before. With reduced-motion set in the browser the first frame is shown still.
+
 ### 4.5 Asset inventory today
 
 | Sheet | Contents | Guide | JSON |
@@ -375,6 +386,10 @@ Sheets of separate pieces that are assembled by the game instead of played as an
 | `games/hero_playing_card` | Atlas, hero deck: same layout; dark swordsman (joker), light-and-space mage (king), water mage (queen), earth mage (jack) | yes | **done** |
 | `games/npc_playing_card` | Atlas, villager deck: same layout; young villager (joker), shopkeeper (king), village elder (queen), village priest (jack) | yes | **done** |
 | `games/polyhedral_dice` | Atlas: D4–D20 in bone and slate, six pip stamps | yes | **done** |
+| `tilesheets/dungeon_parallax` | Scenery behind dungeon levels: far wall, middle arcade, near ribs (three 2000×600 strips) | yes | **done** |
+| `tilesheets/graveyard_parallax` | Scenery behind graveyard levels: sky and cathedral, boundary wall, branches and crypt. Images are as generated and marked not ready (see §4.4c) | yes | **done** |
+| `menus/welcome_screen` | Framed stone panel for the title screen, 9-frame light pulse | yes | **done** |
+| `menus/main_menu_background` | Gothic framed panel for the hero, level and settings screens, 9-frame light pulse | yes | **done** |
 | `tilesheets/old_stone_dungeon` | 40 tiles: floors, platforms, stairs, walls, ceilings, details | yes | **done** |
 | `tilesheets/ruined_graveyard` | 40 tiles (one blank): ground, platforms, 45° slopes, entrance, ruins, props | yes | **done** |
 
