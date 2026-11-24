@@ -114,7 +114,7 @@ export class Boss extends Enemy {
         for (let i = 0; i < count; i++) {
           const angle = aim + ((i - (count - 1) / 2) * (p.spread ?? 0) * Math.PI) / 180;
           world.projectiles.push(new Projectile({ team: 'enemy', owner: this, x, y, vx: Math.cos(angle) * p.speed, vy: Math.sin(angle) * p.speed,
-            range: p.range, damage, effect: attack.effect, radius: 9, color: this.g.color ?? '#7fe3c8' }));
+            range: p.range, damage, effect: attack.effect, radius: 9, sprite: p.sprite ?? null, color: this.g.color ?? '#7fe3c8' }));
         }
       }
     }

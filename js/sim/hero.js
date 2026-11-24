@@ -172,12 +172,12 @@ export class Hero extends Actor {
         world.projectiles.push(new Projectile({ team: 'hero', owner: this,
           x: b.x + this.facing * (b.w / 2 + 8), y: b.y - b.h * 0.58,
           vx: this.facing * p.speed, vy: p.gravity ? -p.gravity * 0.18 : 0, gravity: p.gravity ?? 0,
-          range: p.range, damage: ability.damage * power, effect: ability.effect, pierce: Boolean(p.pierce),
+          range: p.range, damage: ability.damage * power, effect: ability.effect, pierce: Boolean(p.pierce), sprite: p.sprite ?? null,
           color: this.g.color ?? '#ffffff' }));
       } else if (e.type === 'heal' && ability.type === 'heal') {
         const before = this.hp;
         this.hp = Math.min(this.maxHp, this.hp + ability.amount);
-        this.events.push({ type: 'heal', x: b.x, y: b.y - b.h, amount: this.hp - before });
+        this.events.push({ type: 'heal', x: b.x, y: b.y - b.h, amount: this.hp - before, actor: this, sprite: ability.sprite ?? null });
       } else if (e.type === 'cast' && ability.type === 'target') {
         // The nearest living enemy in range, preferring those in front.
         let best = null, bestScore = Infinity;
@@ -191,7 +191,7 @@ export class Hero extends Actor {
         if (best) {
           best.applyEffect(ability.effect);
           if (ability.damage) world.hurtEnemy(best, ability.damage * power, this, {});
-          this.events.push({ type: 'hex', x: best.body.x, y: best.body.y - best.body.h });
+          this.events.push({ type: 'hex', x: best.body.x, y: best.body.y - best.body.h, actor: best, sprite: ability.sprite ?? null });
         }
       }
     }

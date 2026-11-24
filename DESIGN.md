@@ -310,6 +310,19 @@ Tiles are static. The tileset JSON names each cell and gives its default collisi
 - **`bounds`** is the measured opaque area for tiles that do not fill their cell; `empty` marks an intentionally blank cell.
 - **`groups`** are interchangeable variants; **`runs`** say how to cap and fill a horizontal stretch; **`assemblies`** are multi-tile constructions (stairs with landings, arches, the graveyard entrance, the two-piece tree) with offsets in tiles. The level generator builds from these, so a new tileset that supplies the same structure works without code changes.
 
+### 4.4a Projectile sheets
+
+Projectile art uses the ordinary sheet schema with `kind: "projectile"`. Each projectile has three animations: `flight` (loops), `impact` (plays once, ends on an empty frame) and `deflect` (plays once, then `next` says where flight resumes). Extra fields per projectile:
+
+- **`orient`** — `heading`: the art points along its travel and is turned to the direction of flight. `fixed`: the art already tumbles in its frames (dagger, shield, rock, potion) and is only mirrored. Art is mirrored, never turned upside down, when travelling left.
+- **`lead`** — how far the first flight frame reaches ahead of the pivot, measured from the image. The impact is drawn that far along the direction of travel, so an arrow's flash appears at its head, not its middle.
+- **`impactAnchor`** — `contact` (where the shot hit), `recipient` (on the body of whoever is healed) or `head` (on the target's head). The last two are played without any flight.
+- **`flightBounds`** — the painted area of flight F1; scale only, not a collision box.
+
+Catalogs point at a projectile by id with **`sprite`**: inside an ability's `projectile` block for something that flies, or on the ability itself for a heal or a targeted spell. An ability with no `sprite` keeps the particle stand-in. Today: firebolt → fireball, water bolt → water ball, wind blade → wind slash, bow shot → arrow, stone shot → rock, space cast → space attack, heal → heal glow on the hero, mind hex → mind rings on the target's head, lich bolts and the death monarch's volley → undead energy. The thrown dagger, shield, spear and potion have art but no ability uses them yet, and nothing in the game deflects shots yet, so the deflection rows are not played.
+
+The simulation only reports an `impact` event (position, velocity, sprite id) when a shot strikes something or a wall; the display picks the art. A shot that runs out of range simply ends.
+
 ### 4.4b Atlas JSON — static mini-game art
 
 Sheets of separate pieces that are assembled by the game instead of played as animations use the schema `dungeon-scroller/atlas@1` and are listed under `assets.atlases`.
@@ -357,6 +370,7 @@ Sheets of separate pieces that are assembled by the game instead of played as an
 | `bosses/undead_boss` | undead dragon, undead Fenrir, death monarch (9 rows each, 1536×6912) | yes | **done** |
 | `objects/interactive_world_objects` | 16 objects × 3 rows: chest, healing potion, space potion, coin, gem, key, gravestone, checkpoint flag, crate, barrel, urn, wall torch, lever, spell scroll, healing shrine, relic | yes | **done** |
 | `objects/interactive_minigame_objects` | 6 objects × 3 rows: deck of cards, dice, Mahjongg set, board game, computer game, building blocks | yes | **done** |
+| `projectiles/projectiles` | 13 projectiles × 3 rows (flight, impact, deflection): arrow, thrown dagger, thrown shield, thrown spear, magic rock, fireball, wind slash, water ball, heal, space attack, mind attack, undead energy, thrown potion | yes | **done** |
 | `games/playing_card` | Atlas, dungeon deck: card back, skeleton jester (joker), skeletal monarch (king), crypt queen, skeleton guard (jack), plain face, four suit symbols | yes | **done** |
 | `games/hero_playing_card` | Atlas, hero deck: same layout; dark swordsman (joker), light-and-space mage (king), water mage (queen), earth mage (jack) | yes | **done** |
 | `games/npc_playing_card` | Atlas, villager deck: same layout; young villager (joker), shopkeeper (king), village elder (queen), village priest (jack) | yes | **done** |

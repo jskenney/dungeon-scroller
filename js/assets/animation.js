@@ -52,5 +52,6 @@ export const REQUIRED_SLOTS = {
   enemy: ['idle', 'hit', 'death', 'attack1', 'attack2', 'attack3'],
   boss: ['idle', 'fly', 'hit', 'death', 'attack1', 'attack2', 'attack3', 'attack4'],
   object: ['idle', 'interact', 'vanish'],
+  projectile: ['flight', 'impact', 'deflect'],
   npc: ['idle', 'death', 'hit', 'heal', 'buy', 'sell', 'wave', 'talk', 'hide', 'teleport_out', 'teleport_in'],
 };

@@ -107,7 +107,7 @@ async function loadSpritesheet(jsonUrl, problems) {
     for (const slot of REQUIRED_SLOTS[json.kind] ?? []) {
       if (!(slot in animations)) problems.push({ level: 'error', file, message: `${id}: missing the "${slot}" animation.` });
     }
-    if (json.kind !== 'object' && !locomotion(animations)) {
+    if (json.kind !== 'object' && json.kind !== 'projectile' && !locomotion(animations)) {
       problems.push({ level: 'error', file, message: `${id}: has neither a "walk" nor a "run" animation.` });
     }
     entities[id] = { ...entity, id, kind: json.kind, animations, source, sheet: null };
@@ -270,6 +270,9 @@ async function loadCatalogs(config, configUrl, result, problems) {
       for (const [slot, action] of Object.entries(entry.abilities ?? entry.attacks ?? {})) {
         const clip = entity.animations[slot];
         if (!clip) { problems.push({ level: 'error', file, message: `${id}.${slot}: the sheet has no such animation.` }); continue; }
+        for (const sprite of [action.sprite, action.projectile?.sprite]) {
+          if (sprite && !result.entities[`projectile/${sprite}`]) problems.push({ level: 'error', file, message: `${id}.${slot}: projectile sprite "${sprite}" is not in any loaded sheet.` });
+        }
         if (action.box && !isBox(action.box)) problems.push({ level: 'error', file, message: `${id}.${slot}: box is not valid.` });
         if (['melee', 'area'].includes(action.type)) {
           if (!action.box) problems.push({ level: 'error', file, message: `${id}.${slot}: a ${action.type} attack needs a box.` });

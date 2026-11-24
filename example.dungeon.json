@@ -16,6 +16,7 @@
       "assets/sprites/bosses/undead_boss_spritesheet.json",
       "assets/sprites/objects/interactive_world_objects_spritesheet.json",
       "assets/sprites/objects/interactive_minigame_objects_spritesheet.json",
+      "assets/sprites/projectiles/projectiles_spritesheet.json",
       "assets/sprites/NPCs/shopkeeper_spritesheet.json",
       "assets/sprites/NPCs/traveling_merchant_spritesheet.json",
       "assets/sprites/NPCs/village_elder_spritesheet.json",

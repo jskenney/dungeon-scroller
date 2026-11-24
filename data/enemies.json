@@ -252,14 +252,14 @@
           "damage": 10,
           "cooldown": 0.9,
           "weight": 5,
-          "projectile": { "speed": 380, "range": 620 }
+          "projectile": { "sprite": "magic_undead_energy_attack", "speed": 380, "range": 620 }
         },
         "attack2": {
           "type": "projectile",
           "damage": 8,
           "cooldown": 1.6,
           "weight": 3,
-          "projectile": { "speed": 340, "range": 620, "count": 3, "spread": 18 }
+          "projectile": { "sprite": "magic_undead_energy_attack", "speed": 340, "range": 620, "count": 3, "spread": 18 }
         },
         "attack3": {
           "type": "eruption",

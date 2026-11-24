@@ -1,0 +1,534 @@
+{
+  "schema": "dungeon-scroller/spritesheet@1",
+  "kind": "projectile",
+  "image": "projectiles_spritesheet.png",
+  "guide": "projectiles_spritesheet.md",
+  "sha256": "c2221546d81e8c7710a912bb6cc526c6628b7e3e1695c8f0b7dff3e89dc45e7a",
+  "size": { "w": 576, "h": 3744 },
+  "cell": { "w": 96, "h": 96 },
+  "columns": 6,
+  "rows": 39,
+  "facing": "right",
+  "pivot": { "x": 48, "y": 48 },
+  "registration": "center",
+  "notes": [
+    "Thirteen projectiles, each with three rows: flight (loops), impact (plays once and ends on an empty frame) and deflect (plays once, then flight carries on).",
+    "Impact and deflect are alternatives chosen by the game when the projectile touches something. They are never played one after the other.",
+    "There is no ground line. In flight and deflect the pivot (48, 48) is the weapon's centre, the flask's belly or the spell's core. In impact the pivot is the point of contact.",
+    "'lead' is how far the first flight frame reaches ahead of the pivot. Add it along the direction of travel to find the tip when placing the impact.",
+    "'impactAnchor' says where the impact is drawn: 'contact' at the point of the hit, 'recipient' on the body of whoever is healed, 'head' on the target's head. The last two can be played without any flight.",
+    "'orient' is 'heading' for art drawn pointing along its travel, which is turned to the direction of flight, and 'fixed' for art that already tumbles in its frames, which is only mirrored.",
+    "deflect F6 is the same picture as flight F1, so flight resumes at F2 ('next').",
+    "'flightBounds' is the painted area of flight F1, trail included. It shows scale and is not a collision box.",
+    "Speed, range, gravity, damage and collision size are gameplay values and live in the catalogs under data/."
+  ],
+  "entities": {
+    "arrow": {
+      "name": "Arrow",
+      "description": "A straight wooden arrow with a steel point and muted fletching. The shaft stays nearly horizontal during flight, with small changes in the tail. Its physical contact uses a pale metal spark.",
+      "rows": [1, 3],
+      "region": { "x": 0, "y": 0, "w": 576, "h": 288 },
+      "category": "weapon",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 28, "y": 44, "w": 41, "h": 10 },
+      "lead": 21,
+      "animations": {
+        "flight": {
+          "id": "arrow_flight",
+          "label": "Flight",
+          "row": 1,
+          "loop": true,
+          "durations": [80, 80, 80, 80, 80, 80]
+        },
+        "impact": {
+          "id": "arrow_impact",
+          "label": "Impact",
+          "row": 2,
+          "end": "remove",
+          "durations": [40, 45, 55, 55, 65, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "arrow_deflection",
+          "label": "Deflection",
+          "row": 3,
+          "end": "state",
+          "durations": [40, 45, 50, 50, 55, 60],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "thrown_dagger": {
+      "name": "Thrown dagger",
+      "description": "The fire mage's compact single-edged dagger, with a copper guard and dark grip. The six flight poses form an end-over-end tumble. The copper detail distinguishes it from the arrow and spear.",
+      "rows": [4, 6],
+      "region": { "x": 0, "y": 288, "w": 576, "h": 288 },
+      "category": "weapon",
+      "orient": "fixed",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 36, "y": 43, "w": 26, "h": 10 },
+      "lead": 14,
+      "animations": {
+        "flight": {
+          "id": "thrown_dagger_flight",
+          "label": "Flight",
+          "row": 4,
+          "loop": true,
+          "durations": [55, 55, 55, 55, 55, 55]
+        },
+        "impact": {
+          "id": "thrown_dagger_impact",
+          "label": "Impact",
+          "row": 5,
+          "end": "remove",
+          "durations": [40, 45, 55, 55, 60, 45],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "thrown_dagger_deflection",
+          "label": "Deflection",
+          "row": 6,
+          "end": "state",
+          "durations": [35, 40, 45, 45, 50, 55],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "thrown_shield": {
+      "name": "Thrown shield",
+      "description": "The earth mage's iron-rimmed shield with a slate face and raised bronze boss. Flight turns the shield through its face, edge and back; the boss is visible when its front faces the viewer.",
+      "rows": [7, 9],
+      "region": { "x": 0, "y": 576, "w": 576, "h": 288 },
+      "category": "weapon",
+      "orient": "fixed",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 35, "y": 34, "w": 26, "h": 28 },
+      "lead": 13,
+      "animations": {
+        "flight": {
+          "id": "thrown_shield_flight",
+          "label": "Flight",
+          "row": 7,
+          "loop": true,
+          "durations": [80, 80, 80, 80, 80, 80]
+        },
+        "impact": {
+          "id": "thrown_shield_impact",
+          "label": "Impact",
+          "row": 8,
+          "end": "remove",
+          "durations": [50, 55, 70, 65, 70, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "thrown_shield_deflection",
+          "label": "Deflection",
+          "row": 9,
+          "end": "state",
+          "durations": [45, 60, 65, 65, 65, 70],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "thrown_spear": {
+      "name": "Thrown spear",
+      "description": "The water mage's compact spear, with a dark shaft, pale bindings and a leaf-shaped steel point. Flight holds the point to the right with restrained shaft vibration.",
+      "rows": [10, 12],
+      "region": { "x": 0, "y": 864, "w": 576, "h": 288 },
+      "category": "weapon",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 24, "y": 44, "w": 46, "h": 8 },
+      "lead": 22,
+      "animations": {
+        "flight": {
+          "id": "thrown_spear_flight",
+          "label": "Flight",
+          "row": 10,
+          "loop": true,
+          "durations": [85, 85, 85, 85, 85, 85]
+        },
+        "impact": {
+          "id": "thrown_spear_impact",
+          "label": "Impact",
+          "row": 11,
+          "end": "remove",
+          "durations": [40, 45, 60, 55, 60, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "thrown_spear_deflection",
+          "label": "Deflection",
+          "row": 12,
+          "end": "state",
+          "durations": [40, 50, 55, 60, 60, 65],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_thrown_rock": {
+      "name": "Magic thrown rock",
+      "description": "A compact angular stone with slate shadows, warm sandstone highlights and a short trail of grit. Changing facets give its flight a tumbling motion around the stone core.",
+      "rows": [13, 15],
+      "region": { "x": 0, "y": 1152, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "fixed",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 28, "y": 39, "w": 29, "h": 17 },
+      "lead": 9,
+      "animations": {
+        "flight": {
+          "id": "magic_thrown_rock_flight",
+          "label": "Flight",
+          "row": 13,
+          "loop": true,
+          "durations": [85, 85, 85, 85, 85, 85]
+        },
+        "impact": {
+          "id": "magic_thrown_rock_impact",
+          "label": "Impact",
+          "row": 14,
+          "end": "remove",
+          "durations": [45, 55, 65, 70, 75, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_thrown_rock_deflection",
+          "label": "Deflection",
+          "row": 15,
+          "end": "state",
+          "durations": [40, 45, 55, 60, 65, 65],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_fireball": {
+      "name": "Magic fireball",
+      "description": "A yellow-white core with orange flame edges and a short trail of red embers. Its bright core remains stable while the flame envelope pulses.",
+      "rows": [16, 18],
+      "region": { "x": 0, "y": 1440, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 14, "y": 35, "w": 42, "h": 26 },
+      "lead": 8,
+      "animations": {
+        "flight": {
+          "id": "magic_fireball_flight",
+          "label": "Flight",
+          "row": 16,
+          "loop": true,
+          "durations": [65, 65, 65, 65, 65, 65]
+        },
+        "impact": {
+          "id": "magic_fireball_impact",
+          "label": "Impact",
+          "row": 17,
+          "end": "remove",
+          "durations": [40, 50, 65, 65, 70, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_fireball_deflection",
+          "label": "Deflection",
+          "row": 18,
+          "end": "state",
+          "durations": [35, 45, 50, 55, 60, 65],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_wind_slash": {
+      "name": "Magic wind slash",
+      "description": "A thin pale mint-and-ivory crescent with a crisp leading edge and a few trailing wisps. Its small changes suggest moving air without drawing screen travel into the atlas.",
+      "rows": [19, 21],
+      "region": { "x": 0, "y": 1728, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 28, "y": 34, "w": 35, "h": 27 },
+      "lead": 15,
+      "animations": {
+        "flight": {
+          "id": "magic_wind_slash_flight",
+          "label": "Flight",
+          "row": 19,
+          "loop": true,
+          "durations": [60, 60, 60, 60, 60, 60]
+        },
+        "impact": {
+          "id": "magic_wind_slash_impact",
+          "label": "Impact",
+          "row": 20,
+          "end": "remove",
+          "durations": [35, 45, 55, 55, 65, 45],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_wind_slash_deflection",
+          "label": "Deflection",
+          "row": 21,
+          "end": "state",
+          "durations": [35, 40, 45, 50, 55, 60],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_water_ball": {
+      "name": "Magic water ball",
+      "description": "A rounded teal orb with a cyan rim, pale foam pixels and a short droplet trail. The surface ripples while the orb's core stays registered.",
+      "rows": [22, 24],
+      "region": { "x": 0, "y": 2016, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 32, "y": 39, "w": 25, "h": 18 },
+      "lead": 9,
+      "animations": {
+        "flight": {
+          "id": "magic_water_ball_flight",
+          "label": "Flight",
+          "row": 22,
+          "loop": true,
+          "durations": [85, 85, 85, 85, 85, 85]
+        },
+        "impact": {
+          "id": "magic_water_ball_impact",
+          "label": "Impact",
+          "row": 23,
+          "end": "remove",
+          "durations": [45, 55, 65, 70, 75, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_water_ball_deflection",
+          "label": "Deflection",
+          "row": 24,
+          "end": "state",
+          "durations": [40, 50, 60, 65, 70, 75],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_heal": {
+      "name": "Magic heal",
+      "description": "An ivory-gold mote inside a small pulsing ring, with a short warm trail. Its impact becomes a restorative bloom rather than a damaging explosion.",
+      "rows": [25, 27],
+      "region": { "x": 0, "y": 2304, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "recipient",
+      "flightBounds": { "x": 19, "y": 37, "w": 39, "h": 21 },
+      "lead": 10,
+      "animations": {
+        "flight": {
+          "id": "magic_heal_flight",
+          "label": "Flight",
+          "row": 25,
+          "loop": true,
+          "durations": [100, 100, 100, 100, 100, 100]
+        },
+        "impact": {
+          "id": "magic_heal_impact",
+          "label": "Impact",
+          "row": 26,
+          "end": "remove",
+          "durations": [70, 85, 110, 110, 125, 80],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_heal_deflection",
+          "label": "Deflection",
+          "row": 27,
+          "end": "state",
+          "durations": [50, 60, 75, 80, 90, 95],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_space_attack": {
+      "name": "Magic space attack",
+      "description": "A compact violet rift with a cyan edge and dark center. The rim ripples around the dark opening, with a few nearby violet and cyan flecks.",
+      "rows": [28, 30],
+      "region": { "x": 0, "y": 2592, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 26, "y": 35, "w": 29, "h": 26 },
+      "lead": 7,
+      "animations": {
+        "flight": {
+          "id": "magic_space_attack_flight",
+          "label": "Flight",
+          "row": 28,
+          "loop": true,
+          "durations": [80, 80, 80, 80, 80, 80]
+        },
+        "impact": {
+          "id": "magic_space_attack_impact",
+          "label": "Impact",
+          "row": 29,
+          "end": "remove",
+          "durations": [45, 60, 80, 65, 70, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_space_attack_deflection",
+          "label": "Deflection",
+          "row": 30,
+          "end": "state",
+          "durations": [40, 55, 60, 65, 70, 70],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_mind_attack": {
+      "name": "Magic mind attack",
+      "description": "A restrained lavender pulse with offset violet contours and a narrow distortion between them. Its impact uses two small ring contours, with no enemy or head drawn.",
+      "rows": [31, 33],
+      "region": { "x": 0, "y": 2880, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "head",
+      "flightBounds": { "x": 19, "y": 35, "w": 38, "h": 26 },
+      "lead": 9,
+      "animations": {
+        "flight": {
+          "id": "magic_mind_attack_flight",
+          "label": "Flight",
+          "row": 31,
+          "loop": true,
+          "durations": [90, 90, 90, 90, 90, 90]
+        },
+        "impact": {
+          "id": "magic_mind_attack_impact",
+          "label": "Impact",
+          "row": 32,
+          "end": "remove",
+          "durations": [45, 65, 80, 75, 80, 55],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_mind_attack_deflection",
+          "label": "Deflection",
+          "row": 33,
+          "end": "state",
+          "durations": [40, 50, 60, 60, 70, 70],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "magic_undead_energy_attack": {
+      "name": "Magic undead energy attack",
+      "description": "A pale blue-green grave bolt with a dim charcoal core and a ragged tail of spectral sparks. The dark core stays distinct from the bright rim.",
+      "rows": [34, 36],
+      "region": { "x": 0, "y": 3168, "w": 576, "h": 288 },
+      "category": "spell",
+      "orient": "heading",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 18, "y": 37, "w": 41, "h": 20 },
+      "lead": 11,
+      "animations": {
+        "flight": {
+          "id": "magic_undead_energy_attack_flight",
+          "label": "Flight",
+          "row": 34,
+          "loop": true,
+          "durations": [75, 75, 75, 75, 75, 75]
+        },
+        "impact": {
+          "id": "magic_undead_energy_attack_impact",
+          "label": "Impact",
+          "row": 35,
+          "end": "remove",
+          "durations": [45, 55, 75, 70, 75, 50],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "magic_undead_energy_attack_deflection",
+          "label": "Deflection",
+          "row": 36,
+          "end": "state",
+          "durations": [40, 50, 55, 60, 65, 70],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    },
+    "thrown_potion": {
+      "name": "Thrown potion",
+      "description": "A round corked glass flask containing amber liquid. The neck rotates around the flask's rounded belly, and the highlights and liquid shapes change through the tumble.",
+      "rows": [37, 39],
+      "region": { "x": 0, "y": 3456, "w": 576, "h": 288 },
+      "category": "item",
+      "orient": "fixed",
+      "impactAnchor": "contact",
+      "flightBounds": { "x": 38, "y": 32, "w": 20, "h": 25 },
+      "lead": 10,
+      "animations": {
+        "flight": {
+          "id": "thrown_potion_flight",
+          "label": "Flight",
+          "row": 37,
+          "loop": true,
+          "durations": [85, 85, 85, 85, 85, 85]
+        },
+        "impact": {
+          "id": "thrown_potion_impact",
+          "label": "Impact",
+          "row": 38,
+          "end": "remove",
+          "durations": [45, 55, 65, 75, 80, 55],
+          "events": [
+            { "frame": 1, "type": "contact", "note": "Contact. The game applies the result when the hit happens, not on a frame." }
+          ],
+          "emptyFrames": [6]
+        },
+        "deflect": {
+          "id": "thrown_potion_deflection",
+          "label": "Deflection",
+          "row": 39,
+          "end": "state",
+          "durations": [45, 60, 70, 70, 75, 80],
+          "next": { "slot": "flight", "frame": 2 }
+        }
+      }
+    }
+  }
+}

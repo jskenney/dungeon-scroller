@@ -409,6 +409,19 @@ tests.push(
     assert(near(world.hero.mp, 90, 6), `expected about 90 MP, got ${world.hero.mp}`);
     assert(world.projectiles.length === 0, 'the projectile was not removed');
   }],
+  ['a shot reports where it hit, and nothing when it runs out of range', () => {
+    const sprited = () => fighter({ abilities: { ...fighter().gameplay.abilities,
+      attack2: { type: 'projectile', mp: 10, damage: 15, air: true, mobile: true, crouch: true, projectile: { sprite: 'arrow', speed: 500, range: 400 } } } });
+    const hit = arena([3], { hero: sprited(), enemy: dummy(), config: QUIET });
+    const seen = [];
+    runWorld(hit, i => ({ attack2: i === 0 }), 90, w => { seen.push(...w.events.filter(e => e.type === 'impact')); w.events.length = 0; });
+    assert(seen.length === 1, `expected one impact, saw ${seen.length}`);
+    assert(seen[0].sprite === 'arrow' && seen[0].vx > 0 && seen[0].team === 'hero', 'the impact does not describe the shot');
+    const miss = arena([14], { hero: sprited(), enemy: dummy(), config: QUIET, map: ['................', '................', '................', 'S...............', '################'] });
+    const none = [];
+    runWorld(miss, i => ({ attack2: i === 0 }), 120, w => { none.push(...w.events.filter(e => e.type === 'impact')); w.events.length = 0; });
+    assert(none.length === 0 && miss.projectiles.length === 0, 'a shot that ran out of range reported an impact');
+  }],
   ['a projectile stops at a wall and at the end of its range', () => {
     const walled = arena([5], { enemy: dummy(), config: QUIET, map: ['............', '....#.......', 'S...#.......', '############'] });
     runWorld(walled, i => ({ attack2: i === 0 }), 80);

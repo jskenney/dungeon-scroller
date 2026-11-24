@@ -31,7 +31,7 @@ const COLORS = {
   body: 0x63c98a, hit: 0xff5d5d, use: 0x5ac8fa,
   solid: 0xef6b6b, platform: 0x5ac8fa, rect: 0xf59e42, slope: 0xc084fc, stairs: 0xc084fc, hover: 0xffffff,
 };
-const KIND_TITLES = { player: 'Players', enemy: 'Enemies', boss: 'Bosses', npc: 'NPCs', object: 'Objects' };
+const KIND_TITLES = { player: 'Players', enemy: 'Enemies', boss: 'Bosses', npc: 'NPCs', object: 'Objects', projectile: 'Projectiles' };
 const HIT_EVENTS = new Set(['melee', 'area', 'impact', 'emit']);
 const HOLD_MS = 600; // pause on the last frame before a one-shot animation repeats
 
@@ -212,6 +212,7 @@ function currentClip() {
 
 function facingText(entity) {
   if (entity.kind === 'object') return 'not directional';
+  if (entity.kind === 'projectile') return entity.orient === 'fixed' ? 'travels right; tumbles in its frames' : 'travels right; turned to its heading';
   const native = entity.sheet.facing;
   const shown = state.flip ? (native === 'left' ? 'right' : 'left') : native;
   return `facing ${shown}${state.flip ? ' (mirrored)' : ' (as drawn)'}`;
@@ -776,6 +777,8 @@ function entityDetails(entity) {
   row(dl, 'Cell', `${sheet.cell.w} × ${sheet.cell.h}`);
   row(dl, 'Pivot', `(${sheet.pivot.x}, ${sheet.pivot.y})`);
   if (entity.kind !== 'object') row(dl, 'Drawn facing', sheet.facing);
+  if (entity.flightBounds) row(dl, 'Flight size', `${entity.flightBounds.w} × ${entity.flightBounds.h} px`);
+  if (entity.impactAnchor) row(dl, 'Impact drawn', { contact: 'where it hits', recipient: 'on whoever is healed', head: 'on the target\'s head' }[entity.impactAnchor]);
   if (entity.idleBounds) row(dl, 'Idle size', `${entity.idleBounds.w} × ${entity.idleBounds.h} px`);
   row(dl, 'Sits', { ground: 'on the ground', float: 'floating above the ground', wall: 'on a wall', hover: 'hovering' }[entity.registration]);
   row(dl, 'Reward', { accept: 'when the interaction starts', complete: 'when the interaction finishes' }[entity.commit]);

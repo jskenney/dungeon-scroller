@@ -1,5 +1,5 @@
 // Things that fly or erupt: bolts, arrows, stones, and delayed ground bursts.
-// Drawn as particles, since the sheets contain no projectile art.
+// One with a `sprite` is drawn from the projectile sheet; the rest are drawn as particles.
 
 import { slopeSurface } from '../level/level.js';
 
@@ -8,10 +8,10 @@ let nextId = 1;
 export class Projectile {
   /**
    * @param {object} o  {team: 'hero'|'enemy', x, y, vx, vy, gravity, range, damage,
-   *                     effect, pierce, radius, color, owner}
+   *                     effect, pierce, radius, color, owner, sprite}
    */
   constructor(o) {
-    Object.assign(this, { gravity: 0, pierce: false, radius: 6, effect: null, color: '#ffffff' }, o);
+    Object.assign(this, { gravity: 0, pierce: false, radius: 6, effect: null, color: '#ffffff', sprite: null }, o);
     this.id = nextId++;
     this.kind = 'bolt';
     this.prev = { x: this.x, y: this.y };
@@ -29,11 +29,21 @@ export class Projectile {
     const level = world.level, r = this.radius * 0.5;
     // Strike first: a crate is both a target and an obstacle, and should break.
     const hitArea = { l: this.x - this.radius, t: this.y - this.radius, r: this.x + this.radius, b: this.y + this.radius };
+    const before = this.struck.size;
     world.strike(this, hitArea, this.struck);
+    // Each thing struck gets the impact picture; a piercing shot carries on.
+    if (this.struck.size > before) this.impact(world);
     if (this.struck.size && !this.pierce) { this.gone = true; return; }
     const blocked = level.rectsIn(this.x - r, this.y - r, this.x + r, this.y + r).some(q => q.kind === 'solid')
       || level.slopesIn(this.x, this.y, this.x, this.y).some(s => this.y > slopeSurface(s, this.x));
+    if (blocked) this.impact(world);
+    // Running out of range is not a hit: the shot simply ends.
     if (blocked || this.left <= 0 || this.y > level.height + 300) this.gone = true;
+  }
+
+  /** Tell the display where this shot hit something, and which way it was going. */
+  impact(world) {
+    world.events.push({ type: 'impact', sprite: this.sprite, team: this.team, color: this.color, x: this.x, y: this.y, vx: this.vx, vy: this.vy });
   }
 }
 

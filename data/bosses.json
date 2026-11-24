@@ -181,7 +181,7 @@
         "attack4": {
           "type": "projectile",
           "damage": 30,
-          "projectile": { "speed": 420, "range": 800, "count": 3, "spread": 24 },
+          "projectile": { "sprite": "magic_undead_energy_attack", "speed": 420, "range": 800, "count": 3, "spread": 24 },
           "cooldown": 8.0
         }
       }

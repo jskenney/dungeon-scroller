@@ -1,10 +1,11 @@
-// Draws a running world: the hero, enemies with health bars, projectiles as
-// particles, damage numbers, and the debug overlay. Reads the simulation;
+// Draws a running world: the hero, enemies with health bars, projectiles (from
+// the projectile sheet, or as particles when they have no art), damage numbers,
+// and the debug overlay. Reads the simulation;
 // never changes it.
 
 import { Container, Graphics, Sprite, Text } from '../../vendor/pixi.min.mjs';
 import { TILE } from '../level/level.js';
-import { clipLength } from '../assets/animation.js';
+import { clipLength, sampleClip } from '../assets/animation.js';
 import { BOOST_NAMES } from '../ui/hud.js';
 
 const tint = hex => parseInt(String(hex ?? '#ffffff').slice(1), 16);
@@ -37,6 +38,7 @@ export class WorldView {
     this.heroView = stage.addActor(world.hero.entity);
     this.enemyViews = new Map();
     this.shots = new Map();
+    this.bursts = [];              // impact pictures playing out
     this.floaters = [];
     this.time = 0;
   }
@@ -139,9 +141,18 @@ export class WorldView {
       return t < 1;
     });
 
-    // ---- projectiles and bursts, drawn as particles
+    // ---- projectiles and bursts: sheet art where a sprite is named, particles otherwise
     for (const p of world.projectiles) {
       let g = this.shots.get(p);
+      const art = p.sprite ? this.projectileArt(p.sprite) : null;
+      if (!g && art) { g = this.centred(art.animations.flight.frames[0]); g.age = 0; this.shots.set(p, g); }
+      if (art) {
+        g.age += dt * 1000;
+        g.texture = art.animations.flight.frames[sampleClip(art.animations.flight, g.age).frame];
+        this.aim(g, art, p.vx, p.vy);
+        g.position.set(Math.round(lerp(p.prev.x, p.x, a)), Math.round(lerp(p.prev.y, p.y, a)));
+        continue;
+      }
       if (!g) { g = new Graphics(); g.trail = []; this.effects.addChild(g); this.shots.set(p, g); }
       const color = tint(p.color);
       g.clear();
@@ -172,6 +183,48 @@ export class WorldView {
       g.destroy();
       this.shots.delete(p);
     }
+
+    // ---- impact pictures: where a shot landed, on a healed hero, on a hexed enemy's head
+    for (const e of world.events) {
+      const art = e.sprite ? this.projectileArt(e.sprite) : null;
+      if (e.type === 'impact' && art) {
+        // The flight picture is centred on the shot; its tip is `lead` further along.
+        const speed = Math.hypot(e.vx, e.vy) || 1, lead = art.lead ?? 0;
+        this.burst(art, e.x + (e.vx / speed) * lead, e.y + (e.vy / speed) * lead, e.vx, e.vy);
+      } else if ((e.type === 'heal' || e.type === 'hex') && art && e.actor) {
+        this.burst(art, 0, 0, 1, 0, e.actor);
+      } else if (e.type === 'impact' && !e.sprite) {
+        // No art: a few sparks in the shot's colour.
+        const g = new Graphics(); g.sparks = true; g.color = tint(e.color);
+        this.effects.addChild(g);
+        this.bursts.push({ view: g, x: e.x, y: e.y, t: 0 });
+      }
+    }
+    this.bursts = this.bursts.filter(b => {
+      b.t += dt * 1000;
+      if (b.view.sparks) {
+        const t = b.t / 220;
+        b.view.clear();
+        for (let i = 0; i < 6 && t < 1; i++) {
+          const angle = i * 1.047 + 0.4, reach = 4 + 14 * t;
+          b.view.rect(Math.round(b.x + Math.cos(angle) * reach) - 1, Math.round(b.y + Math.sin(angle) * reach) - 1, 3, 3).fill({ color: i % 2 ? b.view.color : 0xffffff, alpha: 1 - t });
+        }
+        if (t < 1) return true;
+      } else {
+        const at = sampleClip(b.clip, b.t);
+        if (!at.finished) {
+          b.view.texture = b.clip.frames[at.frame];
+          if (b.actor) {
+            // Follows whoever it is on: the chest for a heal, the head for a mind spell.
+            const body = b.actor.body, up = b.anchor === 'head' ? body.h - 8 : body.h * 0.5;
+            b.view.position.set(Math.round(lerp(b.actor.prev.x, body.x, a)), Math.round(lerp(b.actor.prev.y, body.y, a) - up));
+          }
+          return true;
+        }
+      }
+      b.view.destroy();
+      return false;
+    });
 
     // ---- numbers that float up from hits and heals
     for (const e of world.events) {
@@ -255,6 +308,37 @@ export class WorldView {
     holder.addChild(inner);
     this.props.addChild(holder);
     return inner;
+  }
+
+  /** The sheet entity for a projectile sprite name, if that sheet is loaded. */
+  projectileArt(id) {
+    return this.world.entities?.[`projectile/${id}`] ?? null;
+  }
+
+  /** A sprite on the effects layer, held by its centre pivot. */
+  centred(texture) {
+    const sprite = new Sprite(texture);
+    sprite.pivot.set(texture.width / 2, texture.height / 2);
+    this.effects.addChild(sprite);
+    return sprite;
+  }
+
+  /**
+   * Point projectile art along its travel. The art is drawn travelling right:
+   * going left it is mirrored, so it never appears upside down. Art that
+   * tumbles in its own frames is mirrored but not turned.
+   */
+  aim(sprite, art, vx, vy) {
+    const mirror = vx < 0 ? -1 : 1;
+    sprite.scale.set(mirror, 1);
+    sprite.rotation = art.orient === 'fixed' ? 0 : Math.atan2(vy * mirror, vx * mirror);
+  }
+
+  /** Start an impact picture at a point, or on an actor it will follow. */
+  burst(art, x, y, vx, vy, actor = null) {
+    const clip = art.animations.impact, view = this.centred(clip.frames[0]);
+    if (!actor) { this.aim(view, art, vx, vy); view.position.set(Math.round(x), Math.round(y)); }
+    this.bursts.push({ view, clip, t: 0, actor, anchor: art.impactAnchor });
   }
 
   float(x, y, label, color) {
