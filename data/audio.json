@@ -1,13 +1,30 @@
 {
   "schema": "dungeon-scroller/audio@1",
   "notes": [
-    "Sound effects and music. Paths are relative to this file. No sound files exist yet, so both lists are empty.",
+    "Sound effects and music. Paths are relative to this file. No sound-effect files exist yet, so that list is empty.",
     "sounds: one entry per cue. Each lists alternative files of the same sound; the first format the browser can play is used. A cue with no entry plays a synthesized stand-in (set audio.standIn to false in dungeon.json to turn those off).",
     "Cues: jump, land, swing, shoot, cast, heal, hit, hurt, defeat, coin, pickup, key, chest, break, lever, gate, locked, checkpoint, shrine, teleport, fall, respawn, alert, growl, boss, phase, shockwave, breath, complete, gameover, ui.",
     "music: tracks by moment. 'title' plays on the menus; 'level' in any level, or 'level:<tileset id>' for one theme; 'boss' during a boss fight; 'complete' on the results screen.",
     "Example sound entry:  \"coin\": { \"files\": [\"../assets/sfx/coin.ogg\", \"../assets/sfx/coin.m4a\"], \"volume\": 0.8 }",
-    "Example music entry:  \"level:old_stone_dungeon\": { \"files\": [\"../assets/music/crypt.ogg\", \"../assets/music/crypt.m4a\"], \"volume\": 0.7 }"
+    "A music entry is either one recording ('files': the same track in alternative formats, the first the browser can play is used) or a 'playlist' of MIDI files played one after another by the game's built-in piano voice. 'order' is 'shuffle' or 'listed'. A playlist of one piece repeats it.",
+    "Today: the slow pieces in assets/music/slow play in every level, and the fast piece in assets/music/fast plays during a boss fight. The menus and the results screen have no music.",
+    "Example of a recording:  \"level:old_stone_dungeon\": { \"files\": [\"../assets/music/crypt.ogg\", \"../assets/music/crypt.m4a\"], \"volume\": 0.7 }"
   ],
   "sounds": {},
-  "music": {}
+  "music": {
+    "level": {
+      "playlist": [
+        "../assets/music/slow/satie_gnossienne_no_1.mid",
+        "../assets/music/slow/satie_gymnopedie_1.mid"
+      ],
+      "order": "shuffle",
+      "volume": 0.9
+    },
+    "boss": {
+      "playlist": [
+        "../assets/music/fast/Dans_l_antre_du_roi_de_la_montagne.mid"
+      ],
+      "volume": 1.0
+    }
+  }
 }

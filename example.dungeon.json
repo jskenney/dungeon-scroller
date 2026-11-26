@@ -37,6 +37,7 @@
       "assets/sprites/menus/welcome_screen_spritesheet.json",
       "assets/sprites/menus/main_menu_background_spritesheet.json"
     ],
+    "turnarounds": "assets/turnaround/turnarounds.json",
     "tilesets": [
       "assets/tilesheets/old_stone_dungeon_tileset.json",
       "assets/tilesheets/ruined_graveyard_tileset.json"

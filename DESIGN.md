@@ -361,6 +361,10 @@ Sheets of separate pieces that are assembled by the game instead of played as an
 
 **Menu backgrounds** use `dungeon-scroller/backdrop@1` and are listed under `assets.backdrops`: a grid of full 1000×600 frames, `animation.durations`, and `menuRect`, the area every frame leaves unchanged for a title and controls (`stillRect` is the measured largest such area). `display.backdrops` says which is used where: `title` for the title screen, `menus` for hero selection, level selection and settings opened from the title. The whole frame is fitted inside the window and the screen's controls are laid out inside `menuRect`, scrolling if they do not fit. Pause, shop and end-of-level panels still appear over the game as before. With reduced-motion set in the browser the first frame is shown still.
 
+### 4.4d Turnarounds
+
+`assets/turnaround/` holds reference pictures of 35 entities seen from four sides, left to right: front, 45°, 90° (side) and back. They have no written guides, so `assets/turnaround/turnarounds.json` (`dungeon-scroller/turnarounds@1`, named by `assets.turnarounds`) records only what was measured: each picture's size and checksum, its ground colour, and a rectangle for each of the four views, found by splitting at the three widest empty gaps. A picture is linked to its entity by file name. The pictures are opaque, on a plain grey-blue ground, in two sizes (1774×887 and 3200×1600). The loader reads the index and attaches each entry to its entity as `entity.turnaround`; the pictures themselves are fetched only when shown. The viewer has a Turnarounds group. Nothing in the game uses them yet. No picture yet for: gem, deck of cards, dice, Mahjongg set, board game, computer game, building blocks.
+
 ### 4.5 Asset inventory today
 
 | Sheet | Contents | Guide | JSON |
@@ -399,7 +403,7 @@ All six hero sheets share one 14-row layout: idle, run, jump, three attacks (lis
 
 All five NPC sheets share one 12-row layout: idle, walk, death, take a hit, receive healing, buy, sell, wave, talking, hide, teleport out, teleport in. `buy` and `sell` are named from the NPC's point of view, and their `trade` events mark the frames where goods and payment visibly change hands; the game decides what is actually traded. The young villager's buy row runs in the opposite order to the others (he pays first). `data/npcs.json` holds what they do (§16.7).
 
-Not yet in the repository: music, sound effects, parallax backgrounds, and travelling projectile/effect sprites.
+Not yet in the repository: sound effects.
 
 **Cards.** Each card is a PNG with no lettering and a quiet reserved area that the game writes into, plus a guide and a JSON file (`dungeon-scroller/card@1`):
 
@@ -685,7 +689,9 @@ Settings, key bindings, last hero, and best results are saved in `localStorage`.
 
 ## 12. Audio
 
-Built in `js/audio/`. **No music or sound files exist yet**, so today every effect is a synthesized stand-in and there is no music.
+Built in `js/audio/`. **No sound-effect files exist yet**, so every effect is a synthesized stand-in.
+
+**Music is MIDI.** `assets/music/slow` holds pieces for exploring and `assets/music/fast` pieces for boss fights. A music entry in `data/audio.json` may be a `playlist` of `.mid` files (`order`: `shuffle` or `listed`); the game reads them itself (`js/audio/midi.js`: tempo changes, running status, sustain pedal) and plays them with a built-in piano-like voice made from oscillators, so no sound font or library is needed. Notes are handed to the audio clock about a second and a half ahead, pieces follow one another with a short pause, and a playlist of one repeats. Today `level` plays the two slow pieces and `boss` the fast one; a boss fight switches to the boss list and back when the boss falls. Menus and the results screen are silent. A recording (`files`) can still be used for any entry instead. The built-in voice is plain; it stands in for a proper instrument sound, which would need sampled audio.
 
 - **Buses.** Music, effects and voice, each with its own volume, under an overall volume. Defaults come from `dungeon.json` → `audio`; the player changes them in Settings (stored in the browser), and the mute key silences everything.
 - **Cues.** The game plays sounds by cue name: `jump`, `land`, `swing`, `shoot`, `cast`, `heal`, `hit`, `hurt`, `defeat`, `coin`, `pickup`, `key`, `chest`, `break`, `lever`, `gate`, `locked`, `checkpoint`, `shrine`, `teleport`, `fall`, `respawn`, `alert`, `growl`, `boss`, `phase`, `shockwave`, `breath`, `complete`, `gameover`, `ui`. Each simulation event maps to one cue (a melee ability to `swing`, a coin to `coin`, a boss changing phase to `phase`, and so on).
@@ -789,7 +795,7 @@ Each phase ends with something that can be opened in a browser and checked.
 | **5. Objects and rules** | **Done:** pickups, chests, keys, breakables, checkpoint flags, shrines, levers and gates, loot drops, the relic as the level goal, and the results screen (§16.5). |
 | **6. Bosses** | **Done:** phases, five attack types, the locking arena with its camera, the boss health bar, defeat and restart rules, and an arena level per boss (§16.6). |
 | **7. Front end** | Title, character cards, level selection, pause and settings including key rebinding, saved preferences. |
-| **8. Audio and dialogue** | **Engine done:** sound buses and volume settings, cue-based effects with synthesized stand-ins, streaming music with cross-fades, speech bubbles, character lines with pacing, and optional reading aloud (§12, §13). **Waiting on assets:** music and sound-effect files, to be listed in `data/audio.json`. |
+| **8. Audio and dialogue** | **Engine done:** sound buses and volume settings, cue-based effects with synthesized stand-ins, streaming music with cross-fades, speech bubbles, character lines with pacing, and optional reading aloud (§12, §13). MIDI music plays from `assets/music` through a built-in voice. **Waiting on assets:** sound-effect files, to be listed in `data/audio.json`. |
 | **9. Polish** | Parallax backgrounds, lighting from torches, particles, performance pass, accessibility options. |
 | **Later** | NPC behaviour, gamepad and touch, text-to-speech, offline support, Tiled import, backend and multiplayer (§15). |
 

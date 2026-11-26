@@ -1,12 +1,15 @@
 // Sound: three buses (music, effects, voice) under a master volume.
 // Effects come from the files listed in data/audio.json; a cue with no file
-// plays a synthesized stand-in. Music streams and cross-fades between tracks.
+// plays a synthesized stand-in. Music cross-fades between tracks; a track is
+// either a sound file, which streams, or a MIDI file, which is played by a
+// built-in piano-like voice.
 //
 // Browsers only allow sound after the user has pressed or clicked something,
 // so the audio context is created on the first such moment.
 
 import { resolve } from '../config.js';
 import { playStandIn, STAND_INS } from './synth.js';
+import { parseMidi, MidiPlayer } from './midi.js';
 
 export class AudioEngine {
   /**
@@ -22,7 +25,9 @@ export class AudioEngine {
     this.context = null;
     this.buffers = new Map();          // cue -> decoded AudioBuffer
     this.lastPlayed = new Map();       // cue -> time, to stop one cue stacking up
-    this.track = null;                 // {id, element, gain} currently playing
+    this.track = null;                 // {id, stop()} currently playing
+    this.songs = new Map();            // url -> parsed MIDI song
+    this.lastTune = new Map();         // music id -> the playlist entry played most recently
     this.wanted = null;                // music id asked for before sound was unlocked
     const unlock = () => this.unlock();
     window.addEventListener('pointerdown', unlock);
@@ -110,13 +115,9 @@ export class AudioEngine {
     this.wanted = id;
     if (!this.context || this.track?.id === id) return;
     const context = this.context, now = context.currentTime;
-    if (this.track) {
-      const old = this.track;
-      old.gain.gain.setTargetAtTime(0, now, 0.4);
-      setTimeout(() => { old.element.pause(); old.element.src = ''; }, 2000);
-      this.track = null;
-    }
+    if (this.track) { this.track.stop(); this.track = null; }
     const entry = id ? this.catalog.music?.[id] : null;
+    if (entry?.playlist?.length) { this.playList(id, entry); return; }
     const file = (entry?.files ?? []).find(f => this.canPlay(f));
     if (!file) return;
     const element = new Audio(resolve(file, this.catalogUrl));
@@ -126,7 +127,44 @@ export class AudioEngine {
     gain.gain.setTargetAtTime(entry.volume ?? 1, now, 0.6);
     context.createMediaElementSource(element).connect(gain).connect(this.bus.music);
     element.play().catch(() => {});
-    this.track = { id, element, gain };
+    this.track = { id, stop: () => {
+      gain.gain.setTargetAtTime(0, context.currentTime, 0.4);
+      setTimeout(() => { element.pause(); element.src = ''; }, 2000);
+    } };
+  }
+
+  /**
+   * Play the MIDI files of a playlist one after another for as long as this
+   * music is wanted. 'shuffle' picks at random without repeating a piece
+   * straight away; otherwise they play in the order listed.
+   */
+  playList(id, entry) {
+    const player = new MidiPlayer(this.context, this.bus.music);
+    const track = { id, stop: () => player.stop() };
+    this.track = track;
+    const list = entry.playlist;
+    const pick = () => {
+      const last = this.lastTune.get(id) ?? -1;
+      let index = (last + 1) % list.length;
+      if (entry.order === 'shuffle' && list.length > 1) do { index = Math.floor(Math.random() * list.length); } while (index === last);
+      this.lastTune.set(id, index);
+      return list[index];
+    };
+    const next = async () => {
+      const url = resolve(pick(), this.catalogUrl);
+      try {
+        if (!this.songs.has(url)) {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          this.songs.set(url, parseMidi(await response.arrayBuffer()));
+        }
+        if (this.track !== track) return;                    // something else was asked for while this loaded
+        player.play(this.songs.get(url), { volume: entry.volume ?? 1, loop: list.length === 1, onEnd: next });
+      } catch (error) {
+        console.warn(`Music "${id}" (${url}) could not be played: ${error.message}`);
+      }
+    };
+    next();
   }
 
   /** The music id for a moment in the game: 'title', 'boss', 'complete', or a level's tileset. */

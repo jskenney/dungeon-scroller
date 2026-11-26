@@ -387,6 +387,26 @@ export async function loadAssets(config, configUrl, onProgress = () => {}) {
       }
     }
   }
+  // Reference pictures of entities from four sides. Only the index is read here;
+  // the pictures are large and are fetched when something shows one.
+  result.turnarounds = {};
+  if (lists.turnarounds) {
+    const url = resolve(lists.turnarounds, configUrl), file = shortName(url);
+    try {
+      const index = await fetchJson(url);
+      for (const [id, entry] of Object.entries(index.entries ?? {})) {
+        const entity = result.entities[`${entry.subject?.kind}/${entry.subject?.entity}`];
+        if (!entity) { problems.push({ level: 'error', file, message: `${id}: its subject is not an entity in any loaded sheet.` }); continue; }
+        for (const view of index.viewOrder ?? []) {
+          const v = entry.views?.[view];
+          if (!v || v.x < 0 || v.y < 0 || v.x + v.w > entry.size.w || v.y + v.h > entry.size.h) problems.push({ level: 'error', file, message: `${id}: the "${view}" view is missing or outside the picture.` });
+        }
+        entity.turnaround = result.turnarounds[id] = { ...entry, id, viewOrder: index.viewOrder, imageUrl: resolve(entry.image, url) };
+      }
+    } catch (error) {
+      problems.push({ level: 'error', file, message: `Could not load: ${error.message}` });
+    }
+  }
   await loadCatalogs(config, configUrl, result, problems);
   await loadLevels(config, configUrl, result, problems);
 

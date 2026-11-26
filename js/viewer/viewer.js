@@ -245,6 +245,8 @@ function selectionFromHash() {
   } else if (type === 'parallax' || type === 'backdrop') {
     const item = (type === 'parallax' ? a.parallax : a.backdrops).find(t => t.id === id);
     if (item) return { selection: { type, item } };
+  } else if (type === 'turnaround') {
+    if (a.turnarounds[id]) return { selection: { type, item: a.turnarounds[id] } };
   } else if (type === 'card') {
     const item = a.cards.find(c => c.id === id);
     if (item) return { selection: { type: 'card', item } };
@@ -289,6 +291,11 @@ function buildNav() {
   if (a.backdrops?.length) {
     nav.append(h('h3', {}, 'Menu backgrounds'));
     for (const t of a.backdrops) nav.append(h('a', { href: `#backdrop/${t.id}` }, t.name ?? t.id));
+  }
+  const turnarounds = Object.values(a.turnarounds ?? {});
+  if (turnarounds.length) {
+    nav.append(h('h3', {}, 'Turnarounds'));
+    for (const t of turnarounds) nav.append(h('a', { href: `#turnaround/${t.id}` }, a.entities[`${t.subject.kind}/${t.subject.entity}`]?.name ?? t.id));
   }
   if (a.cards.length) {
     nav.append(h('h3', {}, 'Cards'));
@@ -811,6 +818,32 @@ function buildCardView(card) {
   $('card-view').replaceChildren(el);
 }
 
+/** A four-sided reference picture, with each measured view outlined and named. */
+function buildTurnaroundView(item) {
+  const pct = (v, total) => `${(v / total) * 100}%`;
+  const NAMES = { front: 'front', three_quarter: '45°', side: '90°', back: 'back' };
+  const el = h('div', { class: 'turnaround', style: { aspectRatio: `${item.size.w} / ${item.size.h}` } },
+    h('img', { src: item.imageUrl, alt: `${item.id.replaceAll('_', ' ')} from four sides` }),
+    item.viewOrder.map(view => {
+      const v = item.views[view];
+      return h('div', { class: 'area outline main', style: { left: pct(v.x, item.size.w), top: pct(v.y, item.size.h), width: pct(v.w, item.size.w), height: pct(v.h, item.size.h) } },
+        h('span', { class: 'tag' }, NAMES[view] ?? view));
+    }));
+  $('card-view').replaceChildren(el);
+}
+
+function turnaroundDetails(item) {
+  const dl = h('dl'), entity = state.assets.entities[`${item.subject.kind}/${item.subject.entity}`];
+  row(dl, 'Image', item.image);
+  row(dl, 'Size', `${item.size.w} × ${item.size.h}`);
+  row(dl, 'Shows', entity ? h('a', { href: hashFor({ type: 'entity', item: entity }) }, entity.name) : 'not found');
+  row(dl, 'Ground colour', item.background);
+  row(dl, 'Narrowest gap', `${item.narrowestGap} px`);
+  setDetails(h('h2', {}, entity?.name ?? item.id), dl,
+    h('h3', {}, 'Views'), h('ul', {}, item.viewOrder.map(view => { const v = item.views[view]; return h('li', {}, h('b', {}, view.replace('_', ' ')), ` — ${v.w} × ${v.h} at (${v.x}, ${v.y})`); })),
+    h('p', { class: 'muted' }, 'There is no written guide for these pictures. The outlines were measured from the picture against its plain ground, and are good to a few pixels.'));
+}
+
 function buildProblemsView() {
   const { problems } = state.assets;
   const view = $('problems-view');
@@ -1002,7 +1035,7 @@ function syncToolbar() {
   $('view-built').setAttribute('aria-pressed', String(state.tilesetView === 'built'));
   $('flip').setAttribute('aria-pressed', String(state.flip));
   $('play').textContent = state.playing ? 'Pause' : 'Play';
-  for (const id of ['zoom-in', 'zoom-out', 'zoom-label']) $(id).hidden = type === 'card' || type === 'parallax' || type === 'backdrop';
+  for (const id of ['zoom-in', 'zoom-out', 'zoom-label']) $(id).hidden = ['card', 'parallax', 'backdrop', 'turnaround'].includes(type);
   const single = type === 'entity' && state.entityView === 'single';
   $('nudge-group').hidden = !single;
   if (single) {
@@ -1021,7 +1054,7 @@ function refresh() {
   clearStage();
   markNav();
   syncToolbar();
-  $('card-view').hidden = sel.type !== 'card';
+  $('card-view').hidden = sel.type !== 'card' && sel.type !== 'turnaround';
   $('problems-view').hidden = sel.type !== 'problems';
   const single = sel.type === 'entity' && state.entityView === 'single';
   $('timeline').hidden = !single;
@@ -1040,6 +1073,9 @@ function refresh() {
   } else if (sel.type === 'parallax' || sel.type === 'backdrop') {
     (sel.type === 'parallax' ? buildParallax : buildBackdrop)(sel.item);
     sceneryDetails(sel.item, sel.type);
+  } else if (sel.type === 'turnaround') {
+    buildTurnaroundView(sel.item);
+    turnaroundDetails(sel.item);
   } else if (sel.type === 'card') {
     buildCardView(sel.item);
     cardDetails(sel.item);

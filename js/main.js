@@ -292,6 +292,8 @@ function sceneryFor(tileset) {
 
 function stopPlay() {
   game.speech?.stop();
+  // Level music ends with the level; the menus play their own, if any is listed.
+  if (game.world) game.audio?.music(game.audio.musicFor('title'));
   if (game.world) showBackdrop();
   game.world = null; game.view = null; game.hud = null; game.paused = false;
   game.input.setEnabled(false);

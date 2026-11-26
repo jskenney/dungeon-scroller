@@ -901,6 +901,29 @@ tests.push(
 // ----------------------------------------------------------------- dialogue
 
 import { LineDirector } from '../speech/lines.js';
+import { parseMidi } from '../audio/midi.js';
+
+tests.push(
+  ['a MIDI file becomes notes timed in seconds, following tempo changes', () => {
+    // One track, 96 ticks to the beat: 120 beats a minute, then 60 from the second beat on.
+    const track = [
+      0x00, 0xff, 0x03, 0x04, 0x74, 0x65, 0x73, 0x74,          // name "test"
+      0x00, 0xff, 0x51, 0x03, 0x07, 0xa1, 0x20,                // tempo: 500000 us a beat
+      0x00, 0x90, 60, 100,                                     // middle C on at beat 0
+      0x60, 0x80, 60, 0,                                       // off one beat later
+      0x00, 0xff, 0x51, 0x03, 0x0f, 0x42, 0x40,                // tempo: 1000000 us a beat
+      0x00, 0x90, 64, 127,                                     // E on at beat 1
+      0x60, 64, 0,                                             // running status, loudness 0 = off, one beat later
+      0x00, 0xff, 0x2f, 0x00];
+    const bytes = new Uint8Array([0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 0, 0, 1, 0, 96,
+      0x4d, 0x54, 0x72, 0x6b, 0, 0, 0, track.length, ...track]);
+    const song = parseMidi(bytes);
+    assert(song.notes.length === 2, `expected 2 notes, got ${song.notes.length}`);
+    const [c, e] = song.notes;
+    assert(c.n === 60 && near(c.t, 0, 0.001) && near(c.d, 0.5, 0.001), `first note wrong: ${JSON.stringify(c)}`);
+    assert(e.n === 64 && near(e.t, 0.5, 0.001) && near(e.d, 1, 0.001) && e.v === 1, `second note wrong: ${JSON.stringify(e)}`);
+    assert(near(song.duration, 1.5, 0.001) && song.names[0] === 'test', 'length or name wrong');
+  }]);
 
 const speaker = (lines, extra = {}) => ({ g: { lines }, hp: 100, maxHp: 100, dead: false, ...extra });
 

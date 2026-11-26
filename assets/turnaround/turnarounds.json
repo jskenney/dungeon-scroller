@@ -1,0 +1,520 @@
+{
+  "schema": "dungeon-scroller/turnarounds@1",
+  "kind": "turnarounds",
+  "notes": [
+    "Reference pictures of a character or object seen from four sides, left to right: front, three-quarter (45 degrees), side (90 degrees) and back (180 degrees). The order is as the artist described it.",
+    "These images have no written guide. Everything here was measured from the pictures; nothing about what they show has been assumed.",
+    "Each picture is named after the game entity it shows ('subject'), which is how the two are linked.",
+    "The pictures are painted on a plain grey-blue ground, not a transparent one, and the ground is slightly uneven. 'views' are the areas that differ clearly from it, found by splitting at the three widest empty gaps, so their edges are good to a few pixels, not exact.",
+    "'narrowestGap' is the smallest of those three gaps in pixels. Where it is small the views nearly touch and a rectangle may clip or include a neighbour's edge.",
+    "The pictures come in two sizes, 1774 x 887 and 3200 x 1600. Both are 2:1.",
+    "'withoutPicture' lists entities that have no turnaround yet."
+  ],
+  "viewOrder": [
+    "front",
+    "three_quarter",
+    "side",
+    "back"
+  ],
+  "entries": {
+    "barrel": {
+      "image": "barrel.png",
+      "sha256": "687049b088a33a4c23964403f9796c81e148cc8fcf2fa59bf1222cd1a68dcce9",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "barrel" },
+      "background": "#55566a",
+      "narrowestGap": 75,
+      "views": {
+        "front": { "x": 38, "y": 209, "w": 367, "h": 457 },
+        "three_quarter": { "x": 480, "y": 205, "w": 368, "h": 462 },
+        "side": { "x": 923, "y": 209, "w": 366, "h": 457 },
+        "back": { "x": 1368, "y": 209, "w": 368, "h": 457 }
+      }
+    },
+    "burial_urn": {
+      "image": "burial_urn.png",
+      "sha256": "d89a89c91d8bce2f3576e8683788641d727a391b5150cda3358f26c9a030c39e",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "burial_urn" },
+      "background": "#565669",
+      "narrowestGap": 95,
+      "views": {
+        "front": { "x": 47, "y": 206, "w": 346, "h": 489 },
+        "three_quarter": { "x": 490, "y": 206, "w": 347, "h": 489 },
+        "side": { "x": 932, "y": 206, "w": 347, "h": 489 },
+        "back": { "x": 1377, "y": 206, "w": 347, "h": 489 }
+      }
+    },
+    "checkpoint_flag": {
+      "image": "checkpoint_flag.png",
+      "sha256": "7eefc04028ace2b9a654b14e3cbeac7072ed1b43c143a26703b435e0ac189a7d",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "checkpoint_flag" },
+      "background": "#545568",
+      "narrowestGap": 71,
+      "views": {
+        "front": { "x": 56, "y": 163, "w": 425, "h": 537 },
+        "three_quarter": { "x": 552, "y": 163, "w": 296, "h": 537 },
+        "side": { "x": 1008, "y": 165, "w": 109, "h": 535 },
+        "back": { "x": 1289, "y": 164, "w": 425, "h": 536 }
+      }
+    },
+    "dark_swordsman": {
+      "image": "dark_swordsman.png",
+      "sha256": "899d514fc881a93dfc74269fc6727f05c149cb5a9b2a7056e1a262dd11d05a6b",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "player", "entity": "dark_swordsman" },
+      "background": "#535463",
+      "narrowestGap": 136,
+      "views": {
+        "front": { "x": 47, "y": 36, "w": 349, "h": 807 },
+        "three_quarter": { "x": 536, "y": 35, "w": 272, "h": 808 },
+        "side": { "x": 998, "y": 35, "w": 244, "h": 808 },
+        "back": { "x": 1378, "y": 36, "w": 346, "h": 807 }
+      }
+    },
+    "death_knight": {
+      "image": "death_knight.png",
+      "sha256": "1a6f0e06f13f2bb6f5c1de2b8111677f1bb0d868eca3d6e4099086d2a9b62c57",
+      "size": { "w": 3200, "h": 1600 },
+      "subject": { "kind": "enemy", "entity": "death_knight" },
+      "background": "#4b5160",
+      "narrowestGap": 52,
+      "views": {
+        "front": { "x": 18, "y": 216, "w": 759, "h": 1189 },
+        "three_quarter": { "x": 829, "y": 211, "w": 745, "h": 1194 },
+        "side": { "x": 1683, "y": 214, "w": 632, "h": 1193 },
+        "back": { "x": 2460, "y": 213, "w": 682, "h": 1194 }
+      }
+    },
+    "death_monarch": {
+      "image": "death_monarch.png",
+      "sha256": "2ff5057ec355829d0c622dc6cc8fc3973bfdd5bc9a9dd746143de66fa9aa36aa",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "boss", "entity": "death_monarch" },
+      "background": "#545568",
+      "narrowestGap": 57,
+      "views": {
+        "front": { "x": 32, "y": 12, "w": 359, "h": 822 },
+        "three_quarter": { "x": 478, "y": 12, "w": 330, "h": 822 },
+        "side": { "x": 912, "y": 12, "w": 387, "h": 822 },
+        "back": { "x": 1356, "y": 12, "w": 368, "h": 821 }
+      }
+    },
+    "dungeon_relic": {
+      "image": "dungeon_relic.png",
+      "sha256": "8f8a9dfd1b46cec348cf444905640855a9fa3dbc43e46e262125fbfdcb895059",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "dungeon_relic" },
+      "background": "#555567",
+      "narrowestGap": 103,
+      "views": {
+        "front": { "x": 50, "y": 106, "w": 348, "h": 666 },
+        "three_quarter": { "x": 501, "y": 106, "w": 322, "h": 663 },
+        "side": { "x": 943, "y": 106, "w": 282, "h": 663 },
+        "back": { "x": 1376, "y": 106, "w": 350, "h": 667 }
+      }
+    },
+    "earth_mage": {
+      "image": "earth_mage.png",
+      "sha256": "fca8a5a6d72cde85338b20dae2d1d9373f55c15ba57f3c4b328b7a34398f8630",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "player", "entity": "earth_mage" },
+      "background": "#4d505f",
+      "narrowestGap": 123,
+      "views": {
+        "front": { "x": 88, "y": 26, "w": 327, "h": 832 },
+        "three_quarter": { "x": 538, "y": 26, "w": 305, "h": 833 },
+        "side": { "x": 980, "y": 26, "w": 202, "h": 832 },
+        "back": { "x": 1366, "y": 26, "w": 319, "h": 831 }
+      }
+    },
+    "fire_mage": {
+      "image": "fire_mage.png",
+      "sha256": "62ac93ba3c8824f8e180ab3750daf5752a2abc334b1d7d8df4a7fda02fad7627",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "player", "entity": "fire_mage" },
+      "background": "#515361",
+      "narrowestGap": 137,
+      "views": {
+        "front": { "x": 98, "y": 31, "w": 290, "h": 813 },
+        "three_quarter": { "x": 525, "y": 30, "w": 267, "h": 814 },
+        "side": { "x": 973, "y": 30, "w": 182, "h": 813 },
+        "back": { "x": 1373, "y": 33, "w": 294, "h": 810 }
+      }
+    },
+    "gold_coin": {
+      "image": "gold_coin.png",
+      "sha256": "274d671c1e1fed3479a86ba1f8433cdc79efbd74ffb2d32a27d098879cd7b8f4",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "gold_coin" },
+      "background": "#545467",
+      "narrowestGap": 98,
+      "views": {
+        "front": { "x": 49, "y": 229, "w": 400, "h": 415 },
+        "three_quarter": { "x": 547, "y": 229, "w": 298, "h": 415 },
+        "side": { "x": 1051, "y": 229, "w": 80, "h": 415 },
+        "back": { "x": 1322, "y": 229, "w": 401, "h": 415 }
+      }
+    },
+    "gravestone": {
+      "image": "gravestone.png",
+      "sha256": "d2a52ad84b5c1850dbdad347ac61808a8e51611eb475aa1bd7b4dc7728c4b9d1",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "gravestone" },
+      "background": "#575b65",
+      "narrowestGap": 88,
+      "views": {
+        "front": { "x": 58, "y": 92, "w": 423, "h": 668 },
+        "three_quarter": { "x": 569, "y": 88, "w": 366, "h": 693 },
+        "side": { "x": 1044, "y": 91, "w": 165, "h": 677 },
+        "back": { "x": 1315, "y": 92, "w": 418, "h": 669 }
+      }
+    },
+    "healing_potion": {
+      "image": "healing_potion.png",
+      "sha256": "6b642f920753966558c11738dba1b2b8e2372199dd61611d7daf12080975c295",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "healing_potion" },
+      "background": "#525366",
+      "narrowestGap": 102,
+      "views": {
+        "front": { "x": 66, "y": 221, "w": 334, "h": 439 },
+        "three_quarter": { "x": 502, "y": 221, "w": 331, "h": 439 },
+        "side": { "x": 938, "y": 221, "w": 334, "h": 439 },
+        "back": { "x": 1374, "y": 221, "w": 333, "h": 439 }
+      }
+    },
+    "healing_shrine": {
+      "image": "healing_shrine.png",
+      "sha256": "32e886648fc47b758ab33256ce81e1b8293e809478ffeb9eaad4b9f34d5b4a1a",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "healing_shrine" },
+      "background": "#56576a",
+      "narrowestGap": 74,
+      "views": {
+        "front": { "x": 46, "y": 196, "w": 356, "h": 501 },
+        "three_quarter": { "x": 476, "y": 185, "w": 387, "h": 530 },
+        "side": { "x": 970, "y": 191, "w": 264, "h": 506 },
+        "back": { "x": 1369, "y": 196, "w": 357, "h": 501 }
+      }
+    },
+    "iron_key": {
+      "image": "iron_key.png",
+      "sha256": "b9f37475601e345debc3f728f1c57d83a9b20681ef9cf414c61f03055efb6ff9",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "iron_key" },
+      "background": "#515267",
+      "narrowestGap": 234,
+      "views": {
+        "front": { "x": 111, "y": 65, "w": 269, "h": 738 },
+        "three_quarter": { "x": 614, "y": 69, "w": 176, "h": 734 },
+        "side": { "x": 1049, "y": 69, "w": 83, "h": 734 },
+        "back": { "x": 1395, "y": 65, "w": 268, "h": 738 }
+      }
+    },
+    "lever": {
+      "image": "lever.png",
+      "sha256": "f76856642202ba3d0ffdb1ff803abc50362760d3c08a9a780a0dedfd6e223415",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "lever" },
+      "background": "#535968",
+      "narrowestGap": 47,
+      "views": {
+        "front": { "x": 60, "y": 140, "w": 385, "h": 570 },
+        "three_quarter": { "x": 492, "y": 138, "w": 407, "h": 595 },
+        "side": { "x": 998, "y": 138, "w": 218, "h": 577 },
+        "back": { "x": 1320, "y": 138, "w": 394, "h": 572 }
+      }
+    },
+    "lich": {
+      "image": "lich.png",
+      "sha256": "3747e4abaf4464f689391d1d3b658b90607e275f2fec2259bc32d5550e036af1",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "enemy", "entity": "lich" },
+      "background": "#525362",
+      "narrowestGap": 119,
+      "views": {
+        "front": { "x": 57, "y": 38, "w": 334, "h": 808 },
+        "three_quarter": { "x": 512, "y": 38, "w": 304, "h": 807 },
+        "side": { "x": 935, "y": 41, "w": 292, "h": 804 },
+        "back": { "x": 1373, "y": 38, "w": 343, "h": 807 }
+      }
+    },
+    "light_space_mage": {
+      "image": "light_space_mage.png",
+      "sha256": "3b98ae62d155838cb4d593906a081d8020a1c99b2472e62a1cbbac2d30cc9402",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "player", "entity": "light_space_mage" },
+      "background": "#535366",
+      "narrowestGap": 130,
+      "views": {
+        "front": { "x": 48, "y": 36, "w": 321, "h": 769 },
+        "three_quarter": { "x": 499, "y": 37, "w": 280, "h": 768 },
+        "side": { "x": 953, "y": 37, "w": 254, "h": 768 },
+        "back": { "x": 1402, "y": 36, "w": 323, "h": 769 }
+      }
+    },
+    "normal_skeleton": {
+      "image": "normal_skeleton.png",
+      "sha256": "81cd4ed9fd2c56cad2bd1c774c087ce682a5f445beae1e689a99cdc63fa15b72",
+      "size": { "w": 3200, "h": 1600 },
+      "subject": { "kind": "enemy", "entity": "normal_skeleton" },
+      "background": "#515262",
+      "narrowestGap": 310,
+      "views": {
+        "front": { "x": 80, "y": 103, "w": 596, "h": 1398 },
+        "three_quarter": { "x": 989, "y": 103, "w": 484, "h": 1398 },
+        "side": { "x": 1882, "y": 96, "w": 354, "h": 1403 },
+        "back": { "x": 2546, "y": 96, "w": 601, "h": 1401 }
+      }
+    },
+    "shopkeeper": {
+      "image": "shopkeeper.png",
+      "sha256": "b91066403faea3ce5f9ed7ed9a5370f47e872e51de8fcc7983af26df6fe691bb",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "npc", "entity": "shopkeeper" },
+      "background": "#515462",
+      "narrowestGap": 89,
+      "views": {
+        "front": { "x": 69, "y": 34, "w": 363, "h": 821 },
+        "three_quarter": { "x": 521, "y": 34, "w": 330, "h": 821 },
+        "side": { "x": 987, "y": 33, "w": 199, "h": 822 },
+        "back": { "x": 1342, "y": 34, "w": 349, "h": 821 }
+      }
+    },
+    "skeleton_knight": {
+      "image": "skeleton_knight.png",
+      "sha256": "4f408bce897c0d5372616f036608fe5d1018ecba4addd1e5aeb2c019c9171e51",
+      "size": { "w": 3200, "h": 1600 },
+      "subject": { "kind": "enemy", "entity": "skeleton_knight" },
+      "background": "#525466",
+      "narrowestGap": 91,
+      "views": {
+        "front": { "x": 72, "y": 94, "w": 662, "h": 1354 },
+        "three_quarter": { "x": 871, "y": 94, "w": 619, "h": 1356 },
+        "side": { "x": 1793, "y": 96, "w": 521, "h": 1365 },
+        "back": { "x": 2405, "y": 94, "w": 755, "h": 1354 }
+      }
+    },
+    "space_potion": {
+      "image": "space_potion.png",
+      "sha256": "f5a758b84f391f4e7d4d0bfc5da2b630982cc94d57e091509c25b764bebadb9d",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "space_potion" },
+      "background": "#4a4e62",
+      "narrowestGap": 199,
+      "views": {
+        "front": { "x": 203, "y": 47, "w": 186, "h": 768 },
+        "three_quarter": { "x": 603, "y": 46, "w": 187, "h": 769 },
+        "side": { "x": 1001, "y": 46, "w": 186, "h": 769 },
+        "back": { "x": 1386, "y": 47, "w": 186, "h": 768 }
+      }
+    },
+    "spell_scroll": {
+      "image": "spell_scroll.png",
+      "sha256": "d4cfa3473c9996d539a88e76fba5d8814d29dfda38f632640c466ba671f8726b",
+      "size": { "w": 3200, "h": 1600 },
+      "subject": { "kind": "object", "entity": "spell_scroll" },
+      "background": "#4e505c",
+      "narrowestGap": 308,
+      "views": {
+        "front": { "x": 314, "y": 170, "w": 386, "h": 1230 },
+        "three_quarter": { "x": 1055, "y": 162, "w": 433, "h": 1238 },
+        "side": { "x": 1836, "y": 162, "w": 383, "h": 1234 },
+        "back": { "x": 2527, "y": 170, "w": 383, "h": 1228 }
+      }
+    },
+    "traveling_merchant": {
+      "image": "traveling_merchant.png",
+      "sha256": "cf7bbc14360c639d575e68c87444f896c4181f6c452b9a0fe7860d7f4cef90a1",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "npc", "entity": "traveling_merchant" },
+      "background": "#4f525e",
+      "narrowestGap": 76,
+      "views": {
+        "front": { "x": 90, "y": 32, "w": 344, "h": 823 },
+        "three_quarter": { "x": 510, "y": 32, "w": 333, "h": 824 },
+        "side": { "x": 938, "y": 31, "w": 306, "h": 823 },
+        "back": { "x": 1354, "y": 31, "w": 323, "h": 825 }
+      }
+    },
+    "treasure_chest": {
+      "image": "treasure_chest.png",
+      "sha256": "39df24bb10f566ca4af0970ea7166708a420ca13df34d352898cb58af753ecac",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "treasure_chest" },
+      "background": "#535466",
+      "narrowestGap": 57,
+      "views": {
+        "front": { "x": 47, "y": 286, "w": 395, "h": 313 },
+        "three_quarter": { "x": 499, "y": 282, "w": 410, "h": 323 },
+        "side": { "x": 977, "y": 279, "w": 278, "h": 321 },
+        "back": { "x": 1332, "y": 286, "w": 396, "h": 313 }
+      }
+    },
+    "undead_dragon": {
+      "image": "undead_dragon.png",
+      "sha256": "c70386bf402e2592337e59eee6848662436f089c9584e16e6b7d5f7e33dacddb",
+      "size": { "w": 3200, "h": 1600 },
+      "subject": { "kind": "boss", "entity": "undead_dragon" },
+      "background": "#515366",
+      "narrowestGap": 40,
+      "views": {
+        "front": { "x": 38, "y": 366, "w": 635, "h": 781 },
+        "three_quarter": { "x": 713, "y": 366, "w": 699, "h": 772 },
+        "side": { "x": 1468, "y": 368, "w": 1038, "h": 765 },
+        "back": { "x": 2572, "y": 366, "w": 581, "h": 783 }
+      }
+    },
+    "undead_fenrir": {
+      "image": "undead_fenrir.png",
+      "sha256": "aabd368b7467f997de4710c0206bf49fe70f8bba1cfaf6bdc5a2a36a4e899acf",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "boss", "entity": "undead_fenrir" },
+      "background": "#535465",
+      "narrowestGap": 9,
+      "views": {
+        "front": { "x": 16, "y": 196, "w": 350, "h": 453 },
+        "three_quarter": { "x": 376, "y": 208, "w": 431, "h": 441 },
+        "side": { "x": 818, "y": 223, "w": 634, "h": 426 },
+        "back": { "x": 1461, "y": 221, "w": 298, "h": 429 }
+      }
+    },
+    "undead_wolf": {
+      "image": "undead_wolf.png",
+      "sha256": "013e3777a16bcfe7b44abbb3090b233fb3aeee3d3f3ba9af623bbad868cec2bd",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "enemy", "entity": "undead_wolf" },
+      "background": "#525465",
+      "narrowestGap": 50,
+      "views": {
+        "front": { "x": 48, "y": 273, "w": 255, "h": 361 },
+        "three_quarter": { "x": 353, "y": 275, "w": 381, "h": 359 },
+        "side": { "x": 816, "y": 276, "w": 636, "h": 358 },
+        "back": { "x": 1503, "y": 290, "w": 232, "h": 343 }
+      }
+    },
+    "village_elder": {
+      "image": "village_elder.png",
+      "sha256": "a76ff3cf4a32916d7c5c964e5833102f877ab3a5e71a12b5b9a4a42eaf9f5120",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "npc", "entity": "village_elder" },
+      "background": "#535464",
+      "narrowestGap": 161,
+      "views": {
+        "front": { "x": 87, "y": 32, "w": 284, "h": 811 },
+        "three_quarter": { "x": 532, "y": 32, "w": 253, "h": 811 },
+        "side": { "x": 963, "y": 33, "w": 233, "h": 810 },
+        "back": { "x": 1391, "y": 32, "w": 291, "h": 809 }
+      }
+    },
+    "village_priest": {
+      "image": "village_priest.png",
+      "sha256": "dae23a5d36a44a537705a713d15ad0f00a5951a8459c16fc1ea2660bb99e8108",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "npc", "entity": "village_priest" },
+      "background": "#515363",
+      "narrowestGap": 132,
+      "views": {
+        "front": { "x": 78, "y": 31, "w": 304, "h": 811 },
+        "three_quarter": { "x": 514, "y": 35, "w": 277, "h": 807 },
+        "side": { "x": 971, "y": 34, "w": 188, "h": 807 },
+        "back": { "x": 1373, "y": 33, "w": 310, "h": 808 }
+      }
+    },
+    "wall_torch": {
+      "image": "wall_torch.png",
+      "sha256": "7e23fab35cc9c50dffc332da5074460d044dd15ff6c10ccb2ae759f63955f5d2",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "wall_torch" },
+      "background": "#545466",
+      "narrowestGap": 166,
+      "views": {
+        "front": { "x": 122, "y": 107, "w": 206, "h": 645 },
+        "three_quarter": { "x": 494, "y": 107, "w": 280, "h": 645 },
+        "side": { "x": 948, "y": 107, "w": 304, "h": 645 },
+        "back": { "x": 1438, "y": 107, "w": 224, "h": 645 }
+      }
+    },
+    "water_mage": {
+      "image": "water_mage.png",
+      "sha256": "f78279be29efa2da373be15d2463c1cc40121a858ba22f82dc067e7f0d36018a",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "player", "entity": "water_mage" },
+      "background": "#505261",
+      "narrowestGap": 150,
+      "views": {
+        "front": { "x": 90, "y": 18, "w": 294, "h": 824 },
+        "three_quarter": { "x": 534, "y": 18, "w": 272, "h": 824 },
+        "side": { "x": 987, "y": 18, "w": 227, "h": 824 },
+        "back": { "x": 1386, "y": 18, "w": 294, "h": 824 }
+      }
+    },
+    "wight": {
+      "image": "wight.png",
+      "sha256": "40fcc7b97daf74c6516598296b8542b36da267009a12ee0cbd2c06a8d188d40c",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "enemy", "entity": "wight" },
+      "background": "#515264",
+      "narrowestGap": 70,
+      "views": {
+        "front": { "x": 28, "y": 41, "w": 376, "h": 768 },
+        "three_quarter": { "x": 480, "y": 41, "w": 314, "h": 768 },
+        "side": { "x": 933, "y": 41, "w": 350, "h": 768 },
+        "back": { "x": 1353, "y": 41, "w": 393, "h": 768 }
+      }
+    },
+    "wind_mage": {
+      "image": "wind_mage.png",
+      "sha256": "fd8feb2fc59b973a33f6628ec17c029966ec4935819a7d07f902cfc27d3dc6a8",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "player", "entity": "wind_mage" },
+      "background": "#545664",
+      "narrowestGap": 113,
+      "views": {
+        "front": { "x": 82, "y": 36, "w": 320, "h": 803 },
+        "three_quarter": { "x": 515, "y": 36, "w": 315, "h": 803 },
+        "side": { "x": 956, "y": 38, "w": 261, "h": 801 },
+        "back": { "x": 1381, "y": 36, "w": 316, "h": 802 }
+      }
+    },
+    "wooden_crate": {
+      "image": "wooden_crate.png",
+      "sha256": "6c5341771023a61cdb62f66b9a63d8477d82802219dd5a22425eb72a2470ae35",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "object", "entity": "wooden_crate" },
+      "background": "#57586b",
+      "narrowestGap": 88,
+      "views": {
+        "front": { "x": 55, "y": 228, "w": 335, "h": 401 },
+        "three_quarter": { "x": 485, "y": 219, "w": 382, "h": 417 },
+        "side": { "x": 955, "y": 228, "w": 313, "h": 401 },
+        "back": { "x": 1381, "y": 228, "w": 337, "h": 401 }
+      }
+    },
+    "young_male_villager": {
+      "image": "young_male_villager.png",
+      "sha256": "35d9fe4183a7eaedcbd18d98b869c7ce60006694aab2b436b0544867c1f7193d",
+      "size": { "w": 1774, "h": 887 },
+      "subject": { "kind": "npc", "entity": "young_male_villager" },
+      "background": "#525463",
+      "narrowestGap": 153,
+      "views": {
+        "front": { "x": 107, "y": 26, "w": 261, "h": 815 },
+        "three_quarter": { "x": 521, "y": 25, "w": 252, "h": 816 },
+        "side": { "x": 981, "y": 26, "w": 174, "h": 815 },
+        "back": { "x": 1395, "y": 26, "w": 261, "h": 815 }
+      }
+    }
+  },
+  "withoutPicture": [
+    "board_game",
+    "building_blocks",
+    "computer_game",
+    "deck_of_cards",
+    "dice",
+    "gem",
+    "mahjongg_set"
+  ]
+}

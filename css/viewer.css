@@ -155,3 +155,8 @@ aside textarea {
   border: 1px solid var(--line); border-radius: 5px; padding: 6px;
 }
 aside .row { display: flex; gap: 6px; margin-top: 6px; }
+
+.turnaround { position: relative; width: min(100%, 1774px); }
+.turnaround img { width: 100%; height: 100%; display: block; }
+.turnaround .area { position: absolute; outline: 2px solid var(--good); }
+.turnaround .tag { position: absolute; left: 0; bottom: 100%; padding: 0 5px; font-size: 11px; background: #000a; color: #f3d792; white-space: nowrap; }
