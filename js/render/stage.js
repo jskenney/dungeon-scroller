@@ -15,6 +15,7 @@ export class Stage {
     this.strips = [];
     this.sceneryGround = 1;     // how far down the window the strips' bottom edge sits (0–1)
     this.sceneryFill = null;
+    this.sceneryStartY = 0;     // where the view sits when the level starts (world y)
     this.camera = { x: 0, y: 0 };
     this.bounds = { left: 0, top: 0, right: TILE * 10, bottom: TILE * 8 };
     this.scale = 1;             // CSS pixels per world pixel
@@ -90,20 +91,27 @@ export class Stage {
     const x = b.right - b.left <= halfW * 2 ? (b.left + b.right) / 2
       : Math.max(b.left + halfW, Math.min(b.right - halfW, this.camera.x));
     // A level shorter than the window sits at the bottom of it.
-    const y = b.bottom - b.top <= halfH * 2 ? b.bottom - halfH
-      : Math.max(b.top + halfH, Math.min(b.bottom - halfH, this.camera.y));
+    const clampY = cy => (b.bottom - b.top <= halfH * 2 ? b.bottom - halfH
+      : Math.max(b.top + halfH, Math.min(b.bottom - halfH, cy)));
+    const y = clampY(this.camera.y);
     this.world.position.set(this.snap(width / 2 - x * this.scale), this.snap(height / 2 - y * this.scale));
-    // Scenery: each strip is scaled so its whole height fills the window, repeats
-    // sideways, and slides by its own share of the distance the view has moved.
-    // Their bottom edge sits a little below where the hero usually stands, so the
-    // drawn walls and ruins meet the ground instead of hiding behind it.
-    const sceneHeight = Math.round(height * this.sceneryGround);
-    if (this.sceneryFill) this.sceneryFill.clear().rect(0, sceneHeight - 1, width, height - sceneHeight + 1).fill({ color: this.sceneryFill.color });
+    // Scenery: each strip is as tall as the window, repeats sideways, and slides
+    // by its own share of the distance the view has moved.
+    // At the height the level starts at, the strips are raised so their bottom
+    // edge sits a little below the hero's feet: drawn walls and ruins then meet
+    // the ground instead of hiding behind it, and the top of the picture is off
+    // the top of the window. When the view climbs, the strips come down with the
+    // ground until their top reaches the top of the window and stay there, so
+    // neither their bottom edge nor their top edge is ever seen.
+    const raised = height * (1 - this.sceneryGround);
+    const climbed = (clampY(this.sceneryStartY) - y) * this.scale;
+    const top = Math.round(-raised + Math.max(0, Math.min(raised, climbed)));
+    const bottom = height + top;
+    if (this.sceneryFill) this.sceneryFill.clear().rect(0, bottom - 1, width, height - bottom + 1).fill({ color: this.sceneryFill.color });
     for (const { sprite, layer } of this.strips) {
-      const s = sceneHeight / layer.texture.height;
-      sprite.width = width; sprite.height = sceneHeight;
-      sprite.tileScale.set(s);
-      sprite.tilePosition.set(-this.snap((x - halfW) * this.scale * layer.factor), 0);
+      sprite.width = width; sprite.height = Math.max(1, bottom);
+      sprite.tileScale.set(height / layer.texture.height);
+      sprite.tilePosition.set(-this.snap((x - halfW) * this.scale * layer.factor), top);
     }
   }
 
@@ -141,6 +149,7 @@ export class Stage {
       return { sprite, layer };
     });
     this.sceneryGround = Math.min(1, Math.max(0.3, ground));
+    this.sceneryStartY = level.spawn.y - 60;
     // Beneath the raised strips, carry on in the far strip's bottom colour.
     const below = parallax?.layers?.find(l => l.below)?.below;
     this.sceneryFill = null;
