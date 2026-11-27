@@ -184,3 +184,5 @@ table.results td { text-align: right; font-variant-numeric: tabular-nums; }
 .frame-area .logo { font-size: clamp(28px, 7cqw, 96px); margin-bottom: 4cqh; }
 .frame-area .title-block { margin: auto; }
 .screen.framed.title .footnote { text-shadow: 0 1px 2px #000; }
+
+.small { font-size: 12px; margin: 4px 0 0; }

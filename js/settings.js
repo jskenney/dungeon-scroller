@@ -71,9 +71,22 @@ export class Settings {
   get muted() { return Boolean(this.stored.muted); }
   set muted(v) { this.stored.muted = Boolean(v); this.save(); }
 
-  /** Whether lines are also spoken aloud by the browser's built-in voice. */
-  get speakAloud() { return this.stored.speakAloud ?? (this.config.speech?.provider === 'webspeech'); }
-  set speakAloud(v) { this.stored.speakAloud = Boolean(v); this.save(); }
+  /**
+   * How lines are spoken: 'off' (speech bubbles only), 'browser' (the browser's own voice) or
+   * 'pocket' (Pocket TTS). The site sets the starting choice with speech.provider.
+   */
+  get voiceMode() {
+    if (this.stored.voiceMode) return this.stored.voiceMode;
+    if (this.stored.speakAloud != null) return this.stored.speakAloud ? 'browser' : 'off';   // from before there was a choice
+    return { webspeech: 'browser', pocket: 'pocket' }[this.config.speech?.provider] ?? 'off';
+  }
+  set voiceMode(v) { this.stored.voiceMode = v; this.save(); }
+  /** The player has agreed to Pocket TTS's download. A site's default never downloads it on its own. */
+  get pocketAgreed() { return Boolean(this.stored.pocketAgreed); }
+  set pocketAgreed(v) { this.stored.pocketAgreed = Boolean(v); this.save(); }
+  /** The larger, full-precision Pocket TTS model instead of the 8-bit one. */
+  get pocketFullPrecision() { return this.stored.pocketFullPrecision ?? Boolean(this.config.speech?.pocket?.fullPrecision); }
+  set pocketFullPrecision(v) { this.stored.pocketFullPrecision = Boolean(v); this.save(); }
 
   get lastHero() { return this.stored.lastHero ?? null; }
   set lastHero(id) { this.stored.lastHero = id; this.save(); }

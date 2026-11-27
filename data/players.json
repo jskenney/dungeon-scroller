@@ -2,6 +2,7 @@
   "schema": "dungeon-scroller/catalog@1",
   "kind": "player",
   "notes": [
+    "Heroes have no \"voice\" yet, so with Pocket TTS they use speech.pocket.defaultVoice from the site configuration, or stay silent if that is null. Add \"voice\" to a hero, or to defaults, to give one (see the note in npcs.json).",
     "Boxes are in pixels relative to the actor's pivot (feet, on the ground line) for an actor facing right: x is the left edge, y is the top edge (negative is up). They mirror with the sprite.",
     "body and crouchBody are the collision boxes. An ability's box is active during the melee or area event window of its animation.",
     "Ability names come from the animation labels in the sheet JSON. 'air' says whether the ability can be used while jumping or flying. 'mobile' abilities can be used while walking or running; the others stop the hero until they finish. 'crouch' abilities can be used while crouching or crawling, without standing up.",

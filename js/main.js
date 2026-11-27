@@ -20,6 +20,7 @@ import { Hud } from './ui/hud.js';
 import { Bubbles } from './ui/bubbles.js';
 import { AudioEngine } from './audio/audio.js';
 import { Speech } from './speech/speech.js';
+import { POCKET } from './speech/pocket.js';
 import { LineDirector } from './speech/lines.js';
 import { fetchJson, resolve } from './config.js';
 
@@ -201,6 +202,36 @@ function startRandom({ theme, length, difficulty, seed }) {
 
 // --------------------------------------------------------------------- settings
 
+/** The spoken-voice choice: off, the browser's voice, or Pocket TTS with its download and model size. */
+function voiceSettings(render) {
+  const s = game.settings, speech = game.speech, pocket = speech.pocket;
+  const status = h('span', { class: 'muted', role: 'status' });
+  const download = h('button', { type: 'button', onclick: () => { s.pocketAgreed = true; speech.start(); } });
+  game.voiceStatus = () => {
+    if (!status.isConnected && status.parentNode) return;
+    const chosen = s.voiceMode === 'pocket';
+    download.hidden = !chosen || pocket.state === 'loading' || pocket.state === 'ready';
+    download.textContent = pocket.state === 'error' ? 'Try again' : `Download (about ${pocket.megabytes} MB, once)`;
+    status.textContent = !chosen ? '' : pocket.state === 'ready' ? 'Ready.' : pocket.state === 'loading' ? pocket.progress
+      : pocket.state === 'error' ? `Could not start: ${pocket.error}.` : s.pocketAgreed ? '' : 'Not downloaded yet.';
+  };
+  const option = (value, label) => h('option', { value, selected: s.voiceMode === value }, label);
+  const choice = h('select', { 'aria-label': 'Spoken voices', onchange: e => { s.voiceMode = e.target.value; speech.stop(); speech.start(); render(); } },
+    option('off', 'Off (speech bubbles only)'),
+    speech.canSpeakAloud ? option('browser', 'The browser\'s voice') : null,
+    speech.canUsePocket ? option('pocket', 'Pocket TTS (natural voice)') : null);
+  const out = [h('label', { class: 'field' }, h('span', { class: 'field-name' }, 'Spoken voices'), choice)];
+  if (s.voiceMode === 'pocket') {
+    out.push(h('div', { class: 'field' }, download, status),
+      h('label', { class: 'field' },
+        h('input', { type: 'checkbox', checked: s.pocketFullPrecision, onchange: e => { s.pocketFullPrecision = e.target.checked; speech.reload(); render(); } }),
+        ` Full-precision voice model (about ${POCKET.megabytes.full} MB instead of ${POCKET.megabytes.int8} MB)`),
+      h('p', { class: 'muted small' }, 'Pocket TTS by Kyutai, CC BY 4.0. It runs in this browser; nothing you play is sent anywhere.'));
+  }
+  queueMicrotask(game.voiceStatus);
+  return out;
+}
+
 /** @param {Function} returnTo  where Done goes  @param {boolean} [onFrame]  draw on the menu background (not used over a paused game) */
 function settingsScreen(returnTo, onFrame = false) {
   const s = game.settings;
@@ -236,9 +267,7 @@ function settingsScreen(returnTo, onFrame = false) {
             oninput: e => { s.setVolume(name, e.target.value / 100); if (name !== 'music') game.audio.play('coin'); } }))),
       h('label', { class: 'field' },
         h('input', { type: 'checkbox', checked: s.muted, onchange: e => { s.muted = e.target.checked; } }), ' Mute all sound'),
-      game.speech.canSpeakAloud ? h('label', { class: 'field' },
-        h('input', { type: 'checkbox', checked: s.speakAloud, onchange: e => { s.speakAloud = e.target.checked; } }),
-        ' Read speech bubbles aloud with the browser\'s voice') : null,
+      voiceSettings(render),
       h('h2', {}, 'Keys'),
       h('table', { class: 'keys' }, h('tbody', {}, rows)),
       h('div', { class: 'row' },
@@ -272,6 +301,7 @@ function startPlay(entry) {
   game.view = new WorldView(game.stage, game.world, sceneryFor(entry.tileset));
   game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
   game.speech.stop();
+  game.speech.prepare(game.world);
   game.lines = new LineDirector();
   game.world.events.push({ type: 'levelStart' });
   game.audio.music(game.audio.musicFor('level', entry.tileset.id));
@@ -514,7 +544,14 @@ async function main() {
     if (audioUrl) { try { audioCatalog = await fetchJson(audioUrl); } catch (error) { console.warn(error.message); } }
     game.audio = new AudioEngine(config, game.settings, audioCatalog, audioUrl ?? url);
     game.bubbles = new Bubbles(document.getElementById('bubbles'), game.stage);
-    game.speech = new Speech(game.bubbles, game.settings);
+    game.speech = new Speech(game.bubbles, game.settings, game.audio, config, url);
+    // Copying a recorded voice needs an extra model file, so only ask for it when a character uses one.
+    game.speech.wantsCloning = Object.values(game.assets.entities).some(e => e.gameplay?.voice?.clip);
+    game.speech.pocket.onChange = () => {
+      game.voiceStatus?.();
+      if (game.speech.pocket.ready && game.world) game.speech.prepare(game.world);
+    };
+    game.speech.start();
     // A small click for every button and link in the menus.
     ui.addEventListener('click', e => { if (e.target.closest('button, a.button')) game.audio.play('ui'); });
     if (!heroes().length) throw new Error('No playable heroes were loaded. Open viewer.html to see what is wrong.');

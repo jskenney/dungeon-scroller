@@ -167,8 +167,16 @@
   },
 
   "speech": {
-    "$comment": "bubble: speech bubbles only. webspeech: bubbles, and lines are also read aloud by the browser's voice unless the player turns that off.",
-    "provider": "bubble"
+    "$comment": "provider is the starting choice, which the player can change in Settings. bubble: speech bubbles only. webspeech: also read aloud by the browser's voice. pocket: also spoken by Pocket TTS, once the player has pressed Download in Settings.",
+    "provider": "bubble",
+    "pocket": {
+      "$comment": "Pocket TTS, a natural voice that runs in the browser. files: a folder holding lib/, ort/ and model/ as tools/fetch-pocket.sh (or the EPUB reader's fetch-pocket.sh) fills it; point it at the reader's pocket/ folder to share one copy. allowCdn: fetch whatever is missing there from jsDelivr and Hugging Face. fullPrecision: the 431 MB model instead of the 170 MB 8-bit one (the player can change this). defaultVoice: the built-in voice for characters with no voice of their own in the catalogs, or null to leave them silent. enabled false removes the choice from Settings.",
+      "enabled": true,
+      "files": "pocket/",
+      "allowCdn": true,
+      "fullPrecision": false,
+      "defaultVoice": null
+    }
   },
 
   "generator": {

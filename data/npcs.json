@@ -2,6 +2,7 @@
   "schema": "dungeon-scroller/catalog@1",
   "kind": "npc",
   "notes": [
+    "voice is who speaks a character's lines when the player has chosen Pocket TTS. A name is one of its built-in voices (alba, azelma, cosette, eponine, fantine, javert, jean, marius). For a voice of your own use { \"clip\": \"../assets/voices/elder.wav\", \"name\": \"eponine\" }: a recording of up to 10 seconds to copy (path relative to this file), and the built-in voice to use if it cannot be. \"pitch\" (0.5 to 2, 1 is unchanged) plays the voice deeper and slower, or higher and faster. Only use recordings of people who have agreed to it.",
     "NPCs stand where a level places them. A merchant opens a shop when the hero presses the interact key beside them; anyone else just talks.",
     "goods are what can be bought with gold. kind 'upgrade' is permanent and kept by that hero between levels: each level bought adds 'perLevel' to a stat, up to 'maxLevel'. Its price starts at 'price' and is multiplied by 'priceGrowth' for each level already owned.",
     "Upgrade stats: damage, attackSpeed, moveSpeed, mpRegen, hpRegen and toughness add a fraction (0.1 is +10%); maxHp and maxMp add points.",
@@ -24,6 +25,7 @@
   },
   "entries": {
     "shopkeeper": {
+      "voice": "alba",
       "sheet": "../assets/sprites/NPCs/shopkeeper_spritesheet.json",
       "entity": "shopkeeper",
       "card": "../assets/cards/shopkeeper_card.json",
@@ -37,6 +39,7 @@
       }
     },
     "traveling_merchant": {
+      "voice": "javert",
       "sheet": "../assets/sprites/NPCs/traveling_merchant_spritesheet.json",
       "entity": "traveling_merchant",
       "card": "../assets/cards/traveling_merchant_card.json",
@@ -50,6 +53,7 @@
       }
     },
     "village_elder": {
+      "voice": "eponine",
       "sheet": "../assets/sprites/NPCs/village_elder_spritesheet.json",
       "entity": "village_elder",
       "card": "../assets/cards/village_elder_card.json",
@@ -63,6 +67,7 @@
       }
     },
     "village_priest": {
+      "voice": "jean",
       "sheet": "../assets/sprites/NPCs/village_priest_spritesheet.json",
       "entity": "village_priest",
       "card": "../assets/cards/village_priest_card.json",
@@ -76,6 +81,7 @@
       }
     },
     "young_male_villager": {
+      "voice": "fantine",
       "sheet": "../assets/sprites/NPCs/young_male_villager_spritesheet.json",
       "entity": "young_male_villager",
       "card": "../assets/cards/young_male_villager_card.json",

@@ -2,11 +2,13 @@
   "schema": "dungeon-scroller/catalog@1",
   "kind": "enemy",
   "notes": [
+    "defaults.voice is the Pocket TTS voice for every entry here; an entry can set its own \"voice\" (see the note in npcs.json).",
     "Boxes use the same convention as players.json: relative to the pivot, for an actor facing right.",
     "An enemy uses an attack when a hero is inside that attack's box (melee) or range (others), choosing by weight among those off cooldown.",
     "touchDamage is dealt when a hero's body overlaps the enemy's body; the hero's short invulnerability after a hit stops it repeating.",
     "attack1, attack2 and attack3 are the light, medium and heavy attacks of the sheet."
   ],
+  "defaults": { "voice": "marius" },
   "entries": {
     "normal_skeleton": {
       "sheet": "../assets/sprites/enemies/undead_enemy_spritesheet.json",

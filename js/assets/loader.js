@@ -330,6 +330,7 @@ async function loadCatalogs(config, configUrl, result, problems) {
       }
       entity.gameplay = entry;
       entity.catalogFile = file;
+      entity.catalogUrl = url;
     }
   }));
   if (paths.length) {

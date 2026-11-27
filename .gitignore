@@ -4,3 +4,6 @@ __pycache__/
 
 # Interrupted or in-progress downloads
 *.part
+
+# Pocket TTS files fetched by tools/fetch-pocket.sh (hundreds of MB; too big for git)
+/pocket/
