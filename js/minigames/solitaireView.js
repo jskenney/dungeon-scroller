@@ -70,7 +70,7 @@ const cardName = card => `${{ 1: 'Ace', 11: 'Jack', 12: 'Queen', 13: 'King' }[ca
  * @param {string} [o.deck]       id of the deck to start with
  * @param {(deckId: string) => void} [o.onDeck]   the player chose another deck
  * @param {() => string} o.onWin  called once per game won; returns a line saying what was gained
- * @param {() => void} o.onLeave
+ * @param {() => void} [o.onLeave]  leave the table; without it there is no way out to offer (the game on a page of its own)
  * @param {(cue: string) => void} [o.sound]
  * @returns {{element: HTMLElement, key: (code: string) => boolean}}
  */
@@ -94,9 +94,9 @@ export function solitaireScreen({ decks, deck, onDeck, onWin, onLeave, sound = (
       h('h1', {}, 'Solitaire'), counts,
       h('span', { class: 'sol-buttons' }, deckChoice, undo, finish,
         h('button', { type: 'button', onclick: fresh }, 'New game'),
-        h('button', { type: 'button', onclick: () => { clearInterval(finishing); onLeave(); } }, 'Back to the game'))),
+        onLeave ? h('button', { type: 'button', onclick: () => { clearInterval(finishing); onLeave(); } }, 'Back to the game') : null)),
     board, status,
-    h('p', { class: 'muted small sol-help' }, 'Click a card to send it where it fits, or drag it. Click the stock to draw. Keys: D draw, U undo, N new game, Esc leave.'));
+    h('p', { class: 'muted small sol-help' }, `Click a card to send it where it fits, or drag it. Click the stock to draw. Keys: D draw, U undo, N new game${onLeave ? ', Esc leave' : ''}.`));
 
   function say(text) { status.textContent = text; }
 
