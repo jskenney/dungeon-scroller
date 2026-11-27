@@ -5,7 +5,7 @@ import { h, keyName } from './dom.js';
 import { describeAbility } from './card.js';
 
 /** What each temporary boost is called on screen. */
-export const BOOST_NAMES = { damage: 'Power', attackSpeed: 'Haste', moveSpeed: 'Swiftness', mpRegen: 'Focus', toughness: 'Stone skin' };
+export const BOOST_NAMES = { damage: 'Power', attackSpeed: 'Haste', moveSpeed: 'Swiftness', mpRegen: 'Focus', hpRegen: 'Mending', toughness: 'Stone skin' };
 
 export class Hud {
   constructor(hero, settings) {

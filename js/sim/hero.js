@@ -81,6 +81,7 @@ export class Hero extends Actor {
   takeHit(amount, direction, effect = {}, knockback = 220) {
     const dealt = this.loseHealth(amount / this.boost('toughness'));
     if (!dealt) return 0;
+    this.sinceHurt = 0;
     this.applyEffect(effect);
     const b = this.body;
     this.flying = false; this.teleporting = null;
@@ -275,6 +276,12 @@ export class Hero extends Actor {
     if (!this.flying) {
       const regen = (g.stats.mpRegen ?? 0) * (this.config.difficulty?.mpRegen ?? 1) * this.boost('mpRegen');
       this.mp = Math.min(this.maxMp, this.mp + regen * dt);
+    }
+    // Health comes back too, more slowly, and only after a pause since the last injury.
+    this.sinceHurt = (this.sinceHurt ?? Infinity) + dt;
+    if (!this.dead && this.hp < this.maxHp && this.sinceHurt >= (g.stats.hpRegenDelay ?? 0)) {
+      const mend = (g.stats.hpRegen ?? 0) * (this.config.difficulty?.hpRegen ?? 1) * this.boost('hpRegen');
+      this.hp = Math.min(this.maxHp, this.hp + mend * dt);
     }
 
     if (intents.dir && !rooted) this.facing = intents.dir;

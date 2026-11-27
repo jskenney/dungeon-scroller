@@ -135,7 +135,7 @@ A catalog holds the **gameplay** values for every thing of one kind: `data/playe
   "schema": "dungeon-scroller/catalog@1",
   "kind": "player",
   "defaults": {
-    "stats": { "mpRegen": 4, "invulnerableAfterHit": 0.8 },
+    "stats": { "mpRegen": 4, "hpRegen": 1, "hpRegenDelay": 4, "invulnerableAfterHit": 0.8 },
     "movement": { "walkSpeed": 160, "runSpeed": 280, "jumpHeight": 144, "crawlSpeed": 70, "airControl": 0.7 },
     "teleport": { "mp": 20, "distance": 288 }
   },
@@ -159,6 +159,8 @@ A catalog holds the **gameplay** values for every thing of one kind: `data/playe
   }
 }
 ```
+
+MP comes back at `mpRegen` a second (not while flying). Health comes back at `hpRegen` a second once `hpRegenDelay` seconds have passed without being hurt. Both can be set per hero, scaled site-wide by `difficulty.mpRegen` and `difficulty.hpRegen`, and raised by boosts or upgrades that name those stats.
 
 - **Defaults.** Every entry inherits the catalog's `defaults` and may override any value, so a single hero can be made faster or given a longer teleport without repeating the rest.
 - **Boxes.** All boxes are in pixels relative to the actor's pivot (feet, on the ground line) for an actor **facing right**: `x` is the left edge, `y` the top edge (negative is up). They mirror with the sprite. `body` and `crouchBody` are collision boxes; the simulation centres the actor on the body box's horizontal middle. An ability's `box` is active during the `melee`, `area`, `impact` or `emit` event window of that slot's animation (§4.3).

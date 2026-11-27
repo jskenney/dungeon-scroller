@@ -9,10 +9,11 @@
     "combat.airWindupFrames: an ability used in the air skips its wind-up and starts this many frames before its release frame, so the shot or swing happens during the jump. Give one ability \"airWindup\": true to make it play in full even in the air.",
     "Entries inherit every value in 'defaults' and may override any of them.",
     "color tints the hero's effects, and any projectile that has no sprite (those are drawn as particles).",
+    "hpRegen is health regained per second, and hpRegenDelay the seconds without being hurt before it starts. mpRegen is MP per second (none while flying). Set hpRegen to 0 for no healing over time.",
     "sprite names a projectile in the projectile sheet. On a projectile it is what flies and what is shown where it hits; on a heal it is the glow on the hero; on a targeted spell it is shown on the target's head."
   ],
   "defaults": {
-    "stats": { "mpRegen": 4, "invulnerableAfterHit": 0.8, "attackSpeed": 1 },
+    "stats": { "mpRegen": 4, "hpRegen": 1, "hpRegenDelay": 4, "invulnerableAfterHit": 0.8, "attackSpeed": 1 },
     "movement": { "walkSpeed": 160, "runSpeed": 280, "jumpHeight": 144, "crawlSpeed": 70, "airControl": 0.7 },
     "teleport": { "mp": 20, "distance": 288 },
     "combat": { "airWindupFrames": 1 }

@@ -4,7 +4,7 @@
   "notes": [
     "NPCs stand where a level places them. A merchant opens a shop when the hero presses the interact key beside them; anyone else just talks.",
     "goods are what can be bought with gold. kind 'upgrade' is permanent and kept by that hero between levels: each level bought adds 'perLevel' to a stat, up to 'maxLevel'. Its price starts at 'price' and is multiplied by 'priceGrowth' for each level already owned.",
-    "Upgrade stats: damage, attackSpeed, moveSpeed, mpRegen and toughness add a fraction (0.1 is +10%); maxHp and maxMp add points.",
+    "Upgrade stats: damage, attackSpeed, moveSpeed, mpRegen, hpRegen and toughness add a fraction (0.1 is +10%); maxHp and maxMp add points.",
     "kind 'item' is used at once and can be bought again: 'gives' has the same meaning as for objects (hp, mp, hpFraction, mpFraction, keys, boost).",
     "stock lists the goods a merchant sells. lines are what the NPC says: greet (hero comes near), bought, poor (not enough gold), talk (interact, for those who do not trade).",
     "box is the area the hero must stand in to interact, relative to the NPC's pivot. All lines and prices are first drafts."

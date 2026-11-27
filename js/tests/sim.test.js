@@ -904,6 +904,24 @@ import { LineDirector } from '../speech/lines.js';
 import { parseMidi } from '../audio/midi.js';
 
 tests.push(
+  ['health comes back over time, but only after a pause since the last injury', () => {
+    const world = arena([], { hero: fighter({ stats: { hp: 100, mp: 100, mpRegen: 0, hpRegen: 2, hpRegenDelay: 3 } }), config: QUIET });
+    world.hurtHero(40, { x: 0 });
+    const hurt = world.hero.hp;
+    assert(hurt === 60, `expected 60 HP after the hit, got ${hurt}`);
+    runWorld(world, {}, 170);                                 // just under 3 seconds
+    assert(world.hero.hp === 60, `healed during the pause: ${world.hero.hp}`);
+    runWorld(world, {}, 130);                                 // 5 seconds in all: 2 seconds of healing
+    assert(near(world.hero.hp, 64, 0.3), `expected about 64 HP, got ${world.hero.hp}`);
+    runWorld(world, {}, 60 * 30);
+    assert(world.hero.hp === 100, 'healing went past, or stopped short of, full health');
+    const plain = arena([], { config: QUIET });
+    plain.hurtHero(40, { x: 0 });
+    runWorld(plain, {}, 600);
+    assert(plain.hero.hp === 60, 'a hero with no hpRegen healed');
+  }]);
+
+tests.push(
   ['a MIDI file becomes notes timed in seconds, following tempo changes', () => {
     // One track, 96 ticks to the beat: 120 beats a minute, then 60 from the second beat on.
     const track = [
