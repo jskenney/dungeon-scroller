@@ -2,14 +2,14 @@
   "schema": "dungeon-scroller/catalog@1",
   "kind": "boss",
   "notes": [
-    "defaults.voice is the Pocket TTS voice for every entry here; an entry can set its own \"voice\" (see the note in npcs.json).",
+    "defaults.voice is the Pocket TTS voice for every entry here. Its pitch is a range, so each individual is given its own pitch within it when it first speaks; an entry can set its own \"voice\" (see the note in npcs.json).",
     "Boxes use the same convention as players.json.",
     "A boss moves to the next phase when its health falls to the phase's untilHp fraction. tempo speeds up its movement and shortens its cooldowns.",
     "For breath and dive attacks the box is the damage area in front of the boss; the drawn effect beyond the sprite is a particle effect.",
     "touchDamage applies on body contact, and is doubled while the boss is leaping or diving.",
     "A shockwave runs along the ground and misses a hero who is in the air. color tints the boss's breath, waves and shots."
   ],
-  "defaults": { "voice": "marius" },
+  "defaults": { "voice": { "name": "marius", "pitch": [0.78, 1.22] } },
   "entries": {
     "undead_dragon": {
       "sheet": "../assets/sprites/bosses/undead_boss_spritesheet.json",

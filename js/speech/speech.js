@@ -5,7 +5,7 @@
 import { resolve } from '../config.js';
 import { PocketVoice, voiceSpec } from './pocket.js';
 
-const LATE = 1.5;          // seconds after which a line that was not ready is no longer worth speaking
+const LATE = 4;            // seconds after which a line still not ready is dropped: its bubble has gone
 const KEEP = 400;          // spoken lines kept in memory
 
 /** Stage directions such as *snarl* are shown but not read out. */
@@ -28,6 +28,7 @@ export class Speech {
     this.pocket = new PocketVoice(this.options, configUrl, () => settings.pocketFullPrecision);
     this.clips = new Map();            // voice and text -> Promise of an AudioBuffer
     this.playing = new Map();          // actor -> the sound it is making
+    this.pitches = new WeakMap();      // actor -> its own pitch, where the voice gives a range
     this.warned = new Set();           // voices already complained about
     this.wantsCloning = false;         // set from the catalogs: some character's voice is a recording
   }
@@ -54,7 +55,7 @@ export class Speech {
     return spec.key ? spec : null;
   }
 
-  /** The audio for a line in a voice, made once and kept. */
+  /** The audio for a line in a voice. It is made when the line is first spoken, and kept in case it is said again. */
   clip(text, spec, urgent = false) {
     const key = `${spec.key}|${text}`;
     if (!this.clips.has(key)) {
@@ -73,21 +74,6 @@ export class Speech {
     return this.clips.get(key);
   }
 
-  /** Make the audio for everything the characters in a level might say, in the background. */
-  prepare(world) {
-    if (this.settings.voiceMode !== 'pocket' || !this.pocket.ready || !this.audio.context) return;
-    this.pocket.clearQueue();
-    const seen = new Set();
-    for (const actor of [world.hero, ...world.npcs, ...world.enemies]) {
-      const spec = this.specFor(actor);
-      if (!spec || seen.has(actor.entity)) continue;
-      seen.add(actor.entity);
-      for (const lines of Object.values(actor.g?.lines ?? {})) {
-        for (const text of lines) if (speakable(text)) this.clip(text, spec).catch(() => {});
-      }
-    }
-  }
-
   /** Say a line as an actor. */
   say(actor, text) {
     this.bubbles.say(actor, text);
@@ -102,6 +88,19 @@ export class Speech {
     this.synth.speak(utterance);
   }
 
+  /**
+   * How high or low a character speaks. A single number is used as it is. A range, [low, high],
+   * gives each individual its own pitch, chosen once, so two skeletons do not sound alike.
+   */
+  pitchFor(actor, spec) {
+    let pitch = spec.pitch;
+    if (Array.isArray(pitch)) {
+      if (!this.pitches.has(actor)) this.pitches.set(actor, pitch[0] + Math.random() * (pitch[1] - pitch[0]));
+      pitch = this.pitches.get(actor);
+    }
+    return Math.max(0.5, Math.min(2, Number(pitch) || 1));
+  }
+
   sayWithPocket(actor, text) {
     const context = this.audio.context, spec = this.specFor(actor);
     if (!spec || !context || context.state !== 'running') return;
@@ -112,7 +111,7 @@ export class Speech {
       this.playing.get(actor)?.stop();
       const source = context.createBufferSource();
       source.buffer = buffer;
-      source.playbackRate.value = Math.max(0.5, Math.min(2, spec.pitch));
+      source.playbackRate.value = this.pitchFor(actor, spec);
       source.connect(this.audio.bus.voice);
       source.onended = () => { if (this.playing.get(actor) === source) this.playing.delete(actor); };
       this.playing.set(actor, source);

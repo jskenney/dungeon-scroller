@@ -301,7 +301,6 @@ function startPlay(entry) {
   game.view = new WorldView(game.stage, game.world, sceneryFor(entry.tileset));
   game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
   game.speech.stop();
-  game.speech.prepare(game.world);
   game.lines = new LineDirector();
   game.world.events.push({ type: 'levelStart' });
   game.audio.music(game.audio.musicFor('level', entry.tileset.id));
@@ -547,10 +546,7 @@ async function main() {
     game.speech = new Speech(game.bubbles, game.settings, game.audio, config, url);
     // Copying a recorded voice needs an extra model file, so only ask for it when a character uses one.
     game.speech.wantsCloning = Object.values(game.assets.entities).some(e => e.gameplay?.voice?.clip);
-    game.speech.pocket.onChange = () => {
-      game.voiceStatus?.();
-      if (game.speech.pocket.ready && game.world) game.speech.prepare(game.world);
-    };
+    game.speech.pocket.onChange = () => game.voiceStatus?.();
     game.speech.start();
     // A small click for every button and link in the menus.
     ui.addEventListener('click', e => { if (e.target.closest('button, a.button')) game.audio.play('ui'); });
