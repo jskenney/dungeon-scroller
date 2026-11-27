@@ -88,6 +88,10 @@ export class Settings {
   get pocketFullPrecision() { return this.stored.pocketFullPrecision ?? Boolean(this.config.speech?.pocket?.fullPrecision); }
   set pocketFullPrecision(v) { this.stored.pocketFullPrecision = Boolean(v); this.save(); }
 
+  /** The playing-card deck last chosen in a card game. */
+  get cardDeck() { return this.stored.cardDeck ?? null; }
+  set cardDeck(id) { this.stored.cardDeck = id; this.save(); }
+
   get lastHero() { return this.stored.lastHero ?? null; }
   set lastHero(id) { this.stored.lastHero = id; this.save(); }
 }

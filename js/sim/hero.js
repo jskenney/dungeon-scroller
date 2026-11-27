@@ -34,6 +34,8 @@ export class Hero extends Actor {
     this.standH = this.body.h;
     this.crouchH = this.g.crouchBody?.h ?? Math.round(this.body.h * 0.6);
     this.baseHp = this.maxHp;
+    /** Lasting gains that are won, not bought: {maxHp, maxMp} in points. Kept with the hero between levels. */
+    this.bonus = {};
     this.maxMp = this.g.stats.mp;
     this.mp = this.maxMp;
     this.gold = 0;
@@ -133,8 +135,8 @@ export class Hero extends Actor {
       if (good?.kind === 'upgrade') this.permanent[good.stat] = (this.permanent[good.stat] ?? 0) + good.perLevel * level;
     }
     const oldHp = this.maxHp, oldMp = this.maxMp;
-    this.maxHp = this.baseHp + (this.permanent.maxHp ?? 0);
-    this.maxMp = this.g.stats.mp + (this.permanent.maxMp ?? 0);
+    this.maxHp = this.baseHp + (this.permanent.maxHp ?? 0) + (this.bonus.maxHp ?? 0);
+    this.maxMp = this.g.stats.mp + (this.permanent.maxMp ?? 0) + (this.bonus.maxMp ?? 0);
     // A larger maximum arrives filled.
     this.hp = Math.min(this.maxHp, this.hp + Math.max(0, this.maxHp - oldHp));
     this.mp = Math.min(this.maxMp, this.mp + Math.max(0, this.maxMp - oldMp));

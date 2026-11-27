@@ -52,6 +52,7 @@ export class World {
     /** What merchants sell, from data/npcs.json. */
     this.goods = goods;
     this.shop = null;              // the merchant whose shop is open; the world waits while it is
+    this.minigame = null;          // the object whose mini-game is open; the world waits while it is
     this.prompt = null;            // the object or NPC the interact key would use right now
     this.complete = false;         // true once the goal has been reached
     this.deaths = 0;
@@ -163,6 +164,12 @@ export class World {
     if (gives.gold) hero.gold += gives.gold;
     if (gives.score) hero.score += gives.score;
     if (gives.keys) hero.keys += gives.keys;
+    // A lasting rise in the most health or MP the hero can have; the extra arrives filled.
+    if (gives.maxHp || gives.maxMp) {
+      hero.bonus.maxHp = (hero.bonus.maxHp ?? 0) + (gives.maxHp ?? 0);
+      hero.bonus.maxMp = (hero.bonus.maxMp ?? 0) + (gives.maxMp ?? 0);
+      hero.applyUpgrades(this.goods);
+    }
     // A boost: one fixed, or one chosen by chance from a list.
     let boost = gives.boost ?? null;
     if (gives.boostOneOf?.length) boost = gives.boostOneOf[Math.floor(this.random() * gives.boostOneOf.length)];
@@ -206,6 +213,22 @@ export class World {
   openShop(npc) { this.shop = npc; }
   closeShop() { this.shop = null; }
 
+  /** Sit down at a mini-game object. Everything but the NPCs waits while it is open. */
+  openMinigame(object) { this.minigame = object; }
+  /** Leave it. The object goes back to how it was, so it can be played again. */
+  closeMinigame() {
+    const object = this.minigame;
+    this.minigame = null;
+    if (object && object.state === 'used') { object.state = 'idle'; object.t = 0; }
+  }
+  /** A game at the open mini-game object was won: hand over what its catalog entry says a win is worth. */
+  winMinigame() {
+    const object = this.minigame, reward = object?.g.reward;
+    if (!reward) return null;
+    this.give(reward, object);
+    return reward;
+  }
+
   /** Start using an object: pick it up, open it, pull it, light it. */
   useObject(object) {
     const hero = this.hero, kind = object.g.behaviour;
@@ -243,7 +266,7 @@ export class World {
       for (const gate of this.gates) if (gate.id === object.link) this.openGate(gate);
     } else if (kind === 'minigame') {
       // The object now holds its last pose; the game opens the mini-game it names.
-      this.events.push({ type: 'minigame', game: object.g.game, object, x: object.x, y: object.rect().t });
+      this.events.push({ type: 'minigame', game: object.g.game, built: Boolean(object.g.built), object, x: object.x, y: object.rect().t });
     }
   }
 
@@ -279,7 +302,7 @@ export class World {
 
   stepOnce(intents) {
     const hero = this.hero, dt = this.step;
-    if (this.shop) {                      // shopping: the world holds still
+    if (this.shop || this.minigame) {     // shopping or playing a mini-game: the world holds still
       for (const npc of this.npcs) npc.update(this, dt);
       return;
     }

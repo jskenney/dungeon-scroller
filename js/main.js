@@ -20,6 +20,7 @@ import { Hud } from './ui/hud.js';
 import { Bubbles } from './ui/bubbles.js';
 import { AudioEngine } from './audio/audio.js';
 import { Speech } from './speech/speech.js';
+import { solitaireScreen } from './minigames/solitaireView.js';
 import { POCKET } from './speech/pocket.js';
 import { LineDirector } from './speech/lines.js';
 import { fetchJson, resolve } from './config.js';
@@ -287,7 +288,7 @@ function settingsScreen(returnTo, onFrame = false) {
 // ------------------------------------------------------------------------- play
 
 const goods = () => game.assets.catalogs?.npcs?.goods ?? {};
-const progressKey = hero => `${hero.gold}|${JSON.stringify(hero.upgrades)}`;
+const progressKey = hero => `${hero.gold}|${JSON.stringify(hero.upgrades)}|${JSON.stringify(hero.bonus)}`;
 
 function startPlay(entry) {
   game.entry = entry;
@@ -295,7 +296,7 @@ function startPlay(entry) {
   game.world = new World(level, game.hero, game.config, game.assets.entities, goods());
   // Gold and upgrades bought earlier come along into every level.
   const saved = loadProgress(game.hero.id);
-  Object.assign(game.world.hero, { gold: saved.gold, upgrades: saved.upgrades });
+  Object.assign(game.world.hero, { gold: saved.gold, upgrades: saved.upgrades, bonus: saved.bonus });
   game.world.hero.applyUpgrades(goods());
   game.savedState = progressKey(game.world.hero);
   game.view = new WorldView(game.stage, game.world, sceneryFor(entry.tileset));
@@ -396,6 +397,51 @@ function shopScreen(npc) {
   render();
 }
 
+/** The mini-games that exist, by the name an object's catalog entry gives in "game". */
+const MINIGAMES = { solitaire: { name: 'solitaire', offer: 'Play a game of solitaire?' } };
+
+/** What a reward gives, in a few words, for the line shown after a win. */
+function rewardText(gives) {
+  const parts = [];
+  if (gives.maxHp) parts.push(`+${gives.maxHp} maximum HP`);
+  if (gives.maxMp) parts.push(`+${gives.maxMp} maximum MP`);
+  if (gives.hp || gives.hpFraction) parts.push('health restored');
+  if (gives.mp || gives.mpFraction) parts.push('MP restored');
+  if (gives.gold) parts.push(`+${gives.gold} gold`);
+  if (gives.score) parts.push(`+${gives.score} score`);
+  if (gives.keys) parts.push(gives.keys === 1 ? 'a key' : `${gives.keys} keys`);
+  if (gives.boost || gives.boostOneOf) parts.push('a boost');
+  return parts.length ? `You gain ${parts.join(', ')}.` : '';
+}
+
+/**
+ * A mini-game object was used: ask whether to play, then open its game.
+ * The world waits while it is open, and the player can leave at any time.
+ */
+function minigameScreen(object) {
+  const world = game.world, about = MINIGAMES[object.g.game];
+  world.openMinigame(object);
+  game.input.setEnabled(false);
+  game.speech.stop();
+  const leave = () => { game.minigameKey = null; world.closeMinigame(); resume(); };
+  const reward = object.g.reward;
+  const play = () => {
+    const decks = game.assets.atlases.filter(a => a.layouts?.pips);
+    const table = solitaireScreen({ decks, deck: game.settings.cardDeck ?? object.g.deck,
+      onDeck: id => { game.settings.cardDeck = id; },
+      onWin: () => { const won = world.winMinigame(); return won ? rewardText(won) : ''; },
+      onLeave: leave, sound: cue => game.audio.play(cue) });
+    game.minigameKey = table.key;
+    show(table.element, leave);
+  };
+  show(h('div', { class: 'screen centered scrim' }, panel(object.entity.name,
+    h('p', {}, about.offer),
+    reward && rewardText(reward) ? h('p', { class: 'muted' }, `Each game you win: ${rewardText(reward).replace(/^You gain /, '').replace(/\.$/, '')}.`) : null,
+    h('div', { class: 'row' },
+      h('button', { type: 'button', onclick: leave }, 'Not now'),
+      h('button', { type: 'button', class: 'primary', autofocus: true, onclick: play }, 'Play')))), leave);
+}
+
 function completeScreen() {
   game.paused = true;
   game.input.setEnabled(false);
@@ -494,6 +540,7 @@ function tick(dt) {
   for (const line of game.lines.update(world.events, world, dt)) game.speech.say(line.actor, line.text);
   game.bubbles.update(dt);
   const shopAt = world.events.find(e => e.type === 'shop')?.actor;
+  const table = world.events.find(e => e.type === 'minigame' && MINIGAMES[e.game]);
   // Keep gold and upgrades saved as they change.
   if (progressKey(world.hero) !== game.savedState) { saveProgress(game.hero.id, world.hero); game.savedState = progressKey(world.hero); }
   const gameOver = world.events.some(e => e.type === 'gameOver');
@@ -520,6 +567,7 @@ function tick(dt) {
   if (gameOver) gameOverScreen();
   else if (complete) completeScreen();
   else if (shopAt) shopScreen(shopAt);
+  else if (table) minigameScreen(table.object);
 }
 
 // ------------------------------------------------------------------------- boot
@@ -562,6 +610,7 @@ async function main() {
         return;
       }
       if (e.code === 'Escape' && game.back) { e.preventDefault(); game.back(); }
+      else if (game.minigameKey && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) && game.minigameKey(e.code)) e.preventDefault();
     });
     game.canvas.addEventListener('wheel', e => {
       if (!game.world || game.paused) return;

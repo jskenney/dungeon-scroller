@@ -969,6 +969,16 @@ Prices, amounts, limits and every line the NPCs say are first drafts.
 
 The six mini-game objects (`data/objects.json`, behaviour `minigame`) can be placed in a level like any other object. The interact key plays the object's interaction; when that finishes the object stays in its held pose and the simulation raises a `minigame` event naming the game: `cards`, `dice`, `mahjongg`, `board`, `computer` or `blocks`. **No mini-games are built yet**, so the game only shows a short notice. The playing-card and dice atlases (§4.4b) are the art those games will be drawn with. The village level has all six objects.
 
+
+### 16.9 Solitaire
+
+The first mini-game. Using the deck of cards asks whether to play; **Play** opens classic solitaire, drawing one card at a time, with no limit on going through the stock. The world waits while the table is open (as it does for a shop), the player can start as many games as they like, and **Back to the game** or Esc leaves at any moment. After leaving, the deck can be used again.
+
+- **Rules** are in `js/minigames/solitaire.js`, with no drawing code: deal, draw and turn the waste back over, legal moves to columns and foundations, moving a run together, turning over the uncovered card, undo, and finishing automatically once every card is face up. They are covered by tests.
+- **The table** (`js/minigames/solitaireView.js`) assembles all 52 faces once per deck from a playing-card atlas, using the atlas's own layouts for the corner indices and pips, and the game's font for the rank. Click a card to send it where it fits (a foundation first, then a column), or drag it; click the stock to draw. Keys: D draw, U undo, N new game, F finish. The player can switch between the dungeon, hero and villager decks, and the choice is remembered.
+- **Winning** gives the object's `reward` from `data/objects.json`, every time a game is won. It uses the same words as an object's `gives`, plus `maxHp` and `maxMp`, which raise the hero's maximum for good. The default is `{ "maxHp": 10 }`. Such gains are kept with the hero's gold and upgrades in the browser, and are cleared by *Erase progress*.
+- A mini-game object is opened this way when its catalog entry has `"built": true` and a `game` the shell knows; the other five still show "mini-game not built yet".
+
 ### 16.6 Bosses
 
 `js/sim/boss.js` extends the enemy with phases and the larger attacks. Values come from `data/bosses.json`.

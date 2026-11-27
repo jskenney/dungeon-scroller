@@ -186,3 +186,28 @@ table.results td { text-align: right; font-variant-numeric: tabular-nums; }
 .screen.framed.title .footnote { text-shadow: 0 1px 2px #000; }
 
 .small { font-size: 12px; margin: 4px 0 0; }
+
+/* Solitaire */
+.screen.solitaire { background: #0b1512f2; padding: 12px 16px; gap: 8px; overflow: auto; align-items: center; }
+.sol-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; width: min(100%, 1040px); }
+.sol-bar h1 { font-size: 22px; }
+.sol-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; align-items: center; }
+.sol-deck { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.sol-board { width: min(100%, 1040px, (100vh - 150px) * 1.4); --gap: clamp(4px, 1.2vw, 14px); display: flex; flex-direction: column; gap: var(--gap); touch-action: none; }
+.sol-top, .sol-columns { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: start; gap: var(--gap); }
+.sol-pile { position: relative; min-width: 0; aspect-ratio: 5 / 7; border-radius: 6%; outline: 1px dashed #ffffff26; outline-offset: -1px; }
+.sol-pile.tableau { margin-bottom: calc(var(--fan, 0%) * 1.4); }
+.sol-pile.foundation:empty::after { content: "A"; position: absolute; inset: 0; display: grid; place-items: center; color: #ffffff22; font: 700 clamp(14px, 3vw, 34px) Georgia, serif; }
+.pc {
+  position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 5 / 7; padding: 0; border: 0; border-radius: 6%;
+  background: none center / 100% 100% no-repeat; image-rendering: auto; cursor: pointer; box-shadow: 0 1px 3px #0009;
+}
+.pc.down { cursor: default; }
+.sol-pile.stock .pc.down { cursor: pointer; }
+.pc.empty { background: #ffffff0d; color: var(--muted); font-size: clamp(14px, 2.4vw, 28px); box-shadow: none; outline: 1px dashed #ffffff26; outline-offset: -1px; }
+.pc:hover:not(.down):not(:disabled), .sol-pile.stock .pc:hover:not(:disabled) { filter: brightness(1.12); border: 0; }
+.pc:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; z-index: 1; }
+.sol-ghost { position: fixed; z-index: 20; pointer-events: none; }
+.sol-ghost .pc { box-shadow: 0 8px 18px #000a; }
+.sol-status { min-height: 1.5em; margin: 0; color: var(--gold); font-weight: 600; text-align: center; }
+.sol-help { text-align: center; margin: 0; }

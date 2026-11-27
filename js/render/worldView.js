@@ -236,13 +236,13 @@ export class WorldView {
       else if (e.type === 'hex') this.float(e.x, e.y, 'hexed', 0xd9a8ff);
       else if (e.type === 'kill') this.float(e.x, e.y - 40, 'defeated', 0xffffff);
       else if (e.type === 'locked') this.float(e.x, e.y, 'locked', 0xc9ced9);
-      else if (e.type === 'minigame') this.float(e.x, e.y, 'mini-game not built yet', 0xc9ced9);
+      else if (e.type === 'minigame' && !e.built) this.float(e.x, e.y, 'mini-game not built yet', 0xc9ced9);
       else if (e.type === 'shockwave') this.waves.push({ x: e.x, y: e.y, radius: e.radius, color: tint(e.color), age: 0 });
       else if (e.type === 'bossPhase') this.float(e.x, e.y, 'enraged', 0xff8a8a);
       else if (e.type === 'checkpoint') this.float(e.x, e.y - 12, 'checkpoint', 0x7be495);
       else if (e.type === 'gateOpened') this.float(e.x, e.y + 60, 'opened', 0xffffff);
       else if (e.type === 'gave') {
-        const g = e.gives, label = g.keys ? 'key' : g.gold && !g.score ? `+${g.gold} gold` : e.boost ? (BOOST_NAMES[e.boost.stat] ?? e.boost.stat) : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
+        const g = e.gives, label = g.maxHp ? `+${g.maxHp} max HP` : g.maxMp ? `+${g.maxMp} max MP` : g.keys ? 'key' : g.gold && !g.score ? `+${g.gold} gold` : e.boost ? (BOOST_NAMES[e.boost.stat] ?? e.boost.stat) : g.hp ? `+${g.hp} HP` : g.mp ? `+${g.mp} MP`
           : g.score ? `+${g.score}` : g.hpFraction && g.mpFraction ? 'restored' : null;
         if (label) this.float(e.x, e.y, label, g.hp || g.hpFraction ? 0x7be495 : g.mp ? 0x8fb8f2 : 0xffe08a);
       }

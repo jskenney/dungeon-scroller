@@ -2,6 +2,7 @@
   "schema": "dungeon-scroller/catalog@1",
   "kind": "object",
   "notes": [
+    "A mini-game object with \"built\": true opens a real game: \"solitaire\" is classic draw-one solitaire with no limit on going through the stock. \"reward\" is what each game won gives, in the same words as \"gives\" (hp, mp, gold, score, keys, boost), plus maxHp and maxMp, which raise the hero's maximum for good. \"deck\" is the card deck it starts with: dungeon, hero or npc. Leave \"reward\" out for a game played only for fun.",
     "use: touch = taken by walking into it; interact = press the interact key inside its box; attack = hit it; none = scenery.",
     "box is the touch, interaction or hit area relative to the pivot. A solid object also blocks movement with this box.",
     "A chest opens with no key unless the level marks it locked. A lever toggles whatever the level links it to.",
@@ -187,7 +188,10 @@
       "card": "../assets/cards/playing_card_deck_card.json",
       "use": "interact",
       "behaviour": "minigame",
-      "game": "cards",
+      "game": "solitaire",
+      "built": true,
+      "deck": "dungeon",
+      "reward": { "maxHp": 10 },
       "box": { "x": -27, "y": -28, "w": 54, "h": 28 }
     },
     "dice": {

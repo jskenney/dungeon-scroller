@@ -902,6 +902,92 @@ tests.push(
 
 import { LineDirector } from '../speech/lines.js';
 import { parseMidi } from '../audio/midi.js';
+import { Solitaire } from '../minigames/solitaire.js';
+
+const card = (rank, suit, up = true) => ({ rank, suit, up });
+/** A solitaire game with every pile empty, to set up a position by hand. */
+function emptyTable() {
+  const g = new Solitaire(makeRng('table').next);
+  g.stock = []; g.waste = []; g.foundations = [[], [], [], []]; g.tableau = [[], [], [], [], [], [], []]; g.history = []; g.moves = 0;
+  return g;
+}
+
+tests.push(
+  ['solitaire deals seven columns with the last card of each face up, and 24 cards in the stock', () => {
+    const g = new Solitaire(makeRng('deal').next);
+    assert(g.stock.length === 24 && g.waste.length === 0, `stock ${g.stock.length}, waste ${g.waste.length}`);
+    g.tableau.forEach((pile, i) => {
+      assert(pile.length === i + 1, `column ${i} has ${pile.length} cards`);
+      assert(pile.every((c, n) => c.up === (n === pile.length - 1)), `column ${i} has the wrong cards face up`);
+    });
+    const all = [...g.stock, ...g.tableau.flat()].map(c => `${c.suit}${c.rank}`);
+    assert(new Set(all).size === 52, 'the deck is not 52 different cards');
+    const again = new Solitaire(makeRng('deal').next);
+    assert(JSON.stringify(again.tableau) === JSON.stringify(g.tableau), 'the same seed dealt a different game');
+  }],
+  ['solitaire draws one card at a time and goes round the stock without limit, in the same order', () => {
+    const g = new Solitaire(makeRng('draw').next);
+    const first = [];
+    for (let i = 0; i < 24; i++) { assert(g.draw() === 'drew', 'expected to draw'); assert(g.waste.length === i + 1, 'more than one card was drawn'); first.push(g.waste[i]); }
+    assert(g.stock.length === 0, 'the stock should be empty');
+    for (let round = 0; round < 5; round++) {
+      assert(g.draw() === 'turned' && g.stock.length === 24 && g.waste.length === 0, 'the waste was not turned back over');
+      assert(g.stock.every(c => !c.up), 'turned cards should be face down');
+      for (let i = 0; i < 24; i++) { g.draw(); assert(g.waste[i].rank === first[i].rank && g.waste[i].suit === first[i].suit, 'the order changed on a later pass'); }
+    }
+    assert(g.passes === 5, `expected 5 passes, counted ${g.passes}`);
+  }],
+  ['solitaire allows only legal moves, moves runs together, and turns over the card beneath', () => {
+    const g = emptyTable();
+    g.tableau[0] = [card(9, 'club', false), card(8, 'heart'), card(7, 'spade')];
+    g.tableau[1] = [card(9, 'spade')];
+    g.tableau[2] = [card(9, 'diamond')];
+    g.waste = [card(13, 'heart'), card(1, 'club')];
+    const col = i => ({ pile: 'tableau', index: i });
+    assert(!g.canMove(col(0), 1, col(2)), 'a red eight went on a red nine');
+    assert(!g.canMove(col(0), 0, col(1)), 'a face-down card moved');
+    assert(!g.canMove({ pile: 'waste' }, 0, col(3)), 'a buried waste card moved');
+    assert(!g.canMove(col(1), 0, col(3)), 'a nine went on an empty column');
+    assert(g.move(col(0), 1, col(1)), 'the red eight and black seven should go on the black nine');
+    assert(g.tableau[1].length === 3 && g.tableau[0].length === 1 && g.tableau[0][0].up, 'the run did not move together, or the card beneath stayed face down');
+    assert(!g.canMove({ pile: 'waste' }, 1, { pile: 'foundation', index: 0 }) === false, 'an ace should start a foundation');
+    assert(g.autoMove({ pile: 'waste' }, 1)?.pile === 'foundation', 'the ace did not go to a foundation');
+    assert(!g.canMove(col(1), 2, { pile: 'foundation', index: 0 }), 'a seven went on an ace');
+    assert(g.autoMove({ pile: 'waste' }, 0)?.pile === 'tableau' && g.tableau[3][0].rank === 13, 'the king did not go to an empty column');
+    assert(g.bestTarget(col(3), 0) === null, 'a king alone in a column should not hop to another empty one');
+    assert(g.undo() && g.waste.length === 1 && g.tableau[3].length === 0, 'undo did not take the king back');
+  }],
+  ['solitaire is won when all four suits are built from ace to king', () => {
+    const g = emptyTable();
+    const suits = ['heart', 'diamond', 'spade', 'club'];
+    suits.forEach((suit, i) => { for (let rank = 1; rank <= 12; rank++) g.foundations[i].push(card(rank, suit)); });
+    suits.forEach((suit, i) => { g.tableau[i] = [card(13, suit)]; });
+    assert(!g.won && g.canFinish, 'four kings from the end should be finishable but not yet won');
+    let steps = 0;
+    while (g.finishStep()) steps++;
+    assert(steps === 4 && g.won && !g.canFinish, `expected 4 finishing moves and a win, got ${steps}`);
+  }],
+  ['winning a mini-game gives its reward each time, raises maximum health for good, and the object can be used again', () => {
+    const deck = fakeObject({ use: 'interact', behaviour: 'minigame', game: 'solitaire', built: true, reward: { maxHp: 10 } }, true);
+    const level = mapLevel(['............', '............', 'S...........', '############']);
+    level.doc.entities = [{ type: 'object', id: 'deck', col: 2, row: 2 }];
+    const world = new World(level, fighter(), QUIET, { 'object/deck': deck });
+    walkTo(world, 2);
+    let opened = null;
+    runWorld(world, i => ({ interact: i % 5 === 0 }), 140, w => { opened ??= w.events.find(e => e.type === 'minigame'); w.events.length = 0; });
+    assert(opened?.built && opened.game === 'solitaire', 'the solitaire object did not open its game');
+    const object = world.objects[0], hero = world.hero;
+    hero.hp = 50;
+    world.openMinigame(object);
+    const x = hero.body.x;
+    runWorld(world, { right: true }, 30);
+    assert(hero.body.x === x, 'the world did not wait while the mini-game was open');
+    world.winMinigame(); world.winMinigame();
+    assert(hero.maxHp === 120 && hero.hp === 70, `expected 120 maximum and 70 HP, got ${hero.maxHp} and ${hero.hp}`);
+    assert(hero.bonus.maxHp === 20, 'the gain was not recorded to be kept');
+    world.closeMinigame();
+    assert(world.minigame === null && object.state === 'idle', 'the object cannot be used again');
+  }]);
 
 tests.push(
   ['health comes back over time, but only after a pause since the last injury', () => {
