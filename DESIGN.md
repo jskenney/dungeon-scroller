@@ -992,7 +992,7 @@ The first mini-game. Using the deck of cards asks whether to play; **Play** open
 
 ### 16.6 Bosses
 
-`js/sim/boss.js` extends the enemy with phases and the larger attacks. Values come from `data/bosses.json`.
+`js/sim/boss.js` extends the enemy with phases and the larger attacks. Values come from `data/bosses.json`. `difficulty.bossHealth` and `difficulty.bossDamage` in the site configuration scale every boss's health and damage (including touching it) on top of the settings for all enemies; the example sets them to 0.5 and 0.75.
 
 - **The arena.** A level marks it with a `boss_arena` region. The boss stands idle until the hero walks in; then the way back shuts, the camera stays within the arena, and the boss's name and health bar appear across the top. The arena opens again when the boss falls.
 - **Phases.** A boss has three. It moves to the next when its health falls to the phase's `untilHp` fraction (66% and 33%), pausing for a moment; each phase adds an attack and raises the `tempo`, which speeds its movement and shortens its cooldowns. The fourth attack belongs to the last phase.

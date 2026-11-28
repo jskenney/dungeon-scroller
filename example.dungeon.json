@@ -146,6 +146,8 @@
     "enemyHealth": 1,
     "enemyDamage": 1,
     "touchDamage": 1,
+    "bossHealth": 0.5,
+    "bossDamage": 0.75,
     "playerDamage": 1,
     "attackSpeed": 1,
     "mpRegen": 1,

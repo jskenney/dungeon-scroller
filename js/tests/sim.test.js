@@ -905,6 +905,17 @@ import { parseMidi } from '../audio/midi.js';
 import { Solitaire } from '../minigames/solitaire.js';
 
 tests.push(
+  ['the site can make bosses weaker without changing ordinary enemies', () => {
+    const easy = { ...QUIET, difficulty: { bossHealth: 0.5, bossDamage: 0.5 } };
+    const plain = bossRoom(), soft = bossRoom({ config: easy });
+    const bossOf = w => w.enemies.find(e => e.boss);
+    assert(bossOf(soft).maxHp === Math.round(bossOf(plain).maxHp / 2) && bossOf(soft).hp === bossOf(soft).maxHp, 'the boss did not start with half its health');
+    assert(bossOf(soft).touchScale === bossOf(plain).touchScale / 2, 'the boss\'s touch was not halved');
+    const grunt = arena([3], { enemy: dummy(), config: easy }).enemies[0];
+    assert(grunt.maxHp === 30, 'an ordinary enemy was changed too');
+  }]);
+
+tests.push(
   ['a saved game puts the hero, enemies, objects, gates and loot back as they were', () => {
     const build = () => {
       const world = room([['object', 'crate', 3], ['object', 'chest', 6], ['gate', 'g1', 9, { row: 1, height: 2 }],

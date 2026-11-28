@@ -11,6 +11,9 @@ export class Boss extends Enemy {
   constructor(entity, config, x, y) {
     super(entity, config, x, y);
     this.boss = true;
+    // Bosses have their own difficulty settings on top of the ones for all enemies.
+    this.maxHp = Math.max(1, Math.round(this.maxHp * (config.difficulty?.bossHealth ?? 1)));
+    this.hp = this.maxHp;
     this.awake = false;            // set when the hero enters the arena
     this.phase = 0;
     this.start = { x: this.body.x, y: this.body.y };
@@ -19,7 +22,7 @@ export class Boss extends Enemy {
   }
 
   get tempo() { return this.g.phases[this.phase]?.tempo ?? 1; }
-  get touchScale() { return this.action?.leaping ? 2 : 1; }
+  get touchScale() { return (this.action?.leaping ? 2 : 1) * (this.config.difficulty?.bossDamage ?? 1); }
 
   attackList() {
     const allowed = this.g.phases[this.phase]?.attacks ?? Object.keys(this.g.attacks);
@@ -75,7 +78,7 @@ export class Boss extends Enemy {
     super.onFrame(world, clip, frame);
     const a = this.action, attack = a.attack, hero = world.hero, b = this.body;
     if (!attack) return;
-    const damage = attack.damage * (this.config.difficulty?.enemyDamage ?? 1);
+    const damage = attack.damage * (this.config.difficulty?.enemyDamage ?? 1) * (this.config.difficulty?.bossDamage ?? 1);
     const events = clip.events ?? [];
     // A leaping melee attack takes off one frame before it lands its first blow.
     const firstHit = events.find(e => e.type === 'melee' || e.type === 'impact');
@@ -159,7 +162,7 @@ export class Boss extends Enemy {
         && eventsOnFrame(this.entity.animations[a.slot], Math.max(0, a.frame)).some(e => e.type === 'emit')
         && overlap(this.breathRect(a.attack), hero.bodyRect())) {
       a.struck = true;
-      world.hurtHero(a.attack.damage * (this.config.difficulty?.enemyDamage ?? 1), this, a.attack.effect);
+      world.hurtHero(a.attack.damage * (this.config.difficulty?.enemyDamage ?? 1) * (this.config.difficulty?.bossDamage ?? 1), this, a.attack.effect);
     }
     if (this.changedPhase) {
       this.changedPhase = false;
