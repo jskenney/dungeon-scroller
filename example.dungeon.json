@@ -125,6 +125,8 @@
     "teleport": ["KeyV"],
     "fly": ["KeyF"],
     "interact": ["KeyE"],
+    "quickSave": ["KeyK"],
+    "quickLoad": ["KeyL"],
     "zoomIn": ["Equal", "NumpadAdd"],
     "zoomOut": ["Minus", "NumpadSubtract"],
     "pause": ["Escape"],

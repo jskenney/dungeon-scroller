@@ -16,6 +16,7 @@ import { keyboardIntents } from './sim/controllers/keyboard.js';
 import { h, keyName } from './ui/dom.js';
 import { cardElement, plainCard, spritePreview } from './ui/card.js';
 import { loadProgress, saveProgress, resetProgress } from './profile.js';
+import { SLOTS, listSaves, quickSlot, newestSlot, writeSave, readSave, deleteSave } from './saves.js';
 import { Hud } from './ui/hud.js';
 import { Bubbles } from './ui/bubbles.js';
 import { AudioEngine } from './audio/audio.js';
@@ -93,6 +94,8 @@ function titleScreen() {
     h('h1', { class: 'logo' }, game.config.title ?? 'Dungeon Scroller'),
     h('div', { class: 'menu' },
       h('button', { type: 'button', autofocus: true, onclick: heroScreen }, 'Play'),
+      newestSlot() >= 0 ? h('button', { type: 'button', onclick: () => loadGame(newestSlot()) }, 'Continue') : null,
+      newestSlot() >= 0 ? h('button', { type: 'button', onclick: () => savesScreen('load', titleScreen, true) }, 'Load game') : null,
       h('button', { type: 'button', onclick: () => settingsScreen(titleScreen, true) }, 'Settings'),
       h('a', { class: 'button', href: 'viewer.html' }, 'Asset viewer'))), 'title');
   screen.append(h('p', { class: 'footnote' },
@@ -189,16 +192,22 @@ function heroLimits() {
   return { maxRise: Math.max(1, maxRise), maxGap: Math.max(1, maxGap) };
 }
 
-function startRandom({ theme, length, difficulty, seed }) {
+/** Build a random level from its recipe. The same recipe always builds the same level. */
+function randomEntry({ theme, length, difficulty, seed }) {
   const tileset = game.assets.tilesets.find(t => t.id === theme) ?? game.assets.tilesets[0];
   const ofKind = kind => Object.values(game.assets.entities).filter(e => e.kind === kind && e.gameplay).map(e => e.id);
   const { doc } = generateLevel({ seed, tileset, tilesetId: tileset.id, length, difficulty,
     enemies: ofKind('enemy'), bosses: ofKind('boss'), limits: heroLimits(),
     npcs: Object.values(game.assets.entities).filter(e => e.kind === 'npc' && e.gameplay?.role === 'merchant').map(e => e.id) });
+  return { id: doc.id, name: 'Random dungeon', doc, tileset, seed, recipe: { theme: tileset.id, length, difficulty } };
+}
+
+function startRandom(recipe) {
+  const entry = randomEntry(recipe);
   // Put the recipe in the address bar so the level can be shared or replayed.
-  const query = new URLSearchParams({ seed, theme: tileset.id, length, difficulty });
+  const query = new URLSearchParams({ seed: entry.seed, ...entry.recipe });
   history.replaceState(null, '', `${location.pathname}?${query}`);
-  startPlay({ id: doc.id, name: 'Random dungeon', doc, tileset, seed, recipe: { theme: tileset.id, length, difficulty } });
+  startPlay(entry);
 }
 
 // --------------------------------------------------------------------- settings
@@ -290,7 +299,8 @@ function settingsScreen(returnTo, onFrame = false) {
 const goods = () => game.assets.catalogs?.npcs?.goods ?? {};
 const progressKey = hero => `${hero.gold}|${JSON.stringify(hero.upgrades)}|${JSON.stringify(hero.bonus)}`;
 
-function startPlay(entry) {
+/** @param {object} entry  the level to play  @param {object} [resumeFrom]  a saved game's state to carry on from */
+function startPlay(entry, resumeFrom = null) {
   game.entry = entry;
   const level = new Level(entry.doc, entry.tileset);
   game.world = new World(level, game.hero, game.config, game.assets.entities, goods());
@@ -298,12 +308,13 @@ function startPlay(entry) {
   const saved = loadProgress(game.hero.id);
   Object.assign(game.world.hero, { gold: saved.gold, upgrades: saved.upgrades, bonus: saved.bonus });
   game.world.hero.applyUpgrades(goods());
+  if (resumeFrom) game.world.restore(resumeFrom);
   game.savedState = progressKey(game.world.hero);
   game.view = new WorldView(game.stage, game.world, sceneryFor(entry.tileset));
   game.view.interactKey = keyName(game.settings.keys('interact')[0] ?? 'KeyE');
   game.speech.stop();
   game.lines = new LineDirector();
-  game.world.events.push({ type: 'levelStart' });
+  if (!resumeFrom) game.world.events.push({ type: 'levelStart' });
   game.audio.music(game.audio.musicFor('level', entry.tileset.id));
   game.hud = new Hud(game.hero, game.settings);
   const b = game.world.hero.body;
@@ -350,6 +361,78 @@ function resume() {
   game.canvas.focus();
 }
 
+// ------------------------------------------------------------------ saved games
+
+/** A game can be saved while the hero is alive and the level is still being played. */
+const canSave = () => Boolean(game.world) && !game.world.hero.dead && !game.world.over && !game.world.complete;
+
+/** Store the level being played in a slot. @returns {boolean} whether it worked */
+function saveGame(slot) {
+  if (!canSave()) return false;
+  const world = game.world, hero = world.hero, entry = game.entry;
+  return writeSave(slot, { version: 1, when: Date.now(), heroId: game.hero.id, heroName: game.hero.name, levelName: world.level.name,
+    level: entry.recipe ? { recipe: entry.recipe, seed: entry.seed } : { id: entry.id },
+    summary: { hp: Math.ceil(hero.hp), maxHp: hero.maxHp, gold: hero.gold, seconds: Math.round(world.time) },
+    state: world.snapshot() });
+}
+
+/** Carry on from a slot. @returns {string|null} why it could not, or null when it did */
+function loadGame(slot) {
+  const save = readSave(slot);
+  if (!save) return 'That slot is empty.';
+  const hero = heroes().find(e => e.id === save.heroId);
+  if (!hero) return `Its hero, ${save.heroName}, is not in this game any more.`;
+  let entry = null;
+  try {
+    entry = save.level.recipe ? randomEntry({ ...save.level.recipe, seed: save.level.seed }) : game.assets.levels.find(l => l.id === save.level.id);
+  } catch (error) { return `Its level could not be rebuilt: ${error.message}`; }
+  if (!entry) return `Its level, ${save.levelName}, is not in this game any more.`;
+  game.hero = hero;
+  game.settings.lastHero = hero.id;
+  startPlay(entry, save.state);
+  toast(`Loaded slot ${slot + 1}`);
+  return null;
+}
+
+/** A short message over the game that goes away by itself. */
+function toast(text) {
+  document.querySelector('.toast')?.remove();
+  const el = h('div', { class: 'toast', role: 'status' }, text);
+  document.body.append(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+/** The five slots, to save into or load from. */
+function savesScreen(mode, returnTo, onFrame = false) {
+  const render = (message = '') => {
+    const clock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    const rows = listSaves().map((save, slot) => {
+      const act = () => {
+        if (mode === 'save') {
+          if (save && !confirm(`Replace the game saved in slot ${slot + 1}?`)) return;
+          if (saveGame(slot)) { toast(`Saved to slot ${slot + 1}`); returnTo(); } else render('This game could not be saved (the browser\'s storage may be full or switched off).');
+        } else {
+          const problem = loadGame(slot);
+          if (problem) render(problem);
+        }
+      };
+      return h('li', { class: 'save' },
+        h('button', { type: 'button', class: 'save-slot', disabled: mode === 'load' && !save, autofocus: slot === quickSlot(), onclick: act },
+          h('strong', {}, `Slot ${slot + 1}`),
+          save ? h('span', {}, `${save.heroName} · ${save.levelName}`) : h('span', { class: 'muted' }, 'Empty'),
+          save ? h('span', { class: 'muted' }, `${save.summary.hp} / ${save.summary.maxHp} HP · ${save.summary.gold} gold · ${clock(save.summary.seconds)} played · saved ${new Date(save.when).toLocaleString()}`) : null),
+        save ? h('button', { type: 'button', 'aria-label': `Delete slot ${slot + 1}`, onclick: () => { if (confirm(`Delete the game saved in slot ${slot + 1}?`)) { deleteSave(slot); render(); } } }, 'Delete') : null);
+    });
+    const content = panel(mode === 'save' ? 'Save game' : 'Load game',
+      h('p', { class: 'muted' }, mode === 'save' ? 'Choose a slot. Quick save uses the slot you saved or loaded last.' : 'Choose a saved game to carry on from.'),
+      h('ul', { class: 'saves' }, rows),
+      h('p', { class: 'warn', role: 'alert' }, message),
+      h('div', { class: 'row' }, h('button', { type: 'button', onclick: returnTo }, '← Back')));
+    show(onFrame ? framed('menus', content) : h('div', { class: 'screen centered scrim' }, content), returnTo);
+  };
+  render();
+}
+
 function pause() {
   game.paused = true;
   game.input.setEnabled(false);
@@ -359,6 +442,8 @@ function pause() {
       + `length ${entry.recipe.length} · difficulty ${entry.recipe.difficulty}`) : null,
     h('div', { class: 'menu' },
       h('button', { type: 'button', autofocus: true, onclick: resume }, 'Resume'),
+      canSave() ? h('button', { type: 'button', onclick: () => savesScreen('save', pause) }, 'Save game') : null,
+      h('button', { type: 'button', onclick: () => savesScreen('load', pause) }, 'Load game'),
       h('button', { type: 'button', onclick: () => startPlay(entry) }, 'Restart level'),
       entry.seed ? h('button', { type: 'button', onclick: () => startRandom({ ...entry.recipe, seed: randomSeed() }) }, 'New random level') : null,
       entry.seed ? h('button', { type: 'button', onclick: () => saveLevelFile(entry) }, 'Save level file') : null,
@@ -527,6 +612,13 @@ function tick(dt) {
   if (input.pressed('pause')) { input.endFrame(); pause(); return; }
   if (input.pressed('zoomIn')) stage.zoomBy(1);
   if (input.pressed('zoomOut')) stage.zoomBy(-1);
+  if (input.pressed('quickSave')) toast(saveGame(quickSlot()) ? `Saved to slot ${quickSlot() + 1}` : 'Cannot save right now');
+  if (input.pressed('quickLoad')) {
+    const slot = quickSlot(), problem = listSaves()[slot] ? loadGame(slot) : 'Nothing saved to load yet';
+    input.endFrame();
+    if (problem) toast(problem);
+    return;
+  }
   if (input.pressed('debug')) { stage.setDebug(!stage.debug); game.debugText.hidden = !stage.debug; }
 
   // The simulation runs in fixed steps; key presses are kept until a step has used them.

@@ -56,19 +56,21 @@ export class World {
     this.prompt = null;            // the object or NPC the interact key would use right now
     this.complete = false;         // true once the goal has been reached
     this.deaths = 0;
-    for (const placed of level.doc.entities ?? []) {
+    // Each thing a level places remembers its position in the level's list, so a saved game can name it.
+    for (const [slot, placed] of (level.doc.entities ?? []).entries()) {
       const x = (placed.col + 0.5) * TILE, y = (placed.row + 1) * TILE;
       if (placed.type === 'enemy') {
         const entity = entities[`enemy/${placed.id}`];
-        if (entity?.gameplay) this.enemies.push(new Enemy(entity, config, x, y));
+        if (entity?.gameplay) this.enemies.push(Object.assign(new Enemy(entity, config, x, y), { slot }));
       } else if (placed.type === 'boss') {
         const entity = entities[`boss/${placed.id}`];
-        if (entity?.gameplay) this.enemies.push(new Boss(entity, config, x, y));
+        if (entity?.gameplay) this.enemies.push(Object.assign(new Boss(entity, config, x, y), { slot }));
       } else if (placed.type === 'npc') {
         const entity = entities[`npc/${placed.id}`];
         if (entity?.gameplay) this.npcs.push(new Npc(entity, x, y));
       } else if (placed.type === 'object') {
-        this.addObject(placed.id, x, y, placed);
+        const object = this.addObject(placed.id, x, y, placed);
+        if (object) object.slot = slot;
       } else if (placed.type === 'gate') {
         const height = placed.height ?? 2;
         const rect = { l: placed.col * TILE + 32, t: placed.row * TILE, r: (placed.col + 1) * TILE - 32, b: (placed.row + height) * TILE, kind: 'solid' };
@@ -76,6 +78,61 @@ export class World {
         level.dynamic.push(rect);
       }
     }
+  }
+
+  /**
+   * Where the level has got to, as plain data that can be stored: the hero,
+   * which enemies are left and their health, what has been opened, taken or
+   * broken, and loot lying about. Things in mid-air or mid-swing are not kept:
+   * shots vanish and everyone is found standing where they were.
+   */
+  snapshot() {
+    const hero = this.hero, b = hero.body, round = v => Math.round(v * 100) / 100;
+    return {
+      tick: this.tick, deaths: this.deaths, checkpoint: { ...this.checkpoint },
+      hero: { x: round(b.x), y: round(b.y), facing: hero.facing, hp: round(hero.hp), mp: round(hero.mp), gold: hero.gold, keys: hero.keys,
+        score: hero.score, lives: hero.lives, upgrades: { ...hero.upgrades }, bonus: { ...hero.bonus },
+        boosts: hero.boosts.map(boost => ({ ...boost })) },
+      enemies: this.enemies.filter(e => !e.dead && !e.gone && e.slot != null).map(e => ({ slot: e.slot, x: round(e.body.x), y: round(e.body.y),
+        hp: round(e.hp), facing: e.facing, ...(e.boss && { phase: e.phase }) })),
+      objects: this.objects.filter(o => o.slot != null && !o.gone && o.state !== 'vanishing').map(o => ({ slot: o.slot,
+        used: o.state === 'used', locked: o.locked, cooldown: round(o.cooldown) })),
+      loose: this.objects.filter(o => o.slot == null && !o.gone && o.state === 'idle').map(o => ({ id: o.typeId, x: round(o.x), y: round(o.y) })),
+      gates: this.gates.map(gate => gate.open),
+    };
+  }
+
+  /** Put a freshly built world of the same level back to how snapshot() found it. */
+  restore(snap) {
+    const hero = this.hero, h = snap.hero;
+    Object.assign(hero, { gold: h.gold, keys: h.keys, score: h.score, lives: h.lives, upgrades: { ...h.upgrades }, bonus: { ...h.bonus }, facing: h.facing });
+    hero.applyUpgrades(this.goods);
+    hero.hp = Math.min(hero.maxHp, h.hp); hero.mp = Math.min(hero.maxMp, h.mp);
+    hero.boosts = (h.boosts ?? []).map(boost => ({ ...boost }));
+    hero.placeAt(h.x, h.y);
+    hero.invulnerable = 1.5;                 // a moment to take stock before anything can hurt
+    this.checkpoint = { ...snap.checkpoint };
+    this.tick = snap.tick; this.deaths = snap.deaths;
+    const left = new Map(snap.enemies.map(e => [e.slot, e]));
+    this.enemies = this.enemies.filter(e => left.has(e.slot));
+    for (const enemy of this.enemies) {
+      const e = left.get(enemy.slot);
+      Object.assign(enemy.body, { x: e.x, y: e.y, vx: 0, vy: 0 });
+      enemy.prev = { ...enemy.prev, x: e.x, y: e.y };
+      enemy.hp = Math.min(enemy.maxHp, e.hp); enemy.facing = e.facing;
+      if (enemy.boss) enemy.phase = e.phase ?? 0;
+    }
+    const kept = new Map(snap.objects.map(o => [o.slot, o]));
+    for (const object of this.objects) {
+      const o = kept.get(object.slot);
+      if (!o) { if (object.solid) this.unblock(object.solid); continue; }
+      object.locked = o.locked; object.cooldown = o.cooldown ?? 0;
+      if (o.used) { object.state = 'used'; object.t = 0; }
+    }
+    this.objects = this.objects.filter(object => kept.has(object.slot));
+    for (const item of snap.loose ?? []) this.addObject(item.id, item.x, item.y);
+    this.gates.forEach((gate, i) => { if (snap.gates?.[i] && !gate.open) { gate.open = true; this.unblock(gate.rect); } });
+    this.projectiles = []; this.events = [];
   }
 
   /** The living boss, if the level has one. */
@@ -118,6 +175,7 @@ export class World {
     const entity = this.entities[`object/${id}`];
     if (!entity?.gameplay) return null;
     const object = new WorldObject(entity, x, y, placed);
+    object.typeId = id;                      // the name it was made from, for saved games
     if (object.g.solid) {
       object.solid = { ...object.rect(), kind: 'solid' };
       this.level.dynamic.push(object.solid);

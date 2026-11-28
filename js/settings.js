@@ -10,6 +10,7 @@ export const ACTIONS = [
   ['jump', 'Jump'], ['run', 'Run (hold)'],
   ['attack1', 'Attack 1'], ['attack2', 'Attack 2'], ['attack3', 'Attack 3'],
   ['teleport', 'Teleport'], ['fly', 'Fly on / off'], ['interact', 'Interact'],
+  ['quickSave', 'Quick save'], ['quickLoad', 'Quick load'],
   ['zoomIn', 'Zoom in'], ['zoomOut', 'Zoom out'], ['pause', 'Pause'], ['mute', 'Mute'], ['debug', 'Debug overlay'],
 ];
 

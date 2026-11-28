@@ -904,6 +904,47 @@ import { LineDirector } from '../speech/lines.js';
 import { parseMidi } from '../audio/midi.js';
 import { Solitaire } from '../minigames/solitaire.js';
 
+tests.push(
+  ['a saved game puts the hero, enemies, objects, gates and loot back as they were', () => {
+    const build = () => {
+      const world = room([['object', 'crate', 3], ['object', 'chest', 6], ['gate', 'g1', 9, { row: 1, height: 2 }],
+        ['object', 'lever', 8, { link: 'g1' }], ['enemy', 'dummy', 10], ['enemy', 'dummy', 11]]);
+      return world;
+    };
+    const world = build();
+    // Change things: hurt the hero and an enemy, break or open what there is, spend and earn.
+    const hero = world.hero;
+    hero.bonus.maxHp = 10; hero.applyUpgrades(world.goods);
+    hero.hp = 41; hero.mp = 17; hero.gold = 23; hero.keys = 2; hero.score = 99;
+    hero.body.x = 300; hero.addBoost({ stat: 'damage', factor: 2, duration: 30 });
+    world.enemies[0].hp = 11; world.enemies[0].body.x += 40;
+    const gone = world.objects[0]; gone.gone = true; if (gone.solid) world.unblock(gone.solid);
+    world.objects[1].state = 'used';
+    world.openGate(world.gates[0]);
+    world.addObject('coin', 500, 288);                         // something dropped on the floor
+    world.checkpoint = { x: 250, y: 288 };
+    world.tick = 600; world.deaths = 3;
+    const snap = JSON.parse(JSON.stringify(world.snapshot())); // as it comes back from storage
+    const again = build();
+    again.restore(snap);
+    const h2 = again.hero;
+    assert(h2.hp === 41 && h2.mp === 17 && h2.gold === 23 && h2.keys === 2 && h2.score === 99, 'the hero\'s numbers were not restored');
+    assert(h2.maxHp === hero.maxHp && h2.body.x === 300 && h2.boosts.length === 1, 'the hero\'s maximum, place or boost was not restored');
+    assert(again.enemies.length === world.enemies.length && again.enemies[0].hp === 11 && again.enemies[0].body.x === world.enemies[0].body.x, 'the enemy was not restored');
+    assert(!again.objects.some(o => o.slot === gone.slot), 'a broken object came back');
+    assert(again.objects.find(o => o.slot === world.objects[1].slot).state === 'used', 'an opened object closed again');
+    assert(again.objects.filter(o => o.slot == null).length === 1, 'loot on the floor was not restored');
+    assert(again.gates[0].open && !again.level.dynamic.includes(again.gates[0].rect), 'the gate shut again');
+    assert(again.checkpoint.x === 250 && again.tick === 600 && again.deaths === 3, 'the checkpoint, time or deaths were not restored');
+    runWorld(again, {}, 30);
+    assert(!again.hero.dead && again.hero.body.grounded, 'the restored world did not carry on');
+    // An enemy that had been defeated stays gone.
+    world.enemies[0].dead = true;
+    const cleared = build();
+    cleared.restore(JSON.parse(JSON.stringify(world.snapshot())));
+    assert(cleared.enemies.length === world.enemies.length - 1, 'a defeated enemy came back');
+  }]);
+
 const card = (rank, suit, up = true) => ({ rank, suit, up });
 /** A solitaire game with every pile empty, to set up a position by hand. */
 function emptyTable() {

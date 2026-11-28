@@ -970,6 +970,16 @@ Prices, amounts, limits and every line the NPCs say are first drafts.
 The six mini-game objects (`data/objects.json`, behaviour `minigame`) can be placed in a level like any other object. The interact key plays the object's interaction; when that finishes the object stays in its held pose and the simulation raises a `minigame` event naming the game: `cards`, `dice`, `mahjongg`, `board`, `computer` or `blocks`. **No mini-games are built yet**, so the game only shows a short notice. The playing-card and dice atlases (§4.4b) are the art those games will be drawn with. The village level has all six objects.
 
 
+### 16.10 Saved games
+
+Five slots, kept in the browser (`js/saves.js`, localStorage key `dungeon-scroller.saves`).
+
+- **Saving and loading.** *Save game* and *Load game* are in the pause menu; the title screen shows *Continue* (the newest save) and *Load game* once there is a save. A slot shows the hero, level, health, gold, time played and when it was saved, and can be deleted. Saving is allowed whenever the hero is alive and the level is not finished.
+- **Quick save and quick load** are keys (K and L by default, rebindable like the rest). They use the slot saved or loaded most recently; with none, the first empty slot.
+- **What is kept** (`World.snapshot()` / `restore()`): the hero's place, health, MP, gold, keys, score, lives, upgrades, lasting gains and active boosts; which enemies are left, where, and their health (a boss's phase too); which objects have been taken, broken or opened; loot lying on the ground; open gates; the checkpoint, deaths and time played. Things in motion are not kept: shots vanish, and everyone is found standing where they were, with nothing mid-swing. The hero cannot be hurt for a moment after loading.
+- **The level itself is not stored**, only how to get it again: a listed level by its id, a random one by its seed, theme, length and difficulty, which always rebuild the same level. A save whose hero or level is no longer in the game says so instead of loading.
+- Loading replaces the hero's gold, upgrades and lasting gains with those in the save.
+
 ### 16.9 Solitaire
 
 The first mini-game. Using the deck of cards asks whether to play; **Play** opens classic solitaire, drawing one card at a time, with no limit on going through the stock. The world waits while the table is open (as it does for a shop), the player can start as many games as they like, and **Back to the game** or Esc leaves at any moment. After leaving, the deck can be used again.
