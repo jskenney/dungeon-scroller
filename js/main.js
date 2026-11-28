@@ -352,6 +352,7 @@ function showBackdrop() {
 
 function resume() {
   game.paused = false;
+  game.audio.resumeMusic();
   game.debugText = h('div', { class: 'debug', hidden: !game.stage.debug });
   show(h('div', { class: 'screen play' }, game.hud.el,
     h('div', { class: 'notice' }, game.world.level.name, game.entry.seed ? ` · seed ${game.entry.seed}` : '', ' · ',
@@ -435,6 +436,7 @@ function savesScreen(mode, returnTo, onFrame = false) {
 
 function pause() {
   game.paused = true;
+  game.audio.pauseMusic();
   game.input.setEnabled(false);
   const entry = game.entry;
   show(h('div', { class: 'screen centered scrim' }, panel('Paused',

@@ -116,6 +116,7 @@ export class AudioEngine {
     if (!this.context || this.track?.id === id) return;
     const context = this.context, now = context.currentTime;
     if (this.track) { this.track.stop(); this.track = null; }
+    this.musicPaused = false;
     const entry = id ? this.catalog.music?.[id] : null;
     if (entry?.playlist?.length) { this.playList(id, entry); return; }
     const file = (entry?.files ?? []).find(f => this.canPlay(f));
@@ -127,7 +128,7 @@ export class AudioEngine {
     gain.gain.setTargetAtTime(entry.volume ?? 1, now, 0.6);
     context.createMediaElementSource(element).connect(gain).connect(this.bus.music);
     element.play().catch(() => {});
-    this.track = { id, stop: () => {
+    this.track = { id, pause: () => element.pause(), resume: () => { element.play().catch(() => {}); }, stop: () => {
       gain.gain.setTargetAtTime(0, context.currentTime, 0.4);
       setTimeout(() => { element.pause(); element.src = ''; }, 2000);
     } };
@@ -140,7 +141,7 @@ export class AudioEngine {
    */
   playList(id, entry) {
     const player = new MidiPlayer(this.context, this.bus.music);
-    const track = { id, stop: () => player.stop() };
+    const track = { id, pause: () => player.pause(), resume: () => player.resume(), stop: () => player.stop() };
     this.track = track;
     const list = entry.playlist;
     const pick = () => {
@@ -159,13 +160,20 @@ export class AudioEngine {
           this.songs.set(url, parseMidi(await response.arrayBuffer()));
         }
         if (this.track !== track) return;                    // something else was asked for while this loaded
-        player.play(this.songs.get(url), { volume: entry.volume ?? 1, loop: list.length === 1, onEnd: next });
+        const start = () => player.play(this.songs.get(url), { volume: entry.volume ?? 1, loop: list.length === 1, onEnd: next });
+        // A piece that finishes loading while the game is paused waits for the game to carry on.
+        if (this.musicPaused) track.resume = () => { track.resume = () => player.resume(); start(); };
+        else start();
       } catch (error) {
         console.warn(`Music "${id}" (${url}) could not be played: ${error.message}`);
       }
     };
     next();
   }
+
+  /** Hold the music where it is (the game was paused), and carry on from there. */
+  pauseMusic() { if (this.track && !this.musicPaused) { this.musicPaused = true; this.track.pause(); } }
+  resumeMusic() { if (this.track && this.musicPaused) { this.musicPaused = false; this.track.resume(); } }
 
   /** The music id for a moment in the game: 'title', 'boss', 'complete', or a level's tileset. */
   musicFor(moment, tilesetId) {

@@ -107,19 +107,47 @@ export class MidiPlayer {
     this.gain.gain.cancelScheduledValues(context.currentTime);
     this.gain.gain.value = 0;
     this.gain.gain.setTargetAtTime(volume, context.currentTime, 0.5);
-    let origin = context.currentTime + 0.25, next = 0;
+    this.volume = volume;
+    this.origin = context.currentTime + 0.25;     // the audio-clock time at which the piece began (or would have)
+    this.next = 0;                                // the next note to hand over
+    this.pausedAt = null;
     const AHEAD = 1.6, GAP = 2.5;                 // seconds scheduled in advance; pause before a repeat
-    const pump = () => {
+    this.pump = () => {
       const horizon = context.currentTime + AHEAD;
-      while (next < song.notes.length && origin + song.notes[next].t < horizon) this.strike(song.notes[next++], origin);
-      if (next >= song.notes.length && context.currentTime > origin + song.duration + GAP) {
-        if (loop) { origin = context.currentTime + 0.25; next = 0; }
+      while (this.next < song.notes.length && this.origin + song.notes[this.next].t < horizon) this.strike(song.notes[this.next++], this.origin);
+      if (this.next >= song.notes.length && context.currentTime > this.origin + song.duration + GAP) {
+        if (loop) { this.origin = context.currentTime + 0.25; this.next = 0; }
         else { this.halt(); onEnd?.(); }
       }
     };
+    this.song = song;
     this.halt();
-    this.timer = setInterval(pump, 200);
-    pump();
+    this.timer = setInterval(this.pump, 200);
+    this.pump();
+  }
+
+  /** Fall silent and remember the place. Notes already handed to the audio clock are hushed by the fade. */
+  pause() {
+    if (this.pausedAt != null || !this.song) return;
+    this.pausedAt = this.context.currentTime - this.origin;
+    this.halt();
+    this.gain.gain.cancelScheduledValues(this.context.currentTime);
+    this.gain.gain.setTargetAtTime(0, this.context.currentTime, 0.04);
+  }
+
+  /** Carry on from where pause() stopped. */
+  resume() {
+    if (this.pausedAt == null) return;
+    const context = this.context, at = this.pausedAt;
+    this.pausedAt = null;
+    // Start a moment late, so the hushed notes have died away before the level comes back up.
+    this.origin = context.currentTime + 0.3 - at;
+    this.next = this.song.notes.findIndex(note => note.t >= at);
+    if (this.next < 0) this.next = this.song.notes.length;
+    this.gain.gain.cancelScheduledValues(context.currentTime);
+    this.gain.gain.setValueAtTime(0, context.currentTime + 0.25);
+    this.gain.gain.setTargetAtTime(this.volume, context.currentTime + 0.25, 0.08);
+    this.timer = setInterval(this.pump, 200);
   }
 
   /** One note: two tones an octave apart that start sharply and die away, quicker for high notes. */
